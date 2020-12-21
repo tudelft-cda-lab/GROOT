@@ -589,7 +589,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
     is_numerical : array-like of shape (n_features,), default=None
         Boolean mask for whether each feature is numerical or categorical.
         By default, all features are considered numerical.
-    one_adversarial_class : bool, optional (default=True)
+    one_adversarial_class : bool, optional (default=False)
         Whether one class (malicious, 1) perturbs their samples or if both
         classes (benign and malicious, 0 and 1) do so.
     chen_heuristic : bool, optional (default=False)
@@ -625,7 +625,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         robust_weight=1.0,
         attack_model=None,
         is_numerical=None,
-        one_adversarial_class=True,
+        one_adversarial_class=False,
         chen_heuristic=False,
         random_state=None,
     ):
@@ -1612,7 +1612,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             category to another integer or a list of integers
     is_numerical : array-like of shape (n_features,), default=None
         Boolean mask for whether each feature is numerical or categorical.
-    one_adversarial_class : bool, optional (default=True)
+    one_adversarial_class : bool, optional (default=False)
         Whether one class (malicious, 1) perturbs their samples or if both
         classes (benign and malicious, 0 and 1) do so.
     verbose : bool, optional (default=False)
@@ -1640,7 +1640,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
         robust_weight=1.0,
         attack_model=None,
         is_numerical=None,
-        one_adversarial_class=True,
+        one_adversarial_class=False,
         verbose=False,
         random_state=None,
     ):
@@ -1876,7 +1876,6 @@ def _tree_dict_to_nodes_rec(tree_dict, round_digits):
         )
 
 
-# TODO: make one_adversarial_class default value False everywhere
 def json_tree_from_file(
     filename,
     one_adversarial_class=False,

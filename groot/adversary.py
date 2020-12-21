@@ -203,7 +203,7 @@ class DecisionTreeAdversary:
         attack_model=None,
         is_numeric=None,
         n_categories=None,
-        one_adversarial_class=True,
+        one_adversarial_class=False,
     ):
         """
         Parameters
@@ -236,7 +236,7 @@ class DecisionTreeAdversary:
         n_categories : array-like of shape (n_features,)
             Number of categories per feature, entries for numerical features
             are ignored.
-        one_adversarial_class : bool, optional (default=True)
+        one_adversarial_class : bool, optional (default=False)
             Whether one class (malicious, 1) perturbs their samples or if both
             classes (benign and malicious, 0 and 1) do so.
         """
