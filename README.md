@@ -1,3 +1,54 @@
-# GROOT
+# GROOT: Growing Robust Trees
+Growing Robust Trees (GROOT) is an algorithm that fits binary classification decision trees such that they are robust against user-specified adversarial examples. The algorithm closely resembles algorithms used for fitting normal decision trees (i.e. CART) but changes the splitting criterion and the way samples propagate when creating a split. 
 
-This repository will soon host the code for GROOT.
+This repository contains the module `groot` that implements GROOT as a Scikit-learn compatible classifier, an adversary for model evaluation and easy functions to import datasets.
+
+## Simple example
+To train and evaluate GROOT on a toy dataset against an attacker that can move samples by 0.5 in each direction one can use the following code:
+
+```python
+from groot.adversary import DecisionTreeAdversary
+from groot.model import GrootTree
+
+from sklearn.datasets import make_moons
+
+X, y = make_moons(noise=0.3, random_state=0)
+X_test, y_test = make_moons(noise=0.3, random_state=1)
+
+attack_model = [0.5, 0.5]
+is_numerical = [True, True]
+tree = GrootTree(attack_model=attack_model, is_numerical=is_numerical, random_state=0)
+
+tree.fit(X, y)
+accuracy = tree.score(X_test, y_test)
+adversarial_accuracy = DecisionTreeAdversary(tree, "groot").adversarial_accuracy(X_test, y_test)
+
+print("Accuracy:", accuracy)
+print("Adversarial Accuracy:", adversarial_accuracy)
+```
+
+## Installation
+The experiment code runs on python version 3.6 and up. After installing python and pip one can install all required libraries using:
+
+```pip3 install -r requirements.txt```
+
+Or on windows:
+
+```pip install -r requirements.txt```
+
+We recommend using virtual environments.
+
+## Reproducing 'Efficient Training of Robust Decision Trees Against Adversarial Examples' (article)
+To reproduce the results from the paper we provide `generate_results.py`, a script that takes the trained decision trees (from JSON format) and generates tables and figures. The resulting figures generate under `/out/`.
+
+To not only generate the results but to also retrain all trees we include the script `train_trees.py`. This script runs GROOT, TREANT and the heuristic from Chen et al. in parallel for each dataset then outputs to `/trees/`. Warning: the script can take a long time to run (about a day given 16 cores). Both `/out/` and `/trees/` have been pre-populated with the results.
+
+The TREANT implementation (`groot.treant.py`) is copied almost completely from the authors of TREANT at https://github.com/gtolomei/treant with small modifications to better interface with the experiments. The heuristic by Chen et al. runs in the GROOT code, only with a different score function. This score function can be enabled by setting `chen_heuristic=True` on a `GrootTree` before calling `.fit(X, y)`.
+
+## Important note on TREANT
+To encode L-infinity norms correctly we had to modify TREANT to NOT apply rules recursively. This means we added a single `break` statement in the `treant.Attacker.__compute_attack()` method. If you are planning on using TREANT with recursive attacker rules then you should remove this statement or use TREANT's unmodified code at https://github.com/gtolomei/treant .
+
+# Testing
+Tests can be run using:
+
+```python -m pytest groot/tests/```
