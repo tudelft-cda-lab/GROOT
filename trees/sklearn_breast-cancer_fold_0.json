@@ -1,0 +1,171 @@
+[
+  {
+    "nodeid": 0,
+    "depth": 0,
+    "split": 7,
+    "split_condition": 0.051455000415444374,
+    "yes": 1,
+    "no": 12,
+    "missing": 1,
+    "children": [
+      {
+        "nodeid": 1,
+        "depth": 1,
+        "split": 23,
+        "split_condition": 960.5,
+        "yes": 2,
+        "no": 9,
+        "missing": 2,
+        "children": [
+          {
+            "nodeid": 2,
+            "depth": 2,
+            "split": 13,
+            "split_condition": 42.19000053405762,
+            "yes": 3,
+            "no": 6,
+            "missing": 3,
+            "children": [
+              {
+                "nodeid": 3,
+                "depth": 3,
+                "split": 7,
+                "split_condition": 0.049230000004172325,
+                "yes": 4,
+                "no": 5,
+                "missing": 4,
+                "children": [
+                  {
+                    "nodeid": 4,
+                    "leaf": 0.011450381679389313
+                  },
+                  {
+                    "nodeid": 5,
+                    "leaf": 0.4
+                  }
+                ]
+              },
+              {
+                "nodeid": 6,
+                "depth": 3,
+                "split": 27,
+                "split_condition": 0.05674000084400177,
+                "yes": 7,
+                "no": 8,
+                "missing": 7,
+                "children": [
+                  {
+                    "nodeid": 7,
+                    "leaf": 0.0
+                  },
+                  {
+                    "nodeid": 8,
+                    "leaf": 1.0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nodeid": 9,
+            "depth": 2,
+            "split": 29,
+            "split_condition": 0.06492000073194504,
+            "yes": 10,
+            "no": 11,
+            "missing": 10,
+            "children": [
+              {
+                "nodeid": 10,
+                "leaf": 0.0
+              },
+              {
+                "nodeid": 11,
+                "leaf": 1.0
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeid": 12,
+        "depth": 1,
+        "split": 27,
+        "split_condition": 0.1465499997138977,
+        "yes": 13,
+        "no": 18,
+        "missing": 13,
+        "children": [
+          {
+            "nodeid": 13,
+            "depth": 2,
+            "split": 20,
+            "split_condition": 17.614999771118164,
+            "yes": 14,
+            "no": 17,
+            "missing": 14,
+            "children": [
+              {
+                "nodeid": 14,
+                "depth": 3,
+                "split": 21,
+                "split_condition": 29.454999923706055,
+                "yes": 15,
+                "no": 16,
+                "missing": 15,
+                "children": [
+                  {
+                    "nodeid": 15,
+                    "leaf": 0.05
+                  },
+                  {
+                    "nodeid": 16,
+                    "leaf": 1.0
+                  }
+                ]
+              },
+              {
+                "nodeid": 17,
+                "leaf": 1.0
+              }
+            ]
+          },
+          {
+            "nodeid": 18,
+            "depth": 2,
+            "split": 1,
+            "split_condition": 15.345000267028809,
+            "yes": 19,
+            "no": 22,
+            "missing": 19,
+            "children": [
+              {
+                "nodeid": 19,
+                "depth": 3,
+                "split": 1,
+                "split_condition": 13.535000324249268,
+                "yes": 20,
+                "no": 21,
+                "missing": 20,
+                "children": [
+                  {
+                    "nodeid": 20,
+                    "leaf": 1.0
+                  },
+                  {
+                    "nodeid": 21,
+                    "leaf": 0.0
+                  }
+                ]
+              },
+              {
+                "nodeid": 22,
+                "leaf": 1.0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

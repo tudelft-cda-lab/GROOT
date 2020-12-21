@@ -1,0 +1,96 @@
+[
+  {
+    "nodeid": 0,
+    "depth": 0,
+    "split": 4,
+    "split_condition": 0.041439998894929886,
+    "yes": 1,
+    "no": 2,
+    "missing": 1,
+    "children": [
+      {
+        "nodeid": 1,
+        "leaf": 1.0
+      },
+      {
+        "nodeid": 2,
+        "depth": 1,
+        "split": 26,
+        "split_condition": 0.999210000038147,
+        "yes": 3,
+        "no": 8,
+        "missing": 3,
+        "children": [
+          {
+            "nodeid": 3,
+            "depth": 2,
+            "split": 2,
+            "split_condition": -0.005170002579689026,
+            "yes": 4,
+            "no": 5,
+            "missing": 4,
+            "children": [
+              {
+                "nodeid": 4,
+                "leaf": 1.0
+              },
+              {
+                "nodeid": 5,
+                "depth": 3,
+                "split": 15,
+                "split_condition": -0.9051699936389923,
+                "yes": 6,
+                "no": 7,
+                "missing": 6,
+                "children": [
+                  {
+                    "nodeid": 6,
+                    "leaf": 1.0
+                  },
+                  {
+                    "nodeid": 7,
+                    "leaf": 0.055865921787709494
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nodeid": 8,
+            "depth": 2,
+            "split": 21,
+            "split_condition": 0.960004985332489,
+            "yes": 9,
+            "no": 12,
+            "missing": 9,
+            "children": [
+              {
+                "nodeid": 9,
+                "depth": 3,
+                "split": 2,
+                "split_condition": 0.7300400137901306,
+                "yes": 10,
+                "no": 11,
+                "missing": 10,
+                "children": [
+                  {
+                    "nodeid": 10,
+                    "leaf": 1.0
+                  },
+                  {
+                    "nodeid": 11,
+                    "leaf": 0.3125
+                  }
+                ]
+              },
+              {
+                "nodeid": 12,
+                "leaf": 1.0
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

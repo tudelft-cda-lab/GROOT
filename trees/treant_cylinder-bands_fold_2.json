@@ -1,0 +1,201 @@
+[
+  {
+    "nodeid": 0,
+    "depth": 0,
+    "split": 26,
+    "split_condition": 2050.0,
+    "yes": 1,
+    "no": 16,
+    "missing": 1,
+    "children": [
+      {
+        "nodeid": 1,
+        "depth": 1,
+        "split": 28,
+        "split_condition": 35.5,
+        "yes": 2,
+        "no": 9,
+        "missing": 2,
+        "children": [
+          {
+            "nodeid": 2,
+            "depth": 2,
+            "split": 1,
+            "split_condition": 37338.0,
+            "yes": 3,
+            "no": 6,
+            "missing": 3,
+            "children": [
+              {
+                "nodeid": 3,
+                "depth": 3,
+                "split": 13,
+                "split_condition": 5.0,
+                "yes": 4,
+                "no": 5,
+                "missing": 4,
+                "children": [
+                  {
+                    "nodeid": 4,
+                    "leaf": 0.840008742435606
+                  },
+                  {
+                    "nodeid": 5,
+                    "leaf": 0.3688315783080289
+                  }
+                ]
+              },
+              {
+                "nodeid": 6,
+                "depth": 3,
+                "split": 31,
+                "split_condition": 2.1,
+                "yes": 7,
+                "no": 8,
+                "missing": 7,
+                "children": [
+                  {
+                    "nodeid": 7,
+                    "leaf": 1.0000390557364518
+                  },
+                  {
+                    "nodeid": 8,
+                    "leaf": 0.14754097785309597
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nodeid": 9,
+            "depth": 2,
+            "split": 26,
+            "split_condition": 1300.0,
+            "yes": 10,
+            "no": 13,
+            "missing": 10,
+            "children": [
+              {
+                "nodeid": 10,
+                "depth": 3,
+                "split": 0,
+                "split_condition": 2.0,
+                "yes": 11,
+                "no": 12,
+                "missing": 11,
+                "children": [
+                  {
+                    "nodeid": 11,
+                    "leaf": 1.0002420375743661
+                  },
+                  {
+                    "nodeid": 12,
+                    "leaf": 0.9999999950329207
+                  }
+                ]
+              },
+              {
+                "nodeid": 13,
+                "depth": 3,
+                "split": 35,
+                "split_condition": 98.3,
+                "yes": 14,
+                "no": 15,
+                "missing": 14,
+                "children": [
+                  {
+                    "nodeid": 14,
+                    "leaf": 0.6429745807754701
+                  },
+                  {
+                    "nodeid": 15,
+                    "leaf": 0.31425696985483703
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeid": 16,
+        "depth": 1,
+        "split": 1,
+        "split_condition": 34585.0,
+        "yes": 17,
+        "no": 22,
+        "missing": 17,
+        "children": [
+          {
+            "nodeid": 17,
+            "depth": 2,
+            "split": 14,
+            "split_condition": 7.0,
+            "yes": 18,
+            "no": 21,
+            "missing": 18,
+            "children": [
+              {
+                "nodeid": 18,
+                "depth": 3,
+                "split": 27,
+                "split_condition": 58.9,
+                "yes": 19,
+                "no": 20,
+                "missing": 19,
+                "children": [
+                  {
+                    "nodeid": 19,
+                    "leaf": 0.33332608493454674
+                  },
+                  {
+                    "nodeid": 20,
+                    "leaf": 0.9999322512533463
+                  }
+                ]
+              },
+              {
+                "nodeid": 21,
+                "leaf": 7.59879462535122e-05
+              }
+            ]
+          },
+          {
+            "nodeid": 22,
+            "depth": 2,
+            "split": 31,
+            "split_condition": 0.8,
+            "yes": 23,
+            "no": 24,
+            "missing": 23,
+            "children": [
+              {
+                "nodeid": 23,
+                "leaf": 1.0000061379428196
+              },
+              {
+                "nodeid": 24,
+                "depth": 3,
+                "split": 8,
+                "split_condition": 1.0,
+                "yes": 25,
+                "no": 26,
+                "missing": 25,
+                "children": [
+                  {
+                    "nodeid": 25,
+                    "leaf": 0.042550202147338824
+                  },
+                  {
+                    "nodeid": 26,
+                    "leaf": 0.5000286995540354
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

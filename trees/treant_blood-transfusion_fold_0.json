@@ -1,0 +1,186 @@
+[
+  {
+    "nodeid": 0,
+    "depth": 0,
+    "split": 0,
+    "split_condition": 7.0,
+    "yes": 1,
+    "no": 14,
+    "missing": 1,
+    "children": [
+      {
+        "nodeid": 1,
+        "depth": 1,
+        "split": 1,
+        "split_condition": 18.0,
+        "yes": 2,
+        "no": 9,
+        "missing": 2,
+        "children": [
+          {
+            "nodeid": 2,
+            "depth": 2,
+            "split": 1,
+            "split_condition": 4.0,
+            "yes": 3,
+            "no": 6,
+            "missing": 3,
+            "children": [
+              {
+                "nodeid": 3,
+                "depth": 3,
+                "split": 3,
+                "split_condition": 17.0,
+                "yes": 4,
+                "no": 5,
+                "missing": 4,
+                "children": [
+                  {
+                    "nodeid": 4,
+                    "leaf": 0.303999986470259
+                  },
+                  {
+                    "nodeid": 5,
+                    "leaf": 0.19999999617239939
+                  }
+                ]
+              },
+              {
+                "nodeid": 6,
+                "depth": 3,
+                "split": 3,
+                "split_condition": 50.0,
+                "yes": 7,
+                "no": 8,
+                "missing": 7,
+                "children": [
+                  {
+                    "nodeid": 7,
+                    "leaf": 0.48571430058079335
+                  },
+                  {
+                    "nodeid": 8,
+                    "leaf": 0.37113399642921935
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nodeid": 9,
+            "depth": 2,
+            "split": 3,
+            "split_condition": 53.0,
+            "yes": 10,
+            "no": 11,
+            "missing": 10,
+            "children": [
+              {
+                "nodeid": 10,
+                "leaf": 0.9999995191502398
+              },
+              {
+                "nodeid": 11,
+                "depth": 3,
+                "split": 3,
+                "split_condition": 59.0,
+                "yes": 12,
+                "no": 13,
+                "missing": 12,
+                "children": [
+                  {
+                    "nodeid": 12,
+                    "leaf": 1.000540716507986e-05
+                  },
+                  {
+                    "nodeid": 13,
+                    "leaf": 0.7999906180008874
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "nodeid": 14,
+        "depth": 1,
+        "split": 0,
+        "split_condition": 15.0,
+        "yes": 15,
+        "no": 20,
+        "missing": 15,
+        "children": [
+          {
+            "nodeid": 15,
+            "depth": 2,
+            "split": 0,
+            "split_condition": 8.0,
+            "yes": 16,
+            "no": 17,
+            "missing": 16,
+            "children": [
+              {
+                "nodeid": 16,
+                "leaf": 0.11074917687288553
+              },
+              {
+                "nodeid": 17,
+                "depth": 3,
+                "split": 3,
+                "split_condition": 15.0,
+                "yes": 18,
+                "no": 19,
+                "missing": 18,
+                "children": [
+                  {
+                    "nodeid": 18,
+                    "leaf": 0.07500553062070835
+                  },
+                  {
+                    "nodeid": 19,
+                    "leaf": 0.15000178402082365
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "nodeid": 20,
+            "depth": 2,
+            "split": 3,
+            "split_condition": 17.0,
+            "yes": 21,
+            "no": 22,
+            "missing": 21,
+            "children": [
+              {
+                "nodeid": 21,
+                "leaf": -2.800871146124706e-09
+              },
+              {
+                "nodeid": 22,
+                "depth": 3,
+                "split": 3,
+                "split_condition": 22.0,
+                "yes": 23,
+                "no": 24,
+                "missing": 23,
+                "children": [
+                  {
+                    "nodeid": 23,
+                    "leaf": 0.17640438948368897
+                  },
+                  {
+                    "nodeid": 24,
+                    "leaf": 0.07017617166405521
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,561 @@
+,Model,Dataset,Fold,Score,Metric
+0,Chen et al.,banknote-authentication,0,0.9345454545454546,accuracy
+1,Chen et al.,banknote-authentication,0,0.9127272727272727,adversarial accuracy
+2,Chen et al.,banknote-authentication,1,0.92,accuracy
+3,Chen et al.,banknote-authentication,1,0.9127272727272727,adversarial accuracy
+4,Chen et al.,banknote-authentication,2,0.9525547445255474,accuracy
+5,Chen et al.,banknote-authentication,2,0.9233576642335767,adversarial accuracy
+6,Chen et al.,banknote-authentication,3,0.948905109489051,accuracy
+7,Chen et al.,banknote-authentication,3,0.9343065693430657,adversarial accuracy
+8,Chen et al.,banknote-authentication,4,0.9635036496350365,accuracy
+9,Chen et al.,banknote-authentication,4,0.9598540145985401,adversarial accuracy
+10,Chen et al.,blood-transfusion,0,0.7933333333333333,accuracy
+11,Chen et al.,blood-transfusion,0,0.7933333333333333,adversarial accuracy
+12,Chen et al.,blood-transfusion,1,0.7733333333333333,accuracy
+13,Chen et al.,blood-transfusion,1,0.7733333333333333,adversarial accuracy
+14,Chen et al.,blood-transfusion,2,0.78,accuracy
+15,Chen et al.,blood-transfusion,2,0.78,adversarial accuracy
+16,Chen et al.,blood-transfusion,3,0.785234899328859,accuracy
+17,Chen et al.,blood-transfusion,3,0.785234899328859,adversarial accuracy
+18,Chen et al.,blood-transfusion,4,0.7114093959731543,accuracy
+19,Chen et al.,blood-transfusion,4,0.7114093959731543,adversarial accuracy
+20,Chen et al.,breast-cancer,0,0.9298245614035088,accuracy
+21,Chen et al.,breast-cancer,0,0.9298245614035088,adversarial accuracy
+22,Chen et al.,breast-cancer,1,0.9385964912280702,accuracy
+23,Chen et al.,breast-cancer,1,0.9385964912280702,adversarial accuracy
+24,Chen et al.,breast-cancer,2,0.9210526315789473,accuracy
+25,Chen et al.,breast-cancer,2,0.9122807017543859,adversarial accuracy
+26,Chen et al.,breast-cancer,3,0.9298245614035088,accuracy
+27,Chen et al.,breast-cancer,3,0.9122807017543859,adversarial accuracy
+28,Chen et al.,breast-cancer,4,0.9380530973451328,accuracy
+29,Chen et al.,breast-cancer,4,0.9380530973451328,adversarial accuracy
+30,Chen et al.,climate-model-simulation,0,0.9166666666666666,accuracy
+31,Chen et al.,climate-model-simulation,0,0.8425925925925926,adversarial accuracy
+32,Chen et al.,climate-model-simulation,1,0.9074074074074074,accuracy
+33,Chen et al.,climate-model-simulation,1,0.8888888888888888,adversarial accuracy
+34,Chen et al.,climate-model-simulation,2,0.9074074074074074,accuracy
+35,Chen et al.,climate-model-simulation,2,0.8333333333333334,adversarial accuracy
+36,Chen et al.,climate-model-simulation,3,0.9166666666666666,accuracy
+37,Chen et al.,climate-model-simulation,3,0.7777777777777778,adversarial accuracy
+38,Chen et al.,climate-model-simulation,4,0.9166666666666666,accuracy
+39,Chen et al.,climate-model-simulation,4,0.8796296296296297,adversarial accuracy
+40,Chen et al.,cylinder-bands,0,0.6964285714285714,accuracy
+41,Chen et al.,cylinder-bands,0,0.6964285714285714,adversarial accuracy
+42,Chen et al.,cylinder-bands,1,0.7321428571428571,accuracy
+43,Chen et al.,cylinder-bands,1,0.7321428571428572,adversarial accuracy
+44,Chen et al.,cylinder-bands,2,0.5818181818181818,accuracy
+45,Chen et al.,cylinder-bands,2,0.5818181818181818,adversarial accuracy
+46,Chen et al.,cylinder-bands,3,0.5818181818181818,accuracy
+47,Chen et al.,cylinder-bands,3,0.5818181818181818,adversarial accuracy
+48,Chen et al.,cylinder-bands,4,0.7272727272727273,accuracy
+49,Chen et al.,cylinder-bands,4,0.7272727272727273,adversarial accuracy
+50,Chen et al.,diabetes,0,0.7012987012987013,accuracy
+51,Chen et al.,diabetes,0,0.7012987012987013,adversarial accuracy
+52,Chen et al.,diabetes,1,0.7142857142857143,accuracy
+53,Chen et al.,diabetes,1,0.7142857142857143,adversarial accuracy
+54,Chen et al.,diabetes,2,0.7662337662337663,accuracy
+55,Chen et al.,diabetes,2,0.7662337662337663,adversarial accuracy
+56,Chen et al.,diabetes,3,0.7254901960784313,accuracy
+57,Chen et al.,diabetes,3,0.7254901960784313,adversarial accuracy
+58,Chen et al.,diabetes,4,0.738562091503268,accuracy
+59,Chen et al.,diabetes,4,0.738562091503268,adversarial accuracy
+60,Chen et al.,haberman,0,0.6774193548387096,accuracy
+61,Chen et al.,haberman,0,0.6612903225806452,adversarial accuracy
+62,Chen et al.,haberman,1,0.6885245901639344,accuracy
+63,Chen et al.,haberman,1,0.6885245901639344,adversarial accuracy
+64,Chen et al.,haberman,2,0.7377049180327869,accuracy
+65,Chen et al.,haberman,2,0.7377049180327868,adversarial accuracy
+66,Chen et al.,haberman,3,0.7704918032786885,accuracy
+67,Chen et al.,haberman,3,0.7704918032786885,adversarial accuracy
+68,Chen et al.,haberman,4,0.7540983606557377,accuracy
+69,Chen et al.,haberman,4,0.7540983606557377,adversarial accuracy
+70,Chen et al.,ionosphere,0,0.9436619718309859,accuracy
+71,Chen et al.,ionosphere,0,0.8873239436619719,adversarial accuracy
+72,Chen et al.,ionosphere,1,0.9,accuracy
+73,Chen et al.,ionosphere,1,0.9,adversarial accuracy
+74,Chen et al.,ionosphere,2,0.8857142857142857,accuracy
+75,Chen et al.,ionosphere,2,0.8571428571428572,adversarial accuracy
+76,Chen et al.,ionosphere,3,0.9,accuracy
+77,Chen et al.,ionosphere,3,0.8857142857142857,adversarial accuracy
+78,Chen et al.,ionosphere,4,0.9142857142857143,accuracy
+79,Chen et al.,ionosphere,4,0.8714285714285714,adversarial accuracy
+80,Chen et al.,parkinsons,0,0.8717948717948718,accuracy
+81,Chen et al.,parkinsons,0,0.8717948717948718,adversarial accuracy
+82,Chen et al.,parkinsons,1,0.8461538461538461,accuracy
+83,Chen et al.,parkinsons,1,0.6923076923076923,adversarial accuracy
+84,Chen et al.,parkinsons,2,0.8205128205128205,accuracy
+85,Chen et al.,parkinsons,2,0.8205128205128205,adversarial accuracy
+86,Chen et al.,parkinsons,3,0.8461538461538461,accuracy
+87,Chen et al.,parkinsons,3,0.8205128205128205,adversarial accuracy
+88,Chen et al.,parkinsons,4,0.8717948717948718,accuracy
+89,Chen et al.,parkinsons,4,0.7948717948717949,adversarial accuracy
+90,Chen et al.,planning-relax,0,0.7297297297297297,accuracy
+91,Chen et al.,planning-relax,0,0.6486486486486487,adversarial accuracy
+92,Chen et al.,planning-relax,1,0.5945945945945946,accuracy
+93,Chen et al.,planning-relax,1,0.5405405405405406,adversarial accuracy
+94,Chen et al.,planning-relax,2,0.7222222222222222,accuracy
+95,Chen et al.,planning-relax,2,0.6944444444444444,adversarial accuracy
+96,Chen et al.,planning-relax,3,0.7222222222222222,accuracy
+97,Chen et al.,planning-relax,3,0.6944444444444444,adversarial accuracy
+98,Chen et al.,planning-relax,4,0.7222222222222222,accuracy
+99,Chen et al.,planning-relax,4,0.6944444444444444,adversarial accuracy
+100,Chen et al.,sonar,0,0.7857142857142857,accuracy
+101,Chen et al.,sonar,0,0.38095238095238093,adversarial accuracy
+102,Chen et al.,sonar,1,0.6904761904761905,accuracy
+103,Chen et al.,sonar,1,0.45238095238095233,adversarial accuracy
+104,Chen et al.,sonar,2,0.6428571428571429,accuracy
+105,Chen et al.,sonar,2,0.19047619047619047,adversarial accuracy
+106,Chen et al.,sonar,3,0.6097560975609756,accuracy
+107,Chen et al.,sonar,3,0.3414634146341463,adversarial accuracy
+108,Chen et al.,sonar,4,0.5853658536585366,accuracy
+109,Chen et al.,sonar,4,0.31707317073170727,adversarial accuracy
+110,Chen et al.,spambase,0,0.8849077090119435,accuracy
+111,Chen et al.,spambase,0,0.8393051031487514,adversarial accuracy
+112,Chen et al.,spambase,1,0.8880434782608696,accuracy
+113,Chen et al.,spambase,1,0.8304347826086956,adversarial accuracy
+114,Chen et al.,spambase,2,0.8945652173913043,accuracy
+115,Chen et al.,spambase,2,0.8369565217391304,adversarial accuracy
+116,Chen et al.,spambase,3,0.8815217391304347,accuracy
+117,Chen et al.,spambase,3,0.8402173913043478,adversarial accuracy
+118,Chen et al.,spambase,4,0.9054347826086957,accuracy
+119,Chen et al.,spambase,4,0.866304347826087,adversarial accuracy
+120,Chen et al.,SPECTF,0,0.6851851851851852,accuracy
+121,Chen et al.,SPECTF,0,0.6851851851851851,adversarial accuracy
+122,Chen et al.,SPECTF,1,0.7222222222222222,accuracy
+123,Chen et al.,SPECTF,1,0.7037037037037037,adversarial accuracy
+124,Chen et al.,SPECTF,2,0.8113207547169812,accuracy
+125,Chen et al.,SPECTF,2,0.8113207547169812,adversarial accuracy
+126,Chen et al.,SPECTF,3,0.8113207547169812,accuracy
+127,Chen et al.,SPECTF,3,0.8113207547169812,adversarial accuracy
+128,Chen et al.,SPECTF,4,0.7735849056603774,accuracy
+129,Chen et al.,SPECTF,4,0.7547169811320755,adversarial accuracy
+130,Chen et al.,wine,0,0.686923076923077,accuracy
+131,Chen et al.,wine,0,0.5623076923076923,adversarial accuracy
+132,Chen et al.,wine,1,0.693076923076923,accuracy
+133,Chen et al.,wine,1,0.6469230769230769,adversarial accuracy
+134,Chen et al.,wine,2,0.6989992301770592,accuracy
+135,Chen et al.,wine,2,0.6612779060816012,adversarial accuracy
+136,Chen et al.,wine,3,0.6797536566589685,accuracy
+137,Chen et al.,wine,3,0.6327944572748267,adversarial accuracy
+138,Chen et al.,wine,4,0.7059276366435719,accuracy
+139,Chen et al.,wine,4,0.6720554272517321,adversarial accuracy
+140,GROOT,banknote-authentication,0,0.9418181818181818,accuracy
+141,GROOT,banknote-authentication,0,0.9381818181818182,adversarial accuracy
+142,GROOT,banknote-authentication,1,0.92,accuracy
+143,GROOT,banknote-authentication,1,0.9163636363636364,adversarial accuracy
+144,GROOT,banknote-authentication,2,0.9708029197080292,accuracy
+145,GROOT,banknote-authentication,2,0.948905109489051,adversarial accuracy
+146,GROOT,banknote-authentication,3,0.9708029197080292,accuracy
+147,GROOT,banknote-authentication,3,0.9598540145985401,adversarial accuracy
+148,GROOT,banknote-authentication,4,0.9635036496350365,accuracy
+149,GROOT,banknote-authentication,4,0.9525547445255474,adversarial accuracy
+150,GROOT,blood-transfusion,0,0.7933333333333333,accuracy
+151,GROOT,blood-transfusion,0,0.7933333333333333,adversarial accuracy
+152,GROOT,blood-transfusion,1,0.7733333333333333,accuracy
+153,GROOT,blood-transfusion,1,0.7733333333333333,adversarial accuracy
+154,GROOT,blood-transfusion,2,0.78,accuracy
+155,GROOT,blood-transfusion,2,0.78,adversarial accuracy
+156,GROOT,blood-transfusion,3,0.785234899328859,accuracy
+157,GROOT,blood-transfusion,3,0.785234899328859,adversarial accuracy
+158,GROOT,blood-transfusion,4,0.7114093959731543,accuracy
+159,GROOT,blood-transfusion,4,0.7114093959731543,adversarial accuracy
+160,GROOT,breast-cancer,0,0.9298245614035088,accuracy
+161,GROOT,breast-cancer,0,0.9298245614035088,adversarial accuracy
+162,GROOT,breast-cancer,1,0.9385964912280702,accuracy
+163,GROOT,breast-cancer,1,0.9385964912280702,adversarial accuracy
+164,GROOT,breast-cancer,2,0.9210526315789473,accuracy
+165,GROOT,breast-cancer,2,0.9122807017543859,adversarial accuracy
+166,GROOT,breast-cancer,3,0.9210526315789473,accuracy
+167,GROOT,breast-cancer,3,0.9122807017543859,adversarial accuracy
+168,GROOT,breast-cancer,4,0.9380530973451328,accuracy
+169,GROOT,breast-cancer,4,0.9380530973451328,adversarial accuracy
+170,GROOT,climate-model-simulation,0,0.9074074074074074,accuracy
+171,GROOT,climate-model-simulation,0,0.9074074074074074,adversarial accuracy
+172,GROOT,climate-model-simulation,1,0.9166666666666666,accuracy
+173,GROOT,climate-model-simulation,1,0.9166666666666666,adversarial accuracy
+174,GROOT,climate-model-simulation,2,0.9166666666666666,accuracy
+175,GROOT,climate-model-simulation,2,0.8888888888888888,adversarial accuracy
+176,GROOT,climate-model-simulation,3,0.9166666666666666,accuracy
+177,GROOT,climate-model-simulation,3,0.9074074074074074,adversarial accuracy
+178,GROOT,climate-model-simulation,4,0.9166666666666666,accuracy
+179,GROOT,climate-model-simulation,4,0.8888888888888888,adversarial accuracy
+180,GROOT,cylinder-bands,0,0.6964285714285714,accuracy
+181,GROOT,cylinder-bands,0,0.6964285714285714,adversarial accuracy
+182,GROOT,cylinder-bands,1,0.7321428571428571,accuracy
+183,GROOT,cylinder-bands,1,0.7321428571428572,adversarial accuracy
+184,GROOT,cylinder-bands,2,0.5818181818181818,accuracy
+185,GROOT,cylinder-bands,2,0.5818181818181818,adversarial accuracy
+186,GROOT,cylinder-bands,3,0.5818181818181818,accuracy
+187,GROOT,cylinder-bands,3,0.5818181818181818,adversarial accuracy
+188,GROOT,cylinder-bands,4,0.7272727272727273,accuracy
+189,GROOT,cylinder-bands,4,0.7272727272727273,adversarial accuracy
+190,GROOT,diabetes,0,0.7077922077922078,accuracy
+191,GROOT,diabetes,0,0.7077922077922079,adversarial accuracy
+192,GROOT,diabetes,1,0.7142857142857143,accuracy
+193,GROOT,diabetes,1,0.7142857142857143,adversarial accuracy
+194,GROOT,diabetes,2,0.7467532467532467,accuracy
+195,GROOT,diabetes,2,0.7467532467532467,adversarial accuracy
+196,GROOT,diabetes,3,0.7254901960784313,accuracy
+197,GROOT,diabetes,3,0.7254901960784313,adversarial accuracy
+198,GROOT,diabetes,4,0.738562091503268,accuracy
+199,GROOT,diabetes,4,0.738562091503268,adversarial accuracy
+200,GROOT,haberman,0,0.6774193548387096,accuracy
+201,GROOT,haberman,0,0.6612903225806452,adversarial accuracy
+202,GROOT,haberman,1,0.6885245901639344,accuracy
+203,GROOT,haberman,1,0.6885245901639344,adversarial accuracy
+204,GROOT,haberman,2,0.7377049180327869,accuracy
+205,GROOT,haberman,2,0.7377049180327868,adversarial accuracy
+206,GROOT,haberman,3,0.7704918032786885,accuracy
+207,GROOT,haberman,3,0.7704918032786885,adversarial accuracy
+208,GROOT,haberman,4,0.7540983606557377,accuracy
+209,GROOT,haberman,4,0.7540983606557377,adversarial accuracy
+210,GROOT,ionosphere,0,0.9295774647887324,accuracy
+211,GROOT,ionosphere,0,0.8732394366197183,adversarial accuracy
+212,GROOT,ionosphere,1,0.8714285714285714,accuracy
+213,GROOT,ionosphere,1,0.8714285714285714,adversarial accuracy
+214,GROOT,ionosphere,2,0.8857142857142857,accuracy
+215,GROOT,ionosphere,2,0.8571428571428572,adversarial accuracy
+216,GROOT,ionosphere,3,0.8857142857142857,accuracy
+217,GROOT,ionosphere,3,0.8714285714285714,adversarial accuracy
+218,GROOT,ionosphere,4,0.9142857142857143,accuracy
+219,GROOT,ionosphere,4,0.8857142857142857,adversarial accuracy
+220,GROOT,parkinsons,0,0.7948717948717948,accuracy
+221,GROOT,parkinsons,0,0.7948717948717949,adversarial accuracy
+222,GROOT,parkinsons,1,0.7948717948717948,accuracy
+223,GROOT,parkinsons,1,0.7948717948717949,adversarial accuracy
+224,GROOT,parkinsons,2,0.8717948717948718,accuracy
+225,GROOT,parkinsons,2,0.8461538461538461,adversarial accuracy
+226,GROOT,parkinsons,3,0.9230769230769231,accuracy
+227,GROOT,parkinsons,3,0.8974358974358975,adversarial accuracy
+228,GROOT,parkinsons,4,0.8717948717948718,accuracy
+229,GROOT,parkinsons,4,0.7948717948717949,adversarial accuracy
+230,GROOT,planning-relax,0,0.7027027027027027,accuracy
+231,GROOT,planning-relax,0,0.7027027027027026,adversarial accuracy
+232,GROOT,planning-relax,1,0.6756756756756757,accuracy
+233,GROOT,planning-relax,1,0.6216216216216216,adversarial accuracy
+234,GROOT,planning-relax,2,0.7222222222222222,accuracy
+235,GROOT,planning-relax,2,0.6944444444444444,adversarial accuracy
+236,GROOT,planning-relax,3,0.6666666666666666,accuracy
+237,GROOT,planning-relax,3,0.6388888888888888,adversarial accuracy
+238,GROOT,planning-relax,4,0.7222222222222222,accuracy
+239,GROOT,planning-relax,4,0.7222222222222222,adversarial accuracy
+240,GROOT,sonar,0,0.7380952380952381,accuracy
+241,GROOT,sonar,0,0.45238095238095233,adversarial accuracy
+242,GROOT,sonar,1,0.6190476190476191,accuracy
+243,GROOT,sonar,1,0.38095238095238093,adversarial accuracy
+244,GROOT,sonar,2,0.5952380952380952,accuracy
+245,GROOT,sonar,2,0.5238095238095238,adversarial accuracy
+246,GROOT,sonar,3,0.5365853658536586,accuracy
+247,GROOT,sonar,3,0.31707317073170727,adversarial accuracy
+248,GROOT,sonar,4,0.6341463414634146,accuracy
+249,GROOT,sonar,4,0.4878048780487805,adversarial accuracy
+250,GROOT,spambase,0,0.8870792616720955,accuracy
+251,GROOT,spambase,0,0.8697068403908794,adversarial accuracy
+252,GROOT,spambase,1,0.8945652173913043,accuracy
+253,GROOT,spambase,1,0.8793478260869565,adversarial accuracy
+254,GROOT,spambase,2,0.9054347826086957,accuracy
+255,GROOT,spambase,2,0.8913043478260869,adversarial accuracy
+256,GROOT,spambase,3,0.8989130434782608,accuracy
+257,GROOT,spambase,3,0.883695652173913,adversarial accuracy
+258,GROOT,spambase,4,0.8597826086956522,accuracy
+259,GROOT,spambase,4,0.8434782608695652,adversarial accuracy
+260,GROOT,SPECTF,0,0.6851851851851852,accuracy
+261,GROOT,SPECTF,0,0.6851851851851851,adversarial accuracy
+262,GROOT,SPECTF,1,0.7222222222222222,accuracy
+263,GROOT,SPECTF,1,0.7037037037037037,adversarial accuracy
+264,GROOT,SPECTF,2,0.8113207547169812,accuracy
+265,GROOT,SPECTF,2,0.8113207547169812,adversarial accuracy
+266,GROOT,SPECTF,3,0.8113207547169812,accuracy
+267,GROOT,SPECTF,3,0.8113207547169812,adversarial accuracy
+268,GROOT,SPECTF,4,0.7735849056603774,accuracy
+269,GROOT,SPECTF,4,0.7547169811320755,adversarial accuracy
+270,GROOT,wine,0,0.7061538461538461,accuracy
+271,GROOT,wine,0,0.6815384615384615,adversarial accuracy
+272,GROOT,wine,1,0.6884615384615385,accuracy
+273,GROOT,wine,1,0.6792307692307693,adversarial accuracy
+274,GROOT,wine,2,0.7128560431100847,accuracy
+275,GROOT,wine,2,0.697459584295612,adversarial accuracy
+276,GROOT,wine,3,0.6782140107775212,accuracy
+277,GROOT,wine,3,0.6635873749037722,adversarial accuracy
+278,GROOT,wine,4,0.7066974595842956,accuracy
+279,GROOT,wine,4,0.6828329484218629,adversarial accuracy
+280,Natural,banknote-authentication,0,0.9418181818181818,accuracy
+281,Natural,banknote-authentication,0,0.9090909090909091,adversarial accuracy
+282,Natural,banknote-authentication,1,0.9127272727272727,accuracy
+283,Natural,banknote-authentication,1,0.8836363636363637,adversarial accuracy
+284,Natural,banknote-authentication,2,0.948905109489051,accuracy
+285,Natural,banknote-authentication,2,0.9379562043795621,adversarial accuracy
+286,Natural,banknote-authentication,3,0.9890510948905109,accuracy
+287,Natural,banknote-authentication,3,0.9708029197080292,adversarial accuracy
+288,Natural,banknote-authentication,4,0.9598540145985401,accuracy
+289,Natural,banknote-authentication,4,0.948905109489051,adversarial accuracy
+290,Natural,blood-transfusion,0,0.7933333333333333,accuracy
+291,Natural,blood-transfusion,0,0.7933333333333333,adversarial accuracy
+292,Natural,blood-transfusion,1,0.7733333333333333,accuracy
+293,Natural,blood-transfusion,1,0.7733333333333333,adversarial accuracy
+294,Natural,blood-transfusion,2,0.78,accuracy
+295,Natural,blood-transfusion,2,0.78,adversarial accuracy
+296,Natural,blood-transfusion,3,0.785234899328859,accuracy
+297,Natural,blood-transfusion,3,0.785234899328859,adversarial accuracy
+298,Natural,blood-transfusion,4,0.7114093959731543,accuracy
+299,Natural,blood-transfusion,4,0.7114093959731543,adversarial accuracy
+300,Natural,breast-cancer,0,0.9210526315789473,accuracy
+301,Natural,breast-cancer,0,0.19298245614035092,adversarial accuracy
+302,Natural,breast-cancer,1,0.9298245614035088,accuracy
+303,Natural,breast-cancer,1,0.4298245614035088,adversarial accuracy
+304,Natural,breast-cancer,2,0.9385964912280702,accuracy
+305,Natural,breast-cancer,2,0.4298245614035088,adversarial accuracy
+306,Natural,breast-cancer,3,0.9649122807017544,accuracy
+307,Natural,breast-cancer,3,0.2807017543859649,adversarial accuracy
+308,Natural,breast-cancer,4,0.8938053097345132,accuracy
+309,Natural,breast-cancer,4,0.37168141592920356,adversarial accuracy
+310,Natural,climate-model-simulation,0,0.9074074074074074,accuracy
+311,Natural,climate-model-simulation,0,0.6759259259259259,adversarial accuracy
+312,Natural,climate-model-simulation,1,0.8703703703703703,accuracy
+313,Natural,climate-model-simulation,1,0.7685185185185185,adversarial accuracy
+314,Natural,climate-model-simulation,2,0.8981481481481481,accuracy
+315,Natural,climate-model-simulation,2,0.7685185185185185,adversarial accuracy
+316,Natural,climate-model-simulation,3,0.9166666666666666,accuracy
+317,Natural,climate-model-simulation,3,0.7685185185185185,adversarial accuracy
+318,Natural,climate-model-simulation,4,0.9351851851851852,accuracy
+319,Natural,climate-model-simulation,4,0.7592592592592593,adversarial accuracy
+320,Natural,cylinder-bands,0,0.6607142857142857,accuracy
+321,Natural,cylinder-bands,0,0.6607142857142857,adversarial accuracy
+322,Natural,cylinder-bands,1,0.6071428571428571,accuracy
+323,Natural,cylinder-bands,1,0.6071428571428572,adversarial accuracy
+324,Natural,cylinder-bands,2,0.5818181818181818,accuracy
+325,Natural,cylinder-bands,2,0.5818181818181818,adversarial accuracy
+326,Natural,cylinder-bands,3,0.5636363636363636,accuracy
+327,Natural,cylinder-bands,3,0.5636363636363637,adversarial accuracy
+328,Natural,cylinder-bands,4,0.6,accuracy
+329,Natural,cylinder-bands,4,0.6,adversarial accuracy
+330,Natural,diabetes,0,0.7012987012987013,accuracy
+331,Natural,diabetes,0,0.7012987012987013,adversarial accuracy
+332,Natural,diabetes,1,0.7272727272727273,accuracy
+333,Natural,diabetes,1,0.7272727272727273,adversarial accuracy
+334,Natural,diabetes,2,0.7467532467532467,accuracy
+335,Natural,diabetes,2,0.7467532467532467,adversarial accuracy
+336,Natural,diabetes,3,0.7058823529411765,accuracy
+337,Natural,diabetes,3,0.6993464052287581,adversarial accuracy
+338,Natural,diabetes,4,0.7320261437908496,accuracy
+339,Natural,diabetes,4,0.7254901960784313,adversarial accuracy
+340,Natural,haberman,0,0.6774193548387096,accuracy
+341,Natural,haberman,0,0.6612903225806452,adversarial accuracy
+342,Natural,haberman,1,0.6885245901639344,accuracy
+343,Natural,haberman,1,0.6885245901639344,adversarial accuracy
+344,Natural,haberman,2,0.7377049180327869,accuracy
+345,Natural,haberman,2,0.7377049180327868,adversarial accuracy
+346,Natural,haberman,3,0.7704918032786885,accuracy
+347,Natural,haberman,3,0.7704918032786885,adversarial accuracy
+348,Natural,haberman,4,0.7540983606557377,accuracy
+349,Natural,haberman,4,0.7540983606557377,adversarial accuracy
+350,Natural,ionosphere,0,0.9014084507042254,accuracy
+351,Natural,ionosphere,0,0.7605633802816901,adversarial accuracy
+352,Natural,ionosphere,1,0.8571428571428571,accuracy
+353,Natural,ionosphere,1,0.7428571428571429,adversarial accuracy
+354,Natural,ionosphere,2,0.8285714285714286,accuracy
+355,Natural,ionosphere,2,0.7285714285714286,adversarial accuracy
+356,Natural,ionosphere,3,0.8857142857142857,accuracy
+357,Natural,ionosphere,3,0.6857142857142857,adversarial accuracy
+358,Natural,ionosphere,4,0.8571428571428571,accuracy
+359,Natural,ionosphere,4,0.6428571428571428,adversarial accuracy
+360,Natural,parkinsons,0,0.9230769230769231,accuracy
+361,Natural,parkinsons,0,0.1282051282051282,adversarial accuracy
+362,Natural,parkinsons,1,0.7948717948717948,accuracy
+363,Natural,parkinsons,1,0.20512820512820518,adversarial accuracy
+364,Natural,parkinsons,2,0.8717948717948718,accuracy
+365,Natural,parkinsons,2,0.23076923076923073,adversarial accuracy
+366,Natural,parkinsons,3,0.9487179487179487,accuracy
+367,Natural,parkinsons,3,0.05128205128205132,adversarial accuracy
+368,Natural,parkinsons,4,0.7435897435897436,accuracy
+369,Natural,parkinsons,4,0.2564102564102564,adversarial accuracy
+370,Natural,planning-relax,0,0.5675675675675675,accuracy
+371,Natural,planning-relax,0,0.3783783783783784,adversarial accuracy
+372,Natural,planning-relax,1,0.5945945945945946,accuracy
+373,Natural,planning-relax,1,0.3783783783783784,adversarial accuracy
+374,Natural,planning-relax,2,0.7222222222222222,accuracy
+375,Natural,planning-relax,2,0.5833333333333333,adversarial accuracy
+376,Natural,planning-relax,3,0.6666666666666666,accuracy
+377,Natural,planning-relax,3,0.5277777777777778,adversarial accuracy
+378,Natural,planning-relax,4,0.6944444444444444,accuracy
+379,Natural,planning-relax,4,0.4722222222222222,adversarial accuracy
+380,Natural,sonar,0,0.7142857142857143,accuracy
+381,Natural,sonar,0,0.0,adversarial accuracy
+382,Natural,sonar,1,0.7142857142857143,accuracy
+383,Natural,sonar,1,0.023809523809523836,adversarial accuracy
+384,Natural,sonar,2,0.7619047619047619,accuracy
+385,Natural,sonar,2,0.0,adversarial accuracy
+386,Natural,sonar,3,0.8048780487804879,accuracy
+387,Natural,sonar,3,0.2195121951219512,adversarial accuracy
+388,Natural,sonar,4,0.6341463414634146,accuracy
+389,Natural,sonar,4,0.0,adversarial accuracy
+390,Natural,spambase,0,0.8914223669923995,accuracy
+391,Natural,spambase,0,0.44516829533116176,adversarial accuracy
+392,Natural,spambase,1,0.9010869565217391,accuracy
+393,Natural,spambase,1,0.33804347826086956,adversarial accuracy
+394,Natural,spambase,2,0.9021739130434783,accuracy
+395,Natural,spambase,2,0.32173913043478264,adversarial accuracy
+396,Natural,spambase,3,0.8989130434782608,accuracy
+397,Natural,spambase,3,0.3097826086956522,adversarial accuracy
+398,Natural,spambase,4,0.9010869565217391,accuracy
+399,Natural,spambase,4,0.28695652173913044,adversarial accuracy
+400,Natural,SPECTF,0,0.7222222222222222,accuracy
+401,Natural,SPECTF,0,0.7222222222222222,adversarial accuracy
+402,Natural,SPECTF,1,0.7407407407407407,accuracy
+403,Natural,SPECTF,1,0.7222222222222222,adversarial accuracy
+404,Natural,SPECTF,2,0.8113207547169812,accuracy
+405,Natural,SPECTF,2,0.8113207547169812,adversarial accuracy
+406,Natural,SPECTF,3,0.7358490566037735,accuracy
+407,Natural,SPECTF,3,0.7358490566037736,adversarial accuracy
+408,Natural,SPECTF,4,0.7735849056603774,accuracy
+409,Natural,SPECTF,4,0.7547169811320755,adversarial accuracy
+410,Natural,wine,0,0.7307692307692307,accuracy
+411,Natural,wine,0,0.533076923076923,adversarial accuracy
+412,Natural,wine,1,0.7369230769230769,accuracy
+413,Natural,wine,1,0.4061538461538462,adversarial accuracy
+414,Natural,wine,2,0.7367205542725174,accuracy
+415,Natural,wine,2,0.5565819861431871,adversarial accuracy
+416,Natural,wine,3,0.7205542725173211,accuracy
+417,Natural,wine,3,0.5096227867590455,adversarial accuracy
+418,Natural,wine,4,0.7444187836797537,accuracy
+419,Natural,wine,4,0.49499615088529636,adversarial accuracy
+420,TREANT,banknote-authentication,0,0.9418181818181818,accuracy
+421,TREANT,banknote-authentication,0,0.9272727272727272,adversarial accuracy
+422,TREANT,banknote-authentication,1,0.9163636363636364,accuracy
+423,TREANT,banknote-authentication,1,0.8981818181818182,adversarial accuracy
+424,TREANT,banknote-authentication,2,0.9635036496350365,accuracy
+425,TREANT,banknote-authentication,2,0.9598540145985401,adversarial accuracy
+426,TREANT,banknote-authentication,3,0.9562043795620438,accuracy
+427,TREANT,banknote-authentication,3,0.9416058394160584,adversarial accuracy
+428,TREANT,banknote-authentication,4,0.9671532846715328,accuracy
+429,TREANT,banknote-authentication,4,0.9635036496350365,adversarial accuracy
+430,TREANT,blood-transfusion,0,0.76,accuracy
+431,TREANT,blood-transfusion,0,0.76,adversarial accuracy
+432,TREANT,blood-transfusion,1,0.7666666666666667,accuracy
+433,TREANT,blood-transfusion,1,0.7666666666666666,adversarial accuracy
+434,TREANT,blood-transfusion,2,0.7666666666666667,accuracy
+435,TREANT,blood-transfusion,2,0.76,adversarial accuracy
+436,TREANT,blood-transfusion,3,0.785234899328859,accuracy
+437,TREANT,blood-transfusion,3,0.7785234899328859,adversarial accuracy
+438,TREANT,blood-transfusion,4,0.7449664429530202,accuracy
+439,TREANT,blood-transfusion,4,0.7449664429530201,adversarial accuracy
+440,TREANT,breast-cancer,0,0.9473684210526315,accuracy
+441,TREANT,breast-cancer,0,0.9473684210526316,adversarial accuracy
+442,TREANT,breast-cancer,1,0.9473684210526315,accuracy
+443,TREANT,breast-cancer,1,0.9298245614035088,adversarial accuracy
+444,TREANT,breast-cancer,2,0.9210526315789473,accuracy
+445,TREANT,breast-cancer,2,0.9210526315789473,adversarial accuracy
+446,TREANT,breast-cancer,3,0.9210526315789473,accuracy
+447,TREANT,breast-cancer,3,0.9210526315789473,adversarial accuracy
+448,TREANT,breast-cancer,4,0.911504424778761,accuracy
+449,TREANT,breast-cancer,4,0.911504424778761,adversarial accuracy
+450,TREANT,climate-model-simulation,0,0.9074074074074074,accuracy
+451,TREANT,climate-model-simulation,0,0.9074074074074074,adversarial accuracy
+452,TREANT,climate-model-simulation,1,0.9166666666666666,accuracy
+453,TREANT,climate-model-simulation,1,0.9166666666666666,adversarial accuracy
+454,TREANT,climate-model-simulation,2,0.9166666666666666,accuracy
+455,TREANT,climate-model-simulation,2,0.9166666666666666,adversarial accuracy
+456,TREANT,climate-model-simulation,3,0.9166666666666666,accuracy
+457,TREANT,climate-model-simulation,3,0.9166666666666666,adversarial accuracy
+458,TREANT,climate-model-simulation,4,0.9166666666666666,accuracy
+459,TREANT,climate-model-simulation,4,0.9166666666666666,adversarial accuracy
+460,TREANT,cylinder-bands,0,0.6964285714285714,accuracy
+461,TREANT,cylinder-bands,0,0.6785714285714286,adversarial accuracy
+462,TREANT,cylinder-bands,1,0.6428571428571429,accuracy
+463,TREANT,cylinder-bands,1,0.6428571428571428,adversarial accuracy
+464,TREANT,cylinder-bands,2,0.6909090909090909,accuracy
+465,TREANT,cylinder-bands,2,0.6727272727272727,adversarial accuracy
+466,TREANT,cylinder-bands,3,0.4727272727272727,accuracy
+467,TREANT,cylinder-bands,3,0.4727272727272728,adversarial accuracy
+468,TREANT,cylinder-bands,4,0.6363636363636364,accuracy
+469,TREANT,cylinder-bands,4,0.6363636363636364,adversarial accuracy
+470,TREANT,diabetes,0,0.6948051948051948,accuracy
+471,TREANT,diabetes,0,0.6818181818181819,adversarial accuracy
+472,TREANT,diabetes,1,0.7597402597402597,accuracy
+473,TREANT,diabetes,1,0.7597402597402597,adversarial accuracy
+474,TREANT,diabetes,2,0.7467532467532467,accuracy
+475,TREANT,diabetes,2,0.7402597402597403,adversarial accuracy
+476,TREANT,diabetes,3,0.738562091503268,accuracy
+477,TREANT,diabetes,3,0.738562091503268,adversarial accuracy
+478,TREANT,diabetes,4,0.738562091503268,accuracy
+479,TREANT,diabetes,4,0.738562091503268,adversarial accuracy
+480,TREANT,haberman,0,0.6612903225806451,accuracy
+481,TREANT,haberman,0,0.6612903225806452,adversarial accuracy
+482,TREANT,haberman,1,0.6885245901639344,accuracy
+483,TREANT,haberman,1,0.6721311475409837,adversarial accuracy
+484,TREANT,haberman,2,0.7704918032786885,accuracy
+485,TREANT,haberman,2,0.7213114754098361,adversarial accuracy
+486,TREANT,haberman,3,0.7704918032786885,accuracy
+487,TREANT,haberman,3,0.7540983606557377,adversarial accuracy
+488,TREANT,haberman,4,0.7213114754098361,accuracy
+489,TREANT,haberman,4,0.7213114754098361,adversarial accuracy
+490,TREANT,ionosphere,0,0.9154929577464789,accuracy
+491,TREANT,ionosphere,0,0.8591549295774648,adversarial accuracy
+492,TREANT,ionosphere,1,0.9142857142857143,accuracy
+493,TREANT,ionosphere,1,0.9142857142857143,adversarial accuracy
+494,TREANT,ionosphere,2,0.8857142857142857,accuracy
+495,TREANT,ionosphere,2,0.8428571428571429,adversarial accuracy
+496,TREANT,ionosphere,3,0.9,accuracy
+497,TREANT,ionosphere,3,0.8857142857142857,adversarial accuracy
+498,TREANT,ionosphere,4,0.9142857142857143,accuracy
+499,TREANT,ionosphere,4,0.8428571428571429,adversarial accuracy
+500,TREANT,parkinsons,0,0.8461538461538461,accuracy
+501,TREANT,parkinsons,0,0.8461538461538461,adversarial accuracy
+502,TREANT,parkinsons,1,0.7692307692307693,accuracy
+503,TREANT,parkinsons,1,0.7692307692307692,adversarial accuracy
+504,TREANT,parkinsons,2,0.8205128205128205,accuracy
+505,TREANT,parkinsons,2,0.7948717948717949,adversarial accuracy
+506,TREANT,parkinsons,3,0.9487179487179487,accuracy
+507,TREANT,parkinsons,3,0.9230769230769231,adversarial accuracy
+508,TREANT,parkinsons,4,0.8461538461538461,accuracy
+509,TREANT,parkinsons,4,0.7692307692307692,adversarial accuracy
+510,TREANT,planning-relax,0,0.7027027027027027,accuracy
+511,TREANT,planning-relax,0,0.7027027027027026,adversarial accuracy
+512,TREANT,planning-relax,1,0.7027027027027027,accuracy
+513,TREANT,planning-relax,1,0.7027027027027026,adversarial accuracy
+514,TREANT,planning-relax,2,0.6944444444444444,accuracy
+515,TREANT,planning-relax,2,0.6944444444444444,adversarial accuracy
+516,TREANT,planning-relax,3,0.7222222222222222,accuracy
+517,TREANT,planning-relax,3,0.7222222222222222,adversarial accuracy
+518,TREANT,planning-relax,4,0.7222222222222222,accuracy
+519,TREANT,planning-relax,4,0.7222222222222222,adversarial accuracy
+520,TREANT,sonar,0,0.6190476190476191,accuracy
+521,TREANT,sonar,0,0.4285714285714286,adversarial accuracy
+522,TREANT,sonar,1,0.6904761904761905,accuracy
+523,TREANT,sonar,1,0.45238095238095233,adversarial accuracy
+524,TREANT,sonar,2,0.7142857142857143,accuracy
+525,TREANT,sonar,2,0.5952380952380952,adversarial accuracy
+526,TREANT,sonar,3,0.6341463414634146,accuracy
+527,TREANT,sonar,3,0.5609756097560976,adversarial accuracy
+528,TREANT,sonar,4,0.6341463414634146,accuracy
+529,TREANT,sonar,4,0.46341463414634143,adversarial accuracy
+530,TREANT,spambase,0,0.8697068403908795,accuracy
+531,TREANT,spambase,0,0.8425624321389794,adversarial accuracy
+532,TREANT,spambase,1,0.8369565217391305,accuracy
+533,TREANT,spambase,1,0.8152173913043479,adversarial accuracy
+534,TREANT,spambase,2,0.8728260869565218,accuracy
+535,TREANT,spambase,2,0.8369565217391304,adversarial accuracy
+536,TREANT,spambase,3,0.875,accuracy
+537,TREANT,spambase,3,0.8532608695652174,adversarial accuracy
+538,TREANT,spambase,4,0.8565217391304348,accuracy
+539,TREANT,spambase,4,0.8358695652173913,adversarial accuracy
+540,TREANT,SPECTF,0,0.7222222222222222,accuracy
+541,TREANT,SPECTF,0,0.7222222222222222,adversarial accuracy
+542,TREANT,SPECTF,1,0.7222222222222222,accuracy
+543,TREANT,SPECTF,1,0.6296296296296297,adversarial accuracy
+544,TREANT,SPECTF,2,0.8113207547169812,accuracy
+545,TREANT,SPECTF,2,0.7358490566037736,adversarial accuracy
+546,TREANT,SPECTF,3,0.8301886792452831,accuracy
+547,TREANT,SPECTF,3,0.7924528301886793,adversarial accuracy
+548,TREANT,SPECTF,4,0.7358490566037735,accuracy
+549,TREANT,SPECTF,4,0.7169811320754718,adversarial accuracy
+550,TREANT,wine,0,0.6923076923076923,accuracy
+551,TREANT,wine,0,0.6823076923076923,adversarial accuracy
+552,TREANT,wine,1,0.6823076923076923,accuracy
+553,TREANT,wine,1,0.6453846153846154,adversarial accuracy
+554,TREANT,wine,2,0.6805234795996921,accuracy
+555,TREANT,wine,2,0.665896843725943,adversarial accuracy
+556,TREANT,wine,3,0.6820631254811393,accuracy
+557,TREANT,wine,3,0.6728252501924558,adversarial accuracy
+558,TREANT,wine,4,0.7159353348729792,accuracy
+559,TREANT,wine,4,0.6843725943033102,adversarial accuracy
