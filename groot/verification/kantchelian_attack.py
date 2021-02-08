@@ -6,8 +6,33 @@ import time
 from tqdm import tqdm
 
 
-GUARD_VAL = 5e-7  # 2e-7
-ROUND_DIGITS = 6  # 20
+"""
+This code is for the most part written by Hongge Chen and is taken and
+adapted from the repository https://github.com/chenhongge/RobustTrees.
+
+It is an implementation of the MILP attack from:
+Kantchelian, Alex, J. Doug Tygar, and Anthony Joseph. "Evasion and hardening of
+tree ensemble classifiers." International Conference on Machine Learning.
+PMLR, 2016.
+
+Feasibility idea from:
+Andriushchenko, Maksym, and Matthias Hein. "Provably robust boosted decision 
+stumps and trees against adversarial attacks." arXiv preprint arXiv:1906.03526
+(2019).
+
+The changes made were related to:
+- Default guard_val, round_digits values
+- Removing dependency on xgboost
+- Taking only a JSON file as input
+- Solving a feasibility encoding for fixed epsilon
+- Removing print statements
+- Removing excessive model updates
+- Only keeping binary classification attacks
+"""
+
+
+GUARD_VAL = 5e-7
+ROUND_DIGITS = 6
 
 
 class node_wrapper(object):
@@ -73,17 +98,8 @@ class KantchelianAttackLinfEpsilon(object):
         self.epsilon = epsilon
         self.LP = LP
         self.binary = binary or (pos_json_input == None) or (neg_json_input == None)
-        # print('binary: ', self.binary)
-        # if LP:
-        # print('USING LINEAR PROGRAMMING APPROXIMATION!!')
-        # else:
-        # print('USING MILP EXACT SOLVER!!')
         self.guard_val = guard_val
         self.round_digits = round_digits
-
-        # print('round features to {} digits'.format(self.round_digits))
-        # print('guard value is :', guard_val)
-        # print('feature values are rounded to {} digits'.format(round_digits))
         self.json_file = json_model
 
         # two nodes with identical decision are merged in this list, their left and right leaves and in the list, third element of the tuple
@@ -170,7 +186,6 @@ class KantchelianAttackLinfEpsilon(object):
                 raise ValueError("leaf count error")
 
         self.m = Model("attack")
-        # self.m.setParam('Threads', 1)
         self.m.setParam(
             "OutputFlag", 0
         )  # suppress Gurobi output, gives a small speed-up and prevents huge logs
@@ -184,9 +199,6 @@ class KantchelianAttackLinfEpsilon(object):
         )  # TODO: experimental
         self.llist = [self.L[key] for key in range(len(self.L))]
         self.plist = [self.P[key] for key in range(len(self.P))]
-
-        # print('leaf value list:',self.leaf_v_list)
-        # print('number of leaves in the first k trees:',self.leaf_count)
 
         # p dictionary by attributes, {attr1:[(threshold1, gurobiVar1),(threshold2, gurobiVar2),...],attr2:[...]}
         self.pdict = {}
@@ -256,20 +268,12 @@ class KantchelianAttackLinfEpsilon(object):
         self.m.update()
 
     def attack(self, X, label):
-        # pred = 1 if self.check(X, self.json_file) >= self.pred_threshold else 0
         x = np.copy(X)
-        # print('\n\n==================================')
-
-        # if pred != label:
-        #     print('wrong prediction, no need to attack')
-        #     return False
 
         # model mislabel
-        # this is for binary
         try:
             c = self.m.getConstrByName("mislabel")
             self.m.remove(c)
-            # self.m.update()
         except Exception:
             pass
         if (not self.binary) or label == 1:
@@ -283,7 +287,6 @@ class KantchelianAttackLinfEpsilon(object):
                 >= self.pred_threshold + self.guard_val,
                 name="mislabel",
             )
-        # self.m.update()
 
         # model objective
         for key in self.pdict.keys():
@@ -309,7 +312,6 @@ class KantchelianAttackLinfEpsilon(object):
                 try:
                     c = self.m.getConstrByName("linf_constr_attr{}".format(key))
                     self.m.remove(c)
-                    # self.m.update()
                 except Exception:
                     pass
                 self.m.addConstr(
@@ -317,22 +319,17 @@ class KantchelianAttackLinfEpsilon(object):
                     <= self.B,
                     name="linf_constr_attr{}".format(key),
                 )
-                # self.m.update()
 
         self.m.setObjective(0, GRB.MINIMIZE)
 
         self.m.update()
         self.m.optimize()
 
-        # print("status:", self.m.status)
-
         return self.m.status == 3  # 3 -> infeasible -> no adv example -> True
 
     def check(self, x, json_file):
         # Due to XGBoost precision issues, some attacks may not succeed if tested using model.predict.
         # We manually run the tree on the json file here to make sure those attacks are actually successful.
-        # print('-------------------------------------\nstart checking')
-        # print('manually run trees')
         leaf_values = []
         for item in json_file:
             tree = item.copy()
@@ -364,7 +361,6 @@ class KantchelianAttackLinfEpsilon(object):
                         raise ValueError("child not found")
             leaf_values.append(tree["leaf"])
         manual_res = np.sum(leaf_values)
-        # print('leaf values:{}, \nsum:{}'.format(leaf_values, manual_res))
         return manual_res
 
 
@@ -396,9 +392,6 @@ def attack_epsilon_feasibility(
     global_start = time.time()
     progress_bar = tqdm(total=X.shape[0])
     for sample, label in zip(X, y):
-        # predict = 1 if attack.check(sample, json_model) >= pred_threshold else 0
-        # if predict != label:
-
         correct_within_epsilon = attack.attack(sample, label)
         if correct_within_epsilon:
             n_correct_within_epsilon += 1
@@ -432,17 +425,8 @@ class xgbKantchelianAttack(object):
 
         self.LP = LP
         self.binary = binary or (pos_json_input == None) or (neg_json_input == None)
-        # print('binary: ', self.binary)
-        # if LP:
-        # print('USING LINEAR PROGRAMMING APPROXIMATION!!')
-        # else:
-        # print('USING MILP EXACT SOLVER!!')
         self.guard_val = guard_val
         self.round_digits = round_digits
-        # print('order is:',order)
-        # print('round features to {} digits'.format(self.round_digits))
-        # print('guard value is :', guard_val)
-        # print('feature values are rounded to {} digits'.format(round_digits))
         self.json_file = json_model
 
         self.order = order
@@ -541,9 +525,6 @@ class xgbKantchelianAttack(object):
         self.llist = [self.L[key] for key in range(len(self.L))]
         self.plist = [self.P[key] for key in range(len(self.P))]
 
-        # print('leaf value list:',self.leaf_v_list)
-        # print('number of leaves in the first k trees:',self.leaf_count)
-
         # p dictionary by attributes, {attr1:[(threshold1, gurobiVar1),(threshold2, gurobiVar2),...],attr2:[...]}
         self.pdict = {}
         for i, node in enumerate(self.node_list):
@@ -610,220 +591,6 @@ class xgbKantchelianAttack(object):
                         name="p{}_right_{}".format(j, k),
                     )
         self.m.update()
-
-    def attack(self, X, label):
-        pred = 1 if self.check(X, self.json_file) >= self.pred_threshold else 0
-        x = np.copy(X)
-        print("\n\n==================================")
-
-        if pred != label:
-            print("wrong prediction, no need to attack")
-            return X
-
-        print("X:", x)
-        print("label:", label)
-        print("prediction:", pred)
-        # model mislabel
-        # this is for binary
-        try:
-            c = self.m.getConstrByName("mislabel")
-            self.m.remove(c)
-            self.m.update()
-        except Exception:
-            pass
-        if (not self.binary) or label == 1:
-            self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold,
-                name="mislabel",
-            )
-        else:
-            self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist)
-                >= self.pred_threshold + self.guard_val,
-                name="mislabel",
-            )
-        self.m.update()
-
-        if self.order == np.inf:
-            rho = 1
-        else:
-            rho = self.order
-
-        if self.order != np.inf:
-            self.obj_coeff_list = []
-            self.obj_var_list = []
-            self.obj_c = 0
-        # model objective
-        for key in self.pdict.keys():
-            if len(self.pdict[key]) == 0:
-                raise ValueError("self.pdict list empty")
-            axis = [-np.inf] + [item[0] for item in self.pdict[key]] + [np.inf]
-            w = [0] * (len(self.pdict[key]) + 1)
-            for i in range(len(axis) - 1, 0, -1):
-                if x[key] < axis[i] and x[key] >= axis[i - 1]:
-                    w[i - 1] = 0
-                elif x[key] < axis[i] and x[key] < axis[i - 1]:
-                    w[i - 1] = np.abs(x[key] - axis[i - 1]) ** rho
-                elif x[key] >= axis[i] and x[key] >= axis[i - 1]:
-                    w[i - 1] = np.abs(x[key] - axis[i] + self.guard_val) ** rho
-                else:
-                    print("x[key]:", x[key])
-                    print("axis:", axis)
-                    print("axis[i]:{}, axis[i-1]:{}".format(axis[i], axis[i - 1]))
-                    raise ValueError("wrong axis ordering")
-            for i in range(len(w) - 1):
-                w[i] -= w[i + 1]
-            if self.order != np.inf:
-                self.obj_c += w[-1]
-                self.obj_coeff_list += w[:-1]
-                self.obj_var_list += [item[1] for item in self.pdict[key]]
-            else:
-                try:
-                    c = self.m.getConstrByName("linf_constr_attr{}".format(key))
-                    self.m.remove(c)
-                    self.m.update()
-                except Exception:
-                    pass
-                self.m.addConstr(
-                    LinExpr(w[:-1], [item[1] for item in self.pdict[key]]) + w[-1]
-                    <= self.B,
-                    name="linf_constr_attr{}".format(key),
-                )
-                self.m.update()
-
-        if self.order != np.inf:
-            self.m.setObjective(
-                LinExpr(self.obj_coeff_list, self.obj_var_list) + self.obj_c,
-                GRB.MINIMIZE,
-            )
-        else:
-            self.m.setObjective(self.B, GRB.MINIMIZE)
-
-        self.m.update()
-        self.m.optimize()
-
-        print("Obj: %g" % self.m.objVal)
-        for key in self.pdict.keys():
-            for node in self.pdict[key]:
-                if node[1].x > 0.5 and x[key] >= node[0]:
-                    x[key] = node[0] - self.guard_val
-                if node[1].x <= 0.5 and x[key] < node[0]:
-                    x[key] = node[0] + self.guard_val
-
-        print("\n-------------------------------------\n")
-        print("result for this point:", x)
-        self.check(x, self.json_file)
-        return x
-
-    def attack_epsilon(self, X, label, epsilon):
-        pred = 1 if self.check(X, self.json_file) >= self.pred_threshold else 0
-        x = np.copy(X)
-
-        if pred != label:
-            # Wrong prediction, no attack
-            return False
-
-        # model mislabel
-        # this is for binary
-        try:
-            c = self.m.getConstrByName("mislabel")
-            self.m.remove(c)
-            self.m.update()
-        except Exception:
-            pass
-        if (not self.binary) or label == 1:
-            self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold,
-                name="mislabel",
-            )
-        else:
-            self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist)
-                >= self.pred_threshold + self.guard_val,
-                name="mislabel",
-            )
-        self.m.update()
-
-        if self.order == np.inf:
-            rho = 1
-        else:
-            rho = self.order
-
-        if self.order != np.inf:
-            self.obj_coeff_list = []
-            self.obj_var_list = []
-            self.obj_c = 0
-        # model objective
-        for key in self.pdict.keys():
-            if len(self.pdict[key]) == 0:
-                raise ValueError("self.pdict list empty")
-            axis = [-np.inf] + [item[0] for item in self.pdict[key]] + [np.inf]
-            w = [0] * (len(self.pdict[key]) + 1)
-            for i in range(len(axis) - 1, 0, -1):
-                if x[key] < axis[i] and x[key] >= axis[i - 1]:
-                    w[i - 1] = 0
-                elif x[key] < axis[i] and x[key] < axis[i - 1]:
-                    w[i - 1] = np.abs(x[key] - axis[i - 1]) ** rho
-                elif x[key] >= axis[i] and x[key] >= axis[i - 1]:
-                    w[i - 1] = np.abs(x[key] - axis[i] + self.guard_val) ** rho
-                else:
-                    print("x[key]:", x[key])
-                    print("axis:", axis)
-                    print("axis[i]:{}, axis[i-1]:{}".format(axis[i], axis[i - 1]))
-                    raise ValueError("wrong axis ordering")
-            for i in range(len(w) - 1):
-                w[i] -= w[i + 1]
-            if self.order != np.inf:
-                self.obj_c += w[-1]
-                self.obj_coeff_list += w[:-1]
-                self.obj_var_list += [item[1] for item in self.pdict[key]]
-            else:
-                try:
-                    c = self.m.getConstrByName("linf_constr_attr{}".format(key))
-                    self.m.remove(c)
-                    self.m.update()
-                except Exception:
-                    pass
-                self.m.addConstr(
-                    LinExpr(w[:-1], [item[1] for item in self.pdict[key]]) + w[-1]
-                    <= self.B,
-                    name="linf_constr_attr{}".format(key),
-                )
-                self.m.update()
-
-        if self.order != np.inf:
-            self.m.setObjective(
-                LinExpr(self.obj_coeff_list, self.obj_var_list) + self.obj_c,
-                GRB.MINIMIZE,
-            )
-        else:
-            self.m.setObjective(self.B, GRB.MINIMIZE)
-
-        self.m.setParam("BestObjStop", epsilon * 0.999)
-        self.m.setParam("BestBdStop", epsilon * 1.001)
-
-        self.m.update()
-        self.m.optimize()
-
-        # This <= has been changed to < for provably robust boosting
-        if self.m.objVal < epsilon - 0.001:
-            # TODO: not sure if it was okay commenting this out
-            # # Assert that the adversarial example causes a misclassification
-            # for key in self.pdict.keys():
-            #     for node in self.pdict[key]:
-            #         if node[1].x > 0.5 and x[key] >= node[0]:
-            #             x[key] = node[0] - self.guard_val
-            #         if node[1].x <= 0.5 and x[key] < node[0]:
-            #             x[key] = node[0] + self.guard_val
-
-            # # assert int(self.check(x, self.json_file) >= self.pred_threshold) != label
-            # if int(self.check(x, self.json_file) >= self.pred_threshold) == label:
-            #     print("NOT A MISCLASSIFICATION", self.check(x, self.json_file), label)
-            # return False
-
-            return False
-
-        return True
 
     def optimal_adversarial_example(self, sample, label):
         pred = 1 if self.check(sample, self.json_file) >= self.pred_threshold else 0
@@ -926,16 +693,13 @@ class xgbKantchelianAttack(object):
         print("Original label:", label)
 
         if pred == label:
-            print("MILP result did not cause a misclassification")
-        #     raise Exception("MILP result did not cause a misclassification")
+            print("MILP result did not cause a misclassification!")
 
         return x
 
     def check(self, x, json_file):
         # Due to XGBoost precision issues, some attacks may not succeed if tested using model.predict.
         # We manually run the tree on the json file here to make sure those attacks are actually successful.
-        # print('-------------------------------------\nstart checking')
-        # print('manually run trees')
         leaf_values = []
         for item in json_file:
             tree = item.copy()
@@ -967,52 +731,7 @@ class xgbKantchelianAttack(object):
                         raise ValueError("child not found")
             leaf_values.append(tree["leaf"])
         manual_res = np.sum(leaf_values)
-        # print('leaf values:{}, \nsum:{}'.format(leaf_values, manual_res))
         return manual_res
-
-
-def attack_binary_dataset_epsilon(
-    json_filename,
-    X,
-    y,
-    epsilon,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    sample_limit=500,
-    pred_threshold=0.5,
-):
-    json_model = json.load(open(json_filename, "r"))
-
-    attack = xgbKantchelianAttack(
-        json_model,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-    )
-
-    X = X[:sample_limit]
-    y = y[:sample_limit]
-
-    n_correct_within_epsilon = 0
-    global_start = time.time()
-    for sample, label in zip(X, y):
-
-        predict = 1 if attack.check(sample, json_model) >= pred_threshold else 0
-        if label != predict:
-            print("Wrong prediction")
-            continue
-
-        correct_within_epsilon = attack.attack_epsilon(sample, label, epsilon)
-        if correct_within_epsilon:
-            n_correct_within_epsilon += 1
-
-    total_time = time.time() - global_start
-    print("Total time:", total_time)
-    print("Avg time per instance:", total_time / len(X))
-
-    adv_accuracy = n_correct_within_epsilon / len(X)
-
-    return adv_accuracy
 
 
 def score_dataset(
@@ -1026,7 +745,7 @@ def score_dataset(
 ):
     json_model = json.load(open(json_filename, "r"))
 
-    attack = xgbKantchelianAttack(
+    attack = KantchelianAttackLinfEpsilon(
         json_model,
         guard_val=guard_val,
         round_digits=round_digits,
@@ -1040,10 +759,8 @@ def score_dataset(
     for sample, label in zip(X, y):
         predict = 1 if attack.check(sample, json_model) >= pred_threshold else 0
         if label != predict:
-            # print("Wrong prediction", predict)
             continue
         else:
-            # print("Correct prediction", predict)
             n_correct += 1
 
     return n_correct / len(X)
@@ -1067,75 +784,3 @@ def optimal_adversarial_example(
     )
 
     return attack.optimal_adversarial_example(sample, label)
-
-
-def attack_binary_dataset(
-    json_filename,
-    X,
-    y,
-    epsilon=0.1,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    pred_threshold=0.5,
-):
-    np.random.seed(8)
-
-    json_model = json.load(open(json_filename, "r"))
-
-    attack = xgbKantchelianAttack(
-        json_model,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-    )
-
-    samples = np.arange(len(X))
-    num_attacks = len(
-        samples
-    )  # real number of attacks cannot be larger than test data size
-    avg_dist = 0
-    counter = 0
-    n_correct_within_epsilon = 0
-    distances = []
-    global_start = time.time()
-    for n, idx in enumerate(samples):
-        print(
-            "\n\n\n\n======== Point {} ({}/{}) starts =========".format(
-                idx, n + 1, num_attacks
-            )
-        )
-        predict = 1 if attack.check(X[idx], json_model) >= pred_threshold else 0
-        if y[idx] == predict:
-            counter += 1
-        else:
-            print("true label:{}, predicted label:{}".format(y[idx], predict))
-            print("prediction not correct, skip this one.")
-            continue
-        adv = attack.attack(X[idx], y[idx])
-        dist = np.max(np.abs(adv - X[idx]))
-        avg_dist += dist
-        if dist > epsilon:
-            n_correct_within_epsilon += 1
-        distances.append(dist)
-        print(
-            "\n======== Point {} ({}/{}) finished, distortion:{} =========".format(
-                idx, n + 1, num_attacks, dist
-            )
-        )
-    print(
-        "\n\nattacked {}/{} points, average linf distortion: {}, total time:{}".format(
-            counter, num_attacks, avg_dist / counter, time.time() - global_start
-        )
-    )
-
-    print(
-        "\n\nattacked {}/{} points, average linf distortion including wrong predictions: {}, total time:{}".format(
-            counter, num_attacks, avg_dist / num_attacks, time.time() - global_start
-        )
-    )
-
-    print(f"{n_correct_within_epsilon}/{num_attacks} correct within epsilon {epsilon}")
-
-    adv_accuracy = n_correct_within_epsilon / len(samples)
-
-    return adv_accuracy, distances
