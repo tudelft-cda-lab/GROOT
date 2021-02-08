@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib import patches
 import numpy as np
-from groot.model import _TREE_UNDEFINED
 
 
 def plot_adversary(X, y, adversary, ax=None):

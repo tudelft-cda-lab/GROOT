@@ -1,10 +1,8 @@
 import json
 import numbers
-import warnings
 import time
 import numpy as np
 from collections import defaultdict
-from functools import lru_cache
 from itertools import product
 from numba import jit
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -13,7 +11,6 @@ from sklearn.utils import check_random_state
 from joblib import Parallel, delayed
 from sklearn.base import clone
 from groot.util import convert_numpy
-from multiprocessing import Pool
 
 
 _TREE_LEAF = -1

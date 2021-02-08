@@ -3,7 +3,7 @@ from groot.util import sklearn_forest_to_xgboost_json
 from groot.datasets import load_mnist, load_fashion_mnist
 from groot.provably_robust_boosting.wrapper import fit_provably_robust_boosting
 
-from xgbKantchelianAttack import (
+from groot.verification.kantchelian_attack import (
     optimal_adversarial_example,
     attack_binary_dataset_epsilon,
     score_dataset,

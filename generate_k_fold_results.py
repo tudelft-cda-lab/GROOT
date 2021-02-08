@@ -198,7 +198,7 @@ if not use_cached_scores_df:
         X_test, y_test = test_sets[(data_name, int(fold))]
         epsilon = epsilons[data_name]
 
-        # Use modified xgbKantchelianAttack.py to compute accuracy and adv_accuracy
+        # Use modified Kantchelian attack to compute accuracy and adv_accuracy
         accuracy = score_dataset(path, X_test, y_test, sample_limit=sample_limit)
         if algorithm in ["boost", "provable", "chenboost"]:
             adv_accuracy = attack_epsilon_feasibility(

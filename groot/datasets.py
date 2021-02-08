@@ -1,12 +1,7 @@
-from groot.treant import AttackerRule, Attacker
-
 import numpy as np
 
-from sklearn.datasets import fetch_openml, make_moons
-from sklearn.datasets import load_breast_cancer as load_breast_cancer_sklearn
+from sklearn.datasets import fetch_openml
 
-import json
-from numbers import Number
 from collections import defaultdict
 
 
@@ -23,64 +18,9 @@ def load_epsilons_dict(epsilon=0.1):
     return epsilons
 
 
-def attack_model_to_treant_attacker(attack_model, is_numerical):
-    attacks = []
-    for i, (attack, numerical) in enumerate(zip(attack_model, is_numerical)):
-        if attack == "":
-            continue
-
-        if numerical:
-            if attack == ">":
-                posts = [np.inf]
-            elif attack == "<":
-                posts = [-np.inf]
-            elif isinstance(attack, Number):
-                posts = [-attack, attack]
-            elif isinstance(attack, tuple):
-                posts = []
-                if attack[0] != 0:
-                    posts.append(-attack[0])
-                if attack[1] != 0:
-                    posts.append(attack[1])
-
-            for post in posts:
-                attacks.append(
-                    AttackerRule(
-                        pre_conditions=(i, (-np.inf, np.inf)),
-                        post_condition=(i, post),
-                        cost=1,
-                        is_numerical=True,
-                    )
-                )
-        else:
-            # For each postcondition (category that can be perturbed to)
-            # collect a list of categories that map to it
-            preconditions = defaultdict(list)
-            for key in attack:
-                postconditions = attack[key]
-                for postcondition in postconditions:
-                    preconditions[postcondition].append(key)
-
-            # Create the attack rules
-            for post, pres in preconditions.items():
-                attacks.append(
-                    AttackerRule(
-                        pre_conditions=(i, tuple(pres)),
-                        post_condition=(i, post),
-                        cost=1,
-                        is_numerical=False,
-                    )
-                )
-
-    for attack in attacks:
-        print(attack.pre_conditions, attack.post_condition)
-
-    # Create an attacker with enough budget to use all attack rules
-    attacker = Attacker(attacks, len(attacks))
-    return attacker
-
-
 def epsilon_attacker(n_features, radius=0.1, max_depth=4):
+    from groot.treant import AttackerRule, Attacker
+
     attacks = []
     for feature in range(n_features):
         attacks.append(
@@ -657,20 +597,6 @@ def load_SPECTF():
         is_numeric,
         data.categories,
     )
-
-
-def load_moons():
-    X, y = make_moons(n_samples=100, noise=0.3, random_state=0)
-
-    return "moons", X, y, [True, True], []
-
-
-def load_breast_cancer_scikit_learn():
-    X, y = load_breast_cancer_sklearn(return_X_y=True)
-
-    y = 1 - y  # Flip labels so 1=malicious
-
-    return "breast-cancer", X, y, [True] * 30, []
 
 
 def load_breast_cancer():
