@@ -1,7 +1,7 @@
 import os
 
 from groot.adversary import DecisionTreeAdversary
-from xgbKantchelianAttack import score_dataset, attack_epsilon_feasibility
+from groot.verification.kantchelian_attack import score_dataset, attack_epsilon_feasibility
 from groot.datasets import load_all, load_epsilons_dict
 from groot.model import json_tree_from_file
 
@@ -13,7 +13,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 
-# import seaborn as sns; sns.set(style="whitegrid", context="paper")
 import seaborn as sns
 
 sns.set(style="whitegrid", font_scale=0.65)
@@ -62,13 +61,8 @@ palette = {
     "Provably robust boosting": sns.color_palette()[8],
     "GROOT forest": sns.color_palette()[9],
 }
-# sns.palplot(sns.color_palette())
-# plt.show()
 
 # Plot the single decision tree runtimes
-# _, ax = plt.subplots(figsize=(6.5, 4))
-# _, ax = plt.subplots(figsize=(5.5, 4.0))
-# _, ax = plt.subplots(figsize=(6.75, 1.9))
 _, ax = plt.subplots(figsize=(6.75, 1.5))
 g = sns.barplot(
     x="Dataset",
@@ -89,10 +83,7 @@ g.set_yscale("log")
 plt.yticks([10 ** -2, 10 ** -1, 10 ** 0, 10 ** 1, 10 ** 2, 10 ** 3, 10 ** 4, 10 ** 5])
 g.set_xticklabels([""] * 14)
 g.tick_params(pad=-2.0)
-# plt.xticks(rotation=30, ha="right")
-# plt.xticks(rotation=90)
 plt.xlabel("")
-# plt.legend(bbox_to_anchor=(0, 0.5), loc=7, borderaxespad=6)
 plt.legend(bbox_to_anchor=(0.5, 1.0), loc=8, borderaxespad=0.5, ncol=4)
 plt.tight_layout(pad=0.4)
 plt.savefig(output_dir + "tree_runtimes.pdf")
@@ -100,9 +91,6 @@ plt.savefig(output_dir + "tree_runtimes.png")
 plt.close()
 
 # Plot the ensemble runtimes
-# _, ax = plt.subplots(figsize=(8, 4))
-# _, ax = plt.subplots(figsize=(6.6, 4.0))
-# _, ax = plt.subplots(figsize=(6.75, 2.75))
 _, ax = plt.subplots(figsize=(6.75, 2.35))
 g = sns.barplot(
     x="Dataset",
@@ -137,9 +125,7 @@ g.set_yscale("log")
 plt.yticks([10 ** 0, 10 ** 1, 10 ** 2, 10 ** 3, 10 ** 4])
 plt.xticks(rotation=20, ha="right")
 g.tick_params(pad=-2.0)
-# plt.xticks(rotation=90)
 plt.xlabel("")
-# plt.legend(bbox_to_anchor=(0, 0.5), loc=7, borderaxespad=6)
 plt.legend(bbox_to_anchor=(0.5, 1.0), loc=8, borderaxespad=0.5, ncol=3)
 plt.tight_layout(pad=0.4)
 plt.savefig(output_dir + "forest_runtimes.pdf")
@@ -179,20 +165,7 @@ if not use_cached_scores_df:
         X_test, y_test = test_sets[(data_name, int(fold))]
         epsilon = epsilons[data_name]
 
-        # # Use our adversary class to determine adv_accuracy
-        # adversary = DecisionTreeAdversary(
-        #     tree,
-        #     "json",
-        #     attack_model=[epsilon] * X_test.shape[1],
-        #     is_numeric=[True] * X_test.shape[1],
-        #     n_categories=[None] * X_test.shape[1],
-        #     one_adversarial_class=False,
-        # )
-        # adv_accuracy = adversary.adversarial_accuracy(X_test, y_test)
-
-        # accuracy = tree.score(X_test, y_test)
-
-        # Use modified xgbKantchelianAttack.py to compute accuracy and adv_accuracy
+        # Use modified kantchelian attack to compute accuracy and adv_accuracy
         accuracy = score_dataset(path, X_test, y_test, sample_limit=None)
         adv_accuracy = attack_epsilon_feasibility(
             path, X_test, y_test, epsilon, sample_limit=None
@@ -260,8 +233,6 @@ if not use_cached_scores_df:
 else:
     scores_df = pd.read_csv(output_dir + "all_results.csv")
 
-# sns.set(style="whitegrid", context="paper")
-
 # Plot average accuracy and adversarial accuracy scores
 scores_df["Algorithm"] = scores_df["Model"].replace(
     {
@@ -285,7 +256,6 @@ g = sns.catplot(
     y="Score",
     col="Metric",
     kind="bar",
-    # hue="Algorithm",
     palette=palette,
     data=scores_df.loc[
         scores_df["Model"].isin(
@@ -314,7 +284,6 @@ g = sns.catplot(
     y="Score",
     col="Metric",
     kind="bar",
-    # hue="Algorithm",
     palette=palette,
     data=scores_df.loc[
         scores_df["Model"].isin(
@@ -355,13 +324,8 @@ g = sns.catplot(
     x="Model",
     y="Score",
     kind="bar",
-    # hue="Algorithm",
     palette=palette,
     data=scores_df[scores_df["Metric"] == "adversarial accuracy"],
-    # height=4,
-    # aspect=2.25,
-    # height=2.5,
-    # aspect=1.3,
     height=3,
     aspect=1.3,
     order=[

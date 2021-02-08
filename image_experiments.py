@@ -24,13 +24,16 @@ import seaborn as sns
 
 sns.set(style="whitegrid")
 
+# Change the dataset variable for MNIST / FMNIST results
+dataset = "mnist"  # "fmnist"
+
+# If False, fit MNIST/FMNIST models, if True then use the fitted models
+cached_mnist = False
+
 mnist_epsilon = 0.4
 fashion_epsilon = 0.1
-n_trees = 500
+n_trees = 100
 sample_limit = 500
-cached_mnist = False
-# dataset = "mnist"
-dataset = "fmnist"
 
 output_dir = "out/"
 mnist_dir = output_dir + dataset + "_ensembles/"
@@ -58,17 +61,17 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 if not cached_mnist:
-    # print("Fitting RF...")
-    # normal_rf = RandomForestClassifier(
-    #     n_estimators=n_trees,
-    #     max_depth=None,
-    #     min_samples_split=10,
-    #     min_samples_leaf=5,
-    #     verbose=True,
-    #     random_state=1,
-    # )
-    # normal_rf.fit(X_train, y_train)
-    # sklearn_forest_to_xgboost_json(normal_rf, mnist_normal_path)
+    print("Fitting RF...")
+    normal_rf = RandomForestClassifier(
+        n_estimators=n_trees,
+        max_depth=None,
+        min_samples_split=10,
+        min_samples_leaf=5,
+        verbose=True,
+        random_state=1,
+    )
+    normal_rf.fit(X_train, y_train)
+    sklearn_forest_to_xgboost_json(normal_rf, mnist_normal_path)
 
     print("Fitting GROOT RF...")
     groot_rf = GrootRandomForest(
@@ -85,52 +88,49 @@ if not cached_mnist:
     groot_rf.fit(X_train, y_train)
     groot_rf.to_xgboost_json(mnist_groot_path)
 
-    # print("Fitting Chen et al. RF...")
-    # chen_rf = GrootRandomForest(
-    #     n_estimators=n_trees,
-    #     max_depth=None,
-    #     min_samples_split=10,
-    #     min_samples_leaf=5,
-    #     one_adversarial_class=False,
-    #     attack_model=[mnist_epsilon] * X.shape[1],
-    #     verbose=True,
-    #     random_state=1,
-    #     chen_heuristic=True,
-    # )
-    # chen_rf.fit(X_train, y_train)
-    # chen_rf.to_xgboost_json(mnist_chen_path)
+    print("Fitting Chen et al. RF...")
+    chen_rf = GrootRandomForest(
+        n_estimators=n_trees,
+        max_depth=None,
+        min_samples_split=10,
+        min_samples_leaf=5,
+        one_adversarial_class=False,
+        attack_model=[mnist_epsilon] * X.shape[1],
+        verbose=True,
+        random_state=1,
+        chen_heuristic=True,
+    )
+    chen_rf.fit(X_train, y_train)
+    chen_rf.to_xgboost_json(mnist_chen_path)
 
-    # print("Fitting provably robust boosting...")
-    # fit_provably_robust_boosting(
-    #     X_train,
-    #     y_train,
-    #     n_trees=n_trees,
-    #     max_depth=8,
-    #     epsilon=mnist_epsilon,
-    #     filename=mnist_provably_path,
-    #     verbose=True,
-    # )
+    print("Fitting provably robust boosting...")
+    fit_provably_robust_boosting(
+        X_train,
+        y_train,
+        n_trees=n_trees,
+        max_depth=8,
+        epsilon=mnist_epsilon,
+        filename=mnist_provably_path,
+        verbose=True,
+    )
 
     print("Done fitting.")
 
 
-# normal_acc = score_dataset(mnist_normal_path, X_test, y_test, sample_limit=10000)
+normal_acc = score_dataset(mnist_normal_path, X_test, y_test, sample_limit=10000)
 groot_acc = score_dataset(mnist_groot_path, X_test, y_test, sample_limit=10000)
-# chen_acc = score_dataset(mnist_chen_path, X_test, y_test, sample_limit=10000)
-# provably_acc = score_dataset(mnist_provably_path, X_test, y_test, sample_limit=10000, pred_threshold=0.0)
+chen_acc = score_dataset(mnist_chen_path, X_test, y_test, sample_limit=10000)
+provably_acc = score_dataset(mnist_provably_path, X_test, y_test, sample_limit=10000, pred_threshold=0.0)
 
-# normal_adv_acc = attack_epsilon_feasibility(mnist_normal_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit)
+normal_adv_acc = attack_epsilon_feasibility(mnist_normal_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit)
 groot_adv_acc = attack_epsilon_feasibility(
     mnist_groot_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit
 )
-# chen_adv_acc = attack_epsilon_feasibility(mnist_chen_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit)
-# provably_adv_acc = attack_epsilon_feasibility(mnist_provably_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit, pred_threshold=0.0)
+chen_adv_acc = attack_epsilon_feasibility(mnist_chen_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit)
+provably_adv_acc = attack_epsilon_feasibility(mnist_provably_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit, pred_threshold=0.0)
 
-# print("Accuracy", normal_acc, groot_acc, chen_acc, provably_acc)
-# print("Adversarial accuracy", normal_adv_acc, groot_adv_acc, chen_adv_acc, provably_adv_acc)
-
-print(groot_acc, groot_adv_acc)
-exit()
+print("Accuracy", normal_acc, groot_acc, chen_acc, provably_acc)
+print("Adversarial accuracy", normal_adv_acc, groot_adv_acc, chen_adv_acc, provably_adv_acc)
 
 with open(f"{mnist_dir}scores.txt", "w") as file:
     file.writelines(

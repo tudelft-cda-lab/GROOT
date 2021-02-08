@@ -11,6 +11,11 @@ import seaborn as sns
 
 sns.set(style="white", context="paper")
 
+"""
+Train on a simple toy dataset with 4 pre-defined threat models, then
+visualize the learned trees using the DecisionTreeAdversary.
+"""
+
 attack_models = [
     (0, 0),
     (0.1, 0.1),
