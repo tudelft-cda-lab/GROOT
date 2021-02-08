@@ -10,6 +10,19 @@ from numbers import Number
 from collections import defaultdict
 
 
+def load_epsilons_dict(epsilon=0.1):
+    # For some datasets we define a smaller / larger epsilon in case 0.1 is
+    # clearly to hard / easy
+    epsilons = defaultdict(lambda: epsilon)
+    epsilons["cod-rna"] = 0.025
+    epsilons["diabetes"] = 0.05
+    epsilons["wine"] = 0.05
+    epsilons["spambase"] = 0.05
+    epsilons["ionosphere"] = 0.2
+    epsilons["breast-cancer"] = 0.3
+    return epsilons
+
+
 def attack_model_to_treant_attacker(attack_model, is_numerical):
     attacks = []
     for i, (attack, numerical) in enumerate(zip(attack_model, is_numerical)):
@@ -652,12 +665,35 @@ def load_moons():
     return "moons", X, y, [True, True], []
 
 
-def load_breast_cancer():
+def load_breast_cancer_scikit_learn():
     X, y = load_breast_cancer_sklearn(return_X_y=True)
 
     y = 1 - y  # Flip labels so 1=malicious
 
     return "breast-cancer", X, y, [True] * 30, []
+
+
+def load_breast_cancer():
+    # Refered to as 'breast-cancer'
+    data = fetch_openml("breast-w", version=1, return_X_y=False)
+
+    X = data.data
+    y = data.target
+
+    y = np.where(y == "malignant", 1, 0).astype(int)
+
+    y = y[~np.isnan(X).any(axis=1)]
+    X = X[~np.isnan(X).any(axis=1)]
+
+    is_numeric = [True] * 10
+
+    return (
+        "breast-cancer",
+        X,
+        y,
+        is_numeric,
+        data.categories,
+    )
 
 
 def load_mnist():

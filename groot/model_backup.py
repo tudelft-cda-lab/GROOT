@@ -24,8 +24,6 @@ LEFT_INTERSECT = 1
 RIGHT_INTERSECT = 2
 RIGHT = 3
 
-NOGIL = True
-
 
 class Node:
     """Base class for decision tree nodes, also functions as leaf."""
@@ -202,223 +200,12 @@ class NumericalNode(Node):
             return self
 
 
-def _attack_model_to_tuples(attack_model):
-    new_attack_model = []
-    for attack_mode in attack_model:
-        if attack_mode == "":
-            new_attack_model.append((0, 0))
-        elif attack_mode == ">":
-            new_attack_model.append((0, 10e9))
-        elif attack_mode == "<":
-            new_attack_model.append((10e9, 0))
-        elif attack_mode == "<>":
-            new_attack_model.append((10e9, 10e9))
-        elif isinstance(attack_mode, numbers.Number):
-            new_attack_model.append((attack_mode, attack_mode))
-        elif isinstance(attack_mode, tuple) and len(attack_mode) == 2:
-            new_attack_model.append(attack_mode)
-        elif isinstance(attack_mode, dict):
-            new_attack_model.append(attack_mode)
-        else:
-            raise Exception("Unknown attack model spec:", attack_mode)
-    return new_attack_model
-
-
-@jit(nopython=True, nogil=NOGIL)
-def _split_left_right_fast(self, X, y, rule, feature, inc, dec, chen_heuristic):
-    # Find the boolean mask of samples in the sets L, LI, RI and R
-    b_L = X[:, feature] <= rule - dec
-    b_LI = (X[:, feature] <= rule) & (X[:, feature] > rule - dec)
-    b_RI = (X[:, feature] <= rule + inc) & (X[:, feature] > rule)
-    b_R = X[:, feature] > rule + inc
-
-    # Find the indices of the samples in each set-label combination
-    i_L_0 = np.where(b_L & (y == 0))[0]
-    i_L_1 = np.where(b_L & (y == 1))[0]
-    i_LI_0 = np.where(b_LI & (y == 0))[0]
-    i_LI_1 = np.where(b_LI & (y == 1))[0]
-    i_RI_0 = np.where(b_RI & (y == 0))[0]
-    i_RI_1 = np.where(b_RI & (y == 1))[0]
-    i_R_0 = np.where(b_R & (y == 0))[0]
-    i_R_1 = np.where(b_R & (y == 1))[0]
-
-    # Determine optimal movement for intersection samples
-    if chen_heuristic:
-        _, x, y = chen_adversarial_gini_gain_two_class(
-            len(i_L_0),
-            len(i_L_1),
-            len(i_LI_0),
-            len(i_LI_1),
-            len(i_RI_0),
-            len(i_RI_1),
-            len(i_R_0),
-            len(i_R_1),
-        )
-    else:
-        _, x, y = adversarial_gini_gain_two_class(
-            len(i_L_0),
-            len(i_L_1),
-            len(i_LI_0),
-            len(i_LI_1),
-            len(i_RI_0),
-            len(i_RI_1),
-            len(i_R_0),
-            len(i_R_1),
-        )
-
-    # TODO: add randomization
-
-    # If there are fewer samples in LI_0 than y, we need to move some samples
-    # from RI_0 into it
-    if len(i_LI_0) < y:
-        i_LI_0 = np.append(i_LI_0, i_RI_0[: y - len(i_LI_0)])
-        i_RI_0 = i_RI_0[y - len(i_LI_0) :]
-    elif len(i_LI_0) > y:
-        i_RI_0 = np.append(i_RI_0, i_LI_0[: len(i_LI_0) - y])
-        i_LI_0 = i_LI_0[: len(i_LI_0) - y]
-
-    # If there are fewer samples in LI_1 than x, we need to move some samples
-    # from RI_1 into it
-    if len(i_LI_1) < x:
-        i_LI_1 = np.append(i_LI_1, i_RI_1[: x - len(i_LI_1)])
-        i_RI_1 = i_RI_1[x - len(i_LI_1) :]
-    elif len(i_LI_1) > x:
-        i_RI_1 = np.append(i_RI_1, i_LI_1[: len(i_LI_1) - x])
-        i_LI_1 = i_LI_1[: len(i_LI_1) - x]
-
-    i_left = np.concatenate((i_RI_0, i_RI_1, i_R_0, i_R_1))
-    i_right = np.concatenate((i_RI_0, i_RI_1, i_R_0, i_R_1))
-
-    return X[i_left], y[i_left], X[i_right], y[i_right]
-
-
-@jit(nopython=True, nogil=NOGIL)
-def _scan_numerical_feature_fast(
-    samples, y, dec, inc, left_bound, right_bound, chen_heuristic,
-):
-    # TODO: so far we assume attack_mode is a tuple (dec, inc), and both
-    # classes can move
-    sort_order = samples.argsort()
-    sorted_labels = y[sort_order]
-    sample_queue = samples[sort_order]
-    dec_queue = sample_queue - dec
-    inc_queue = sample_queue + inc
-
-    # Initialize sample counters
-    l_0 = l_1 = li_0 = li_1 = ri_0 = ri_1 = 0
-    label_counts = np.bincount(y)
-    r_0 = label_counts[0]
-    r_1 = label_counts[1]
-
-    # Initialize queue values and indices
-    sample_i = dec_i = inc_i = 0
-    sample_val = sample_queue[0]
-    dec_val = dec_queue[0]
-    inc_val = inc_queue[0]
-
-    best_score = 10e9
-    best_split = None
-    adv_gini = None
-    while True:
-        smallest_val = min(sample_val, dec_val, inc_val)
-
-        # Find the current point and label from the queue with smallest value.
-        # Also update the sample counters
-        if sample_val == smallest_val:
-            point = sample_val
-            label = sorted_labels[sample_i]
-
-            if label == 0:
-                ri_0 -= 1
-                li_0 += 1
-            else:
-                ri_1 -= 1
-                li_1 += 1
-
-            # Update sample_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the sample_queue does not get picked
-            if sample_i < sample_queue.shape[0] - 1:
-                sample_i += 1
-                sample_val = sample_queue[sample_i]
-            else:
-                sample_val = 10e9
-        elif dec_val == smallest_val:
-            point = dec_val
-            label = sorted_labels[dec_i]
-
-            if label == 0:
-                r_0 -= 1
-                ri_0 += 1
-            else:
-                r_1 -= 1
-                ri_1 += 1
-
-            # Update dec_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the dec_queue does not get picked
-            if dec_i < dec_queue.shape[0] - 1:
-                dec_i += 1
-                dec_val = dec_queue[dec_i]
-            else:
-                dec_val = 10e9
-        else:
-            point = inc_val
-            label = sorted_labels[inc_i]
-
-            if label == 0:
-                li_0 -= 1
-                l_0 += 1
-            else:
-                li_1 -= 1
-                l_1 += 1
-
-            # Update inc_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the inc_queue does not get picked
-            if inc_i < inc_queue.shape[0] - 1:
-                inc_i += 1
-                inc_val = inc_queue[inc_i]
-            else:
-                inc_val = 10e9
-
-        if point >= right_bound:
-            break
-
-        # If the next point is not the same as this one
-        next_point = min(sample_val, dec_val, inc_val)
-        if next_point != point:
-            if chen_heuristic:
-                adv_gini, _, __ = chen_adversarial_gini_gain_two_class(
-                    l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
-                )
-            else:
-                adv_gini, _, __ = adversarial_gini_gain_two_class(
-                    l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
-                )
-
-            # Maximize the margin of the split
-            split = (point + next_point) * 0.5
-
-            if (
-                adv_gini is not None
-                and adv_gini < best_score
-                and split > left_bound
-                and split < right_bound
-            ):
-                best_score = adv_gini
-                best_split = split
-
-    # Returns True to indicate numeric decision
-    return True, best_score, best_split
-
-
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1):
     raise NotImplementedError("Not discussed in the paper by Chen et al.")
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def chen_adversarial_gini_gain_two_class(l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1):
     i_0 = li_0 + ri_0
     i_1 = li_1 + ri_1
@@ -429,24 +216,20 @@ def chen_adversarial_gini_gain_two_class(l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, 
     s4 = weighted_gini(l_0 + ri_0, l_1 + ri_1, r_0 + li_0, r_1 + li_1)
 
     worst_case = max(s1, s2, s3, s4)
-
-    # Return the worst found weighted Gini impurity, the number of class 1
-    # samples that move to the left and the number of class 0 samples that
-    # move to the left
     if s1 == worst_case:
-        return s1, li_1, li_0
+        return s1, li_0, li_1
 
     if s2 == worst_case:
         return s2, 0, 0
 
     if s3 == worst_case:
-        return s3, i_1, i_0
+        return s3, i_0, i_1
 
     if s4 == worst_case:
-        return s4, ri_1, ri_0
+        return s4, ri_0, ri_1
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1):
     # Fast implementation of the adversarial Gini gain, it finds the
     # analytical maximum and rounds to the nearest two ints, then returns
@@ -463,7 +246,7 @@ def adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1):
         return adv_gini_ceil, x_ceil
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def adversarial_gini_gain_two_class(l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1):
     i_0 = li_0 + ri_0
     i_1 = li_1 + ri_1
@@ -562,7 +345,7 @@ def adversarial_gini_gain_two_class(l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1):
     )
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def gini_impurity(i_0, i_1):
     if i_0 + i_1 == 0:
         return 1.0
@@ -571,7 +354,7 @@ def gini_impurity(i_0, i_1):
     return 1.0 - (ratio ** 2) - ((1 - ratio) ** 2)
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def weighted_gini(l_0, l_1, r_0, r_1):
     l_t = l_0 + l_1
     r_t = r_0 + r_1
@@ -598,7 +381,7 @@ def weighted_gini(l_0, l_1, r_0, r_1):
         return 1.0
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def _counts_to_one_class_adv_gini(counts, rho, chen_heuristic):
     # Apply rho by moving a number of samples back from intersect
     rho_inv = 1.0 - rho
@@ -628,7 +411,7 @@ def _counts_to_one_class_adv_gini(counts, rho, chen_heuristic):
     return adv_gini
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def _counts_to_two_class_adv_gini(counts, rho, chen_heuristic):
     # Apply rho by moving a number of samples back from intersect
     rho_inv = 1.0 - rho
@@ -664,7 +447,7 @@ def _counts_to_two_class_adv_gini(counts, rho, chen_heuristic):
     return adv_gini
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def _categorical_counts_to_one_class_adv_gini(
     left_counts,
     left_intersection_counts,
@@ -703,7 +486,7 @@ def _categorical_counts_to_one_class_adv_gini(
     return adv_gini
 
 
-@jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True)
 def _categorical_counts_to_two_class_adv_gini(
     left_counts,
     left_intersection_counts,
@@ -863,10 +646,6 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         self.chen_heuristic = chen_heuristic
         self.random_state = random_state
 
-        # Turn numerical features in attack model into tuples to make fitting
-        # code simpler
-        self.attack_model_ = _attack_model_to_tuples(attack_model)
-
     def fit(self, X, y):
         """
         Build a robust and fair binary decision tree from the training set 
@@ -918,11 +697,12 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             self.max_features_ = 1
 
         # For each feature set the initial constraints for splitting
+        inf = 10.0 ** 10
         constraints = []
-        for feature_i, numeric in enumerate(self.is_numerical):
+        for numeric in self.is_numerical:
             if numeric:
                 # Numeric splits can occur anywhere in the space of the feature
-                constraints.append([np.min(X[:, feature_i]), np.max(X[:, feature_i])])
+                constraints.append([-inf, inf])
             else:
                 # Categorical filters can contain every category
                 constraints.append(set())
@@ -940,7 +720,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         when a leaf is pure or when the leaf contains too few samples.
         """
         if (
-            (self.max_depth is not None and depth == self.max_depth)
+            depth == self.max_depth
             or len(y) < self.min_samples_split
             or np.sum(y == 0) == 0
             or np.sum(y == 1) == 0
@@ -955,6 +735,8 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         gini_gain = current_gini - split_gini
 
+        # print(current_gini, split_gini, gini_gain)
+
         if rule is None or gini_gain <= 0.00:
             return self.__create_leaf(y)
 
@@ -967,18 +749,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             assert rule[0].isdisjoint(constraints[feature])
             assert rule[1].isdisjoint(constraints[feature])
 
-        # TODO: fix this
         X_left, y_left, X_right, y_right = self.__split_left_right(
-            X, y, rule, feature, numeric, self.attack_model_[feature]
+            X, y, rule, feature, numeric, self.attack_model[feature]
         )
-        # if self.robust_weight == 1 and all(self.is_numerical):
-        #     X_left, y_left, X_right, y_right = _split_left_right_fast(
-        #         X, y, rule, feature, numeric, self.attack_model_[feature]
-        #     )
-        # else:
-        #     X_left, y_left, X_right, y_right = self.__split_left_right(
-        #         X, y, rule, feature, numeric, self.attack_model_[feature]
-        #     )
 
         if len(y_left) < self.min_samples_leaf or len(y_right) < self.min_samples_leaf:
             return self.__create_leaf(y)
@@ -1150,8 +923,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
                         X_right.append(sample)
                         y_right.append(label)
 
-        # TODO: refactor this entire part, we can do all operations on indices
-        # and only create new arrays at the end
+        # TODO: refactor this
         X_left = np.array(X_left).reshape(-1, self.n_features_)
         y_left = np.array(y_left)
         X_left_intersection = np.array(X_left_intersection).reshape(
@@ -1181,10 +953,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             i_1 = li_1 + ri_1
 
             # Determine optimal movement
-            if self.chen_heuristic:
-                _, x = chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1)
-            else:
-                _, x = adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1)
+            _, x = adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1)
 
             # Move samples accordingly
             if x > li_1:
@@ -1231,14 +1000,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             ri_1 = round(self.robust_weight * ri_1)
 
             # Determine optimal movement
-            if self.chen_heuristic:
-                _, x, y = chen_adversarial_gini_gain_two_class(
-                    l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
-                )
-            else:
-                _, x, y = adversarial_gini_gain_two_class(
-                    l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
-                )
+            _, x, y = adversarial_gini_gain_two_class(
+                l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
+            )
 
             # Split intersection arrays on label
             X_left_intersection_0 = X_left_intersection[y_left_intersection == 0]
@@ -1344,7 +1108,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         best_is_numerical = None
 
         # If there is a limit on features to consider in a split then choose
-        # that number of random features.
+        # that number of random features to consider.
         all_features = np.arange(self.n_features_)
         features = self.random_state_.choice(
             all_features, size=self.max_features_, replace=False
@@ -1370,20 +1134,12 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         """
 
         samples = X[:, feature]
-        attack_mode = self.attack_model_[feature]
+        attack_mode = self.attack_model[feature]
         numeric = self.is_numerical[feature]
         constraint = constraints[feature]
 
         if numeric:
-            # If possible, use the faster scan implementation
-            if self.robust_weight == 1:
-                return _scan_numerical_feature_fast(
-                    samples, y, *attack_mode, *constraint, self.chen_heuristic
-                )
-            else:
-                return self.__scan_feature_numerical(
-                    samples, y, attack_mode, *constraint
-                )
+            return self.__scan_feature_numerical(samples, y, attack_mode, *constraint)
         else:
             n_categories = self.n_categories_[feature]
             return self.__scan_feature_categorical(
@@ -1830,8 +1586,8 @@ def load_groot_from_json(filename, tree_dict=None):
     return tree
 
 
-def _build_tree_parallel(base_tree, X, y, indices, seed, verbose, n_samples):
-    tree = clone(base_tree)
+def _build_tree_parallel(base_model, X, y, indices, seed, verbose, n_samples):
+    tree = clone(base_model)
 
     random_state = check_random_state(seed)
     tree.random_state = random_state
@@ -1850,9 +1606,9 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    n_estimators : int, optional (default=100)
+    n_estimators : int, optional (default=10)
         The number of decision trees to fit in the forest.
-    max_depth : int, optional (default=None)
+    max_depth : int, optional (default=5)
         The maximum depth for the decision trees once fitted.
     max_features : int or {"sqrt", "log2", None}, optional (default="sqrt")
         The number of features to consider while making each split,
@@ -1907,8 +1663,8 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
     def __init__(
         self,
-        n_estimators=100,
-        max_depth=None,
+        n_estimators=10,
+        max_depth=5,
         max_features="sqrt",
         min_samples_split=2,
         min_samples_leaf=1,
@@ -1958,11 +1714,18 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
         self.n_samples_, self.n_features_ = X.shape
 
+        if self.attack_model is None:
+            self.attack_model = [""] * X.shape[1]
+
+        if self.is_numerical is None:
+            self.is_numerical = [True] * X.shape[1]
+
+        self.estimators_ = []
+
         random_state = check_random_state(self.random_state)
 
         # Generate seeds for the random states of each tree to prevent each
-        # of them from fitting exactly the same way, but use the random state
-        # to keep the forest reproducible
+        # of them from fitting exactly the same way
         seeds = [
             random_state.randint(np.iinfo(np.int32).max)
             for _ in range(self.n_estimators)
@@ -1988,15 +1751,42 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
         indices = np.arange(n_bootstrap_samples)
         self.estimators_ = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose, prefer="processes"
+            n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads"
         )(
             delayed(_build_tree_parallel)(
                 tree, X, y, indices, seed, self.verbose, n_bootstrap_samples
             )
             for seed in seeds
         )
-        # self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads")(
-        #     delayed(_build_tree_parallel)(tree, X, y, indices, seed, self.verbose, n_bootstrap_samples) for seed in seeds)
+
+        # if self.verbose:
+        #     start_time = time.time()
+        #     print("Tree", "Time", sep="\t")
+
+        # indices = np.arange(self.n_samples_)
+        # for i in range(self.n_estimators):
+        #     i_bootstrap = random_state.choice(indices, self.n_samples_)
+        #     X_bootstrap = X[i_bootstrap]
+        #     y_bootstrap = y[i_bootstrap]
+
+        #     tree = GrootTree(
+        #         max_depth=self.max_depth,
+        #         min_samples_split=self.min_samples_split,
+        #         max_features=self.max_features,
+        #         robust_weight=self.robust_weight,
+        #         attack_model=self.attack_model,
+        #         is_numerical=self.is_numerical,
+        #         one_adversarial_class=self.one_adversarial_class,
+        #         chen_heuristic=self.chen_heuristic,
+        #         random_state=random_state,
+        #     )
+        #     tree.fit(X_bootstrap, y_bootstrap)
+        #     self.estimators_.append(tree)
+
+        #     if self.verbose:
+        #         current_time = time.time()
+        #         print(i + 1, current_time - start_time, sep="\t")
+        #         start_time = current_time
 
     def predict_proba(self, X):
         """

@@ -1,5 +1,5 @@
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 import json
 
@@ -15,7 +15,7 @@ def convert_numpy(obj):
     raise TypeError(f"Cannot convert type {type(obj)} to int or float")
 
 
-def _sklearn_tree_to_dict(tree: DecisionTreeClassifier, scale=1.0):
+def _sklearn_tree_to_dict(tree, scale=1.0, classifier=True):
     n_nodes = tree.tree_.node_count
     children_left = tree.tree_.children_left
     children_right = tree.tree_.children_right
@@ -29,12 +29,22 @@ def _sklearn_tree_to_dict(tree: DecisionTreeClassifier, scale=1.0):
 
         if left_id == right_id:
             # If leaf node
-            class_counts = value[node_id][0]
-            prediction = class_counts[1] / (class_counts[0] + class_counts[1])
-            return {
-                "nodeid": node_id,
-                "leaf": prediction * scale,
-            }
+            if classifier:
+                # A decision tree classifier contains the counts of samples
+                # that reach the leaf
+                class_counts = value[node_id][0]
+                prediction = class_counts[1] / (class_counts[0] + class_counts[1])
+                return {
+                    "nodeid": node_id,
+                    "leaf": prediction * scale,
+                }
+            else:
+                # A decision tree regressor contains the raw prediction value
+                prediction = value[node_id][0][0]
+                return {
+                    "nodeid": node_id,
+                    "leaf": prediction * scale,
+                }
         else:
             # If decision node
             left_dict = dfs(left_id, depth + 1)
@@ -63,7 +73,32 @@ def sklearn_tree_to_xgboost_json(tree: DecisionTreeClassifier, filename: str):
 
 def sklearn_forest_to_xgboost_json(forest: RandomForestClassifier, filename: str):
     scale = 1 / forest.n_estimators
-    forest_dict = [_sklearn_tree_to_dict(tree, scale) for tree in forest.estimators_]
+    forest_dict = [
+        _sklearn_tree_to_dict(tree, scale=scale, classifier=True)
+        for tree in forest.estimators_
+    ]
 
     with open(filename, "w") as file:
         json.dump(forest_dict, file, indent=2, default=convert_numpy)
+
+
+def sklearn_booster_to_xgboost_json(booster: GradientBoostingClassifier, filename: str):
+    booster_dict = [
+        _sklearn_tree_to_dict(tree[0], classifier=False) for tree in booster.estimators_
+    ]
+
+    with open(filename, "w") as file:
+        json.dump(booster_dict, file, indent=2, default=convert_numpy)
+
+
+def numpy_to_chensvmlight(X, y, filename):
+    lines = []
+    for sample, label in zip(X, y):
+        terms = [str(label)]
+        for i, value in enumerate(sample):
+            terms.append(f"{i}:{value}")
+        lines.append(" ".join(terms))
+    svmlight_string = "\n".join(lines)
+
+    with open(filename, "w") as file:
+        file.write(svmlight_string)

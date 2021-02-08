@@ -12,7 +12,8 @@ def plot_adversary(X, y, adversary, ax=None):
         start_x, start_y = box[:, 0]
         width, height = box[:, 1] - box[:, 0]
         class_label = round(probability)
-        colors = {0: "#9aadd0", 1: "#e3b6a1"}
+        # colors = {0: "#9aadd0", 1: "#e3b6a1"}
+        colors = {0: "b", 1: "r"}
         color = colors[class_label]
         ax.add_patch(
             patches.Rectangle(
@@ -21,13 +22,13 @@ def plot_adversary(X, y, adversary, ax=None):
                 height,
                 color=color,
                 fill=True,
-                alpha=0.5,
+                alpha=0.25,
                 linewidth=0,
             )
         )
 
-    ax.scatter(X[y == 0, 0], X[y == 0, 1], marker="_")
-    ax.scatter(X[y == 1, 0], X[y == 1, 1], marker="+")
+    ax.scatter(X[y == 0, 0], X[y == 0, 1], marker="_", c="b")
+    ax.scatter(X[y == 1, 0], X[y == 1, 1], marker="+", c="r")
 
     x_low = np.min(X[:, 0])
     x_high = np.max(X[:, 0])
