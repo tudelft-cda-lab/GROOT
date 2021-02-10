@@ -39,11 +39,11 @@ Or on windows:
 We recommend using virtual environments.
 
 ## Reproducing 'Efficient Training of Robust Decision Trees Against Adversarial Examples' (article)
-To reproduce the results from the paper we provide `generate_results.py`, a script that takes the trained decision trees (from JSON format) and generates tables and figures. The resulting figures generate under `/out/`.
+To reproduce the results from the paper we provide `generate_k_fold_results.py`, a script that takes the trained models (from JSON format) and generates tables and figures. The resulting figures generate under `/out/`.
 
-To not only generate the results but to also retrain all trees we include the script `train_trees.py`. This script runs GROOT, TREANT and the heuristic from Chen et al. in parallel for each dataset then outputs to `/trees/`. Warning: the script can take a long time to run (about a day given 16 cores). Both `/out/` and `/trees/` have been pre-populated with the results.
+To not only generate the results but to also retrain all models we include the script `train_kfold_models.py`. This script runs the algorithms in parallel for each dataset then outputs to `/out/trees/` and `/out/forests/`. Warning: the script can take a long time to run (about a day given 16 cores). `/out/results.zip` contains all results from when we ran the scripts.
 
-The TREANT implementation (`groot.treant.py`) is copied almost completely from the authors of TREANT at https://github.com/gtolomei/treant with small modifications to better interface with the experiments. The heuristic by Chen et al. runs in the GROOT code, only with a different score function. This score function can be enabled by setting `chen_heuristic=True` on a `GrootTree` before calling `.fit(X, y)`.
+The TREANT implementation (`groot.treant.py`) is copied almost completely from the authors of TREANT at https://github.com/gtolomei/treant with small modifications to better interface with the experiments. The heuristic by Chen et al. runs in the GROOT code, only with a different score function. This score function can be enabled by setting `chen_heuristic=True` on a `GrootTree` before calling `.fit(X, y)`. The provably robust boosting implementation comes almost completely from their code at https://github.com/max-andr/provably-robust-boosting and we use a small wrapper around their code (`groot.provably_robust_boosting.wrapper.py`) to use it. When we recorded the runtimes we turned off all parallel options in the `@jit` annotations from the code.
 
 ## Important note on TREANT
 To encode L-infinity norms correctly we had to modify TREANT to NOT apply rules recursively. This means we added a single `break` statement in the `treant.Attacker.__compute_attack()` method. If you are planning on using TREANT with recursive attacker rules then you should remove this statement or use TREANT's unmodified code at https://github.com/gtolomei/treant .
