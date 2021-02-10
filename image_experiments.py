@@ -33,7 +33,7 @@ cached_mnist = False
 mnist_epsilon = 0.4
 fashion_epsilon = 0.1
 n_trees = 100
-sample_limit = 500
+sample_limit = 10000
 
 output_dir = "out/"
 mnist_dir = output_dir + dataset + "_ensembles/"
