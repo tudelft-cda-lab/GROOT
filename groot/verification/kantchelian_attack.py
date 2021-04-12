@@ -81,11 +81,12 @@ class node_wrapper(object):
                 self.l_grb_var_list.append((left_leaf_grb_var, right_leaf_grb_var))
 
 
-class KantchelianAttackLinfEpsilon(object):
+class KantchelianAttack(object):
     def __init__(
         self,
         json_model,
-        epsilon,
+        epsilon=None,
+        order=np.inf,
         guard_val=GUARD_VAL,
         round_digits=ROUND_DIGITS,
         LP=False,
@@ -93,7 +94,11 @@ class KantchelianAttackLinfEpsilon(object):
         pos_json_input=None,
         neg_json_input=None,
         pred_threshold=0,
+        verbose=False,
+        n_threads=1,
     ):
+        assert epsilon is None or order == np.inf, "feasibility epsilon can only be used with order inf"
+
         self.pred_threshold = pred_threshold
         self.epsilon = epsilon
         self.LP = LP
@@ -101,6 +106,9 @@ class KantchelianAttackLinfEpsilon(object):
         self.guard_val = guard_val
         self.round_digits = round_digits
         self.json_file = json_model
+        self.order = order
+        self.verbose = verbose
+        self.n_threads = n_threads
 
         # two nodes with identical decision are merged in this list, their left and right leaves and in the list, third element of the tuple
         self.node_list = []
@@ -186,17 +194,23 @@ class KantchelianAttackLinfEpsilon(object):
                 raise ValueError("leaf count error")
 
         self.m = Model("attack")
-        self.m.setParam(
-            "OutputFlag", 0
-        )  # suppress Gurobi output, gives a small speed-up and prevents huge logs
+        self.m.setParam("Threads", self.n_threads)
+        if not self.verbose:
+            self.m.setParam(
+                "OutputFlag", 0
+            )  # suppress Gurobi output, gives a small speed-up and prevents huge logs
+        
         if self.LP:
             self.P = self.m.addVars(len(self.node_list), lb=0, ub=1, name="p")
         else:
             self.P = self.m.addVars(len(self.node_list), vtype=GRB.BINARY, name="p")
         self.L = self.m.addVars(len(self.leaf_v_list), lb=0, ub=1, name="l")
-        self.B = self.m.addVar(
-            name="b", lb=0.0, ub=self.epsilon - 0.0001
-        )  # TODO: experimental
+        if epsilon:
+            self.B = self.m.addVar(
+                name="b", lb=0.0, ub=self.epsilon - 0.0001
+            )
+        elif self.order == np.inf:
+            self.B = self.m.addVar(name="b")
         self.llist = [self.L[key] for key in range(len(self.L))]
         self.plist = [self.P[key] for key in range(len(self.P))]
 
@@ -278,7 +292,7 @@ class KantchelianAttackLinfEpsilon(object):
             pass
         if (not self.binary) or label == 1:
             self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold,
+                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold - self.guard_val,
                 name="mislabel",
             )
         else:
@@ -327,271 +341,6 @@ class KantchelianAttackLinfEpsilon(object):
 
         return self.m.status == 3  # 3 -> infeasible -> no adv example -> True
 
-    def check(self, x, json_file):
-        # Due to XGBoost precision issues, some attacks may not succeed if tested using model.predict.
-        # We manually run the tree on the json file here to make sure those attacks are actually successful.
-        leaf_values = []
-        for item in json_file:
-            tree = item.copy()
-            while "leaf" not in tree.keys():
-                attribute, threshold, nodeid = (
-                    tree["split"],
-                    tree["split_condition"],
-                    tree["nodeid"],
-                )
-                if type(attribute) == str:
-                    attribute = int(attribute[1:])
-                if x[attribute] < threshold:
-                    if tree["children"][0]["nodeid"] == tree["yes"]:
-                        tree = tree["children"][0].copy()
-                    elif tree["children"][1]["nodeid"] == tree["yes"]:
-                        tree = tree["children"][1].copy()
-                    else:
-                        pprint.pprint(tree)
-                        print("x[attribute]:", x[attribute])
-                        raise ValueError("child not found")
-                else:
-                    if tree["children"][0]["nodeid"] == tree["no"]:
-                        tree = tree["children"][0].copy()
-                    elif tree["children"][1]["nodeid"] == tree["no"]:
-                        tree = tree["children"][1].copy()
-                    else:
-                        pprint.pprint(tree)
-                        print("x[attribute]:", x[attribute])
-                        raise ValueError("child not found")
-            leaf_values.append(tree["leaf"])
-        manual_res = np.sum(leaf_values)
-        return manual_res
-
-
-def attack_epsilon_feasibility(
-    json_filename,
-    X,
-    y,
-    epsilon,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    sample_limit=None,
-    pred_threshold=0.5,
-):
-    json_model = json.load(open(json_filename, "r"))
-
-    attack = KantchelianAttackLinfEpsilon(
-        json_model,
-        epsilon,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-    )
-
-    if sample_limit:
-        X = X[:sample_limit]
-        y = y[:sample_limit]
-
-    n_correct_within_epsilon = 0
-    global_start = time.time()
-    progress_bar = tqdm(total=X.shape[0])
-    for sample, label in zip(X, y):
-        correct_within_epsilon = attack.attack(sample, label)
-        if correct_within_epsilon:
-            n_correct_within_epsilon += 1
-
-        progress_bar.update()
-    progress_bar.close()
-
-    total_time = time.time() - global_start
-    print("Total time:", total_time)
-    print("Avg time per instance:", total_time / len(X))
-
-    adv_accuracy = n_correct_within_epsilon / len(X)
-
-    return adv_accuracy
-
-
-class xgbKantchelianAttack(object):
-    def __init__(
-        self,
-        json_model,
-        order=np.inf,
-        guard_val=GUARD_VAL,
-        round_digits=ROUND_DIGITS,
-        LP=False,
-        binary=True,
-        pos_json_input=None,
-        neg_json_input=None,
-        pred_threshold=0,
-    ):
-        self.pred_threshold = pred_threshold
-
-        self.LP = LP
-        self.binary = binary or (pos_json_input == None) or (neg_json_input == None)
-        self.guard_val = guard_val
-        self.round_digits = round_digits
-        self.json_file = json_model
-
-        self.order = order
-        # two nodes with identical decision are merged in this list, their left and right leaves and in the list, third element of the tuple
-        self.node_list = []
-        self.leaf_v_list = []  # list of all leaf values
-        self.leaf_pos_list = []  # list of leaves' position in xgboost model
-        self.leaf_count = [0]  # total number of leaves in the first i trees
-        node_check = (
-            {}
-        )  # track identical decision nodes. {(attr, th):<index in node_list>}
-
-        def dfs(tree, treeid, root=False, neg=False):
-            if "leaf" in tree.keys():
-                if neg:
-                    self.leaf_v_list.append(-tree["leaf"])
-                else:
-                    self.leaf_v_list.append(tree["leaf"])
-                self.leaf_pos_list.append({"treeid": treeid, "nodeid": tree["nodeid"]})
-                return [len(self.leaf_v_list) - 1]
-            else:
-                attribute, threshold, nodeid = (
-                    tree["split"],
-                    tree["split_condition"],
-                    tree["nodeid"],
-                )
-                if type(attribute) == str:
-                    attribute = int(attribute[1:])
-                threshold = round(threshold, self.round_digits)
-                # XGBoost can only offer precision up to 8 digits, however, minimum difference between two splits can be smaller than 1e-8
-                # here rounding may be an option, but its hard to choose guard value after rounding
-                # for example, if round to 1e-6, then guard value should be 5e-7, or otherwise may cause mistake
-                # xgboost prediction has a precision of 1e-8, so when min_diff<1e-8, there is a precision problem
-                # if we do not round, xgboost.predict may give wrong results due to precision, but manual predict on json file should always work
-                left_subtree = None
-                right_subtree = None
-                for subtree in tree["children"]:
-                    if subtree["nodeid"] == tree["yes"]:
-                        left_subtree = subtree
-                    if subtree["nodeid"] == tree["no"]:
-                        right_subtree = subtree
-                if left_subtree == None or right_subtree == None:
-                    pprint.pprint(tree)
-                    raise ValueError("should be a tree but one child is missing")
-                left_leaves = dfs(left_subtree, treeid, False, neg)
-                right_leaves = dfs(right_subtree, treeid, False, neg)
-                if (attribute, threshold) not in node_check:
-                    self.node_list.append(
-                        node_wrapper(
-                            treeid,
-                            nodeid,
-                            attribute,
-                            threshold,
-                            left_leaves,
-                            right_leaves,
-                            root,
-                        )
-                    )
-                    node_check[(attribute, threshold)] = len(self.node_list) - 1
-                else:
-                    node_index = node_check[(attribute, threshold)]
-                    self.node_list[node_index].add_leaves(
-                        treeid, nodeid, left_leaves, right_leaves, root
-                    )
-                return left_leaves + right_leaves
-
-        if self.binary:
-            for i, tree in enumerate(self.json_file):
-                dfs(tree, i, root=True)
-                self.leaf_count.append(len(self.leaf_v_list))
-            if len(self.json_file) + 1 != len(self.leaf_count):
-                print("self.leaf_count:", self.leaf_count)
-                raise ValueError("leaf count error")
-        else:
-            for i, tree in enumerate(self.pos_json_file):
-                dfs(tree, i, root=True)
-                self.leaf_count.append(len(self.leaf_v_list))
-            for i, tree in enumerate(self.neg_json_file):
-                dfs(tree, i + len(self.pos_json_file), root=True, neg=True)
-                self.leaf_count.append(len(self.leaf_v_list))
-            if len(self.pos_json_file) + len(self.neg_json_file) + 1 != len(
-                self.leaf_count
-            ):
-                print("self.leaf_count:", self.leaf_count)
-                raise ValueError("leaf count error")
-
-        self.m = Model("attack")
-        self.m.setParam("Threads", 8)
-        if self.LP:
-            self.P = self.m.addVars(len(self.node_list), lb=0, ub=1, name="p")
-        else:
-            self.P = self.m.addVars(len(self.node_list), vtype=GRB.BINARY, name="p")
-        self.L = self.m.addVars(len(self.leaf_v_list), lb=0, ub=1, name="l")
-        if self.order == np.inf:
-            self.B = self.m.addVar(name="b")
-        self.llist = [self.L[key] for key in range(len(self.L))]
-        self.plist = [self.P[key] for key in range(len(self.P))]
-
-        # p dictionary by attributes, {attr1:[(threshold1, gurobiVar1),(threshold2, gurobiVar2),...],attr2:[...]}
-        self.pdict = {}
-        for i, node in enumerate(self.node_list):
-            node.add_grb_var(self.plist[i], self.llist)
-            if node.attribute not in self.pdict:
-                self.pdict[node.attribute] = [(node.threshold, self.plist[i])]
-            else:
-                self.pdict[node.attribute].append((node.threshold, self.plist[i]))
-
-        # sort each feature list
-        # add p constraints
-        for key in self.pdict.keys():
-            min_diff = 1000
-            if len(self.pdict[key]) > 1:
-                self.pdict[key].sort(key=lambda tup: tup[0])
-                for i in range(len(self.pdict[key]) - 1):
-                    self.m.addConstr(
-                        self.pdict[key][i][1] <= self.pdict[key][i + 1][1],
-                        name="p_consis_attr{}_{}th".format(key, i),
-                    )
-                    min_diff = min(
-                        min_diff, self.pdict[key][i + 1][0] - self.pdict[key][i][0]
-                    )
-                # print('attr {} min difference between thresholds:{}'.format(key,min_diff))
-                if min_diff < 2 * self.guard_val:
-                    self.guard_val = min_diff / 3
-                    print(
-                        "guard value too large, change to min_diff/3:", self.guard_val
-                    )
-
-        # all leaves sum up to 1
-        for i in range(len(self.leaf_count) - 1):
-            leaf_vars = [
-                self.llist[j] for j in range(self.leaf_count[i], self.leaf_count[i + 1])
-            ]
-            self.m.addConstr(
-                LinExpr([1] * (self.leaf_count[i + 1] - self.leaf_count[i]), leaf_vars)
-                == 1,
-                name="leaf_sum_one_for_tree{}".format(i),
-            )
-
-        # node leaves constraints
-        for j in range(len(self.node_list)):
-            p = self.plist[j]
-            for k in range(len(self.node_list[j].leaves_lists)):
-                left_l = [self.llist[i] for i in self.node_list[j].leaves_lists[k][0]]
-                right_l = [self.llist[i] for i in self.node_list[j].leaves_lists[k][1]]
-                if len(self.node_list[j].leaves_lists[k]) == 3:
-                    self.m.addConstr(
-                        LinExpr([1] * len(left_l), left_l) - p == 0,
-                        name="p{}_root_left_{}".format(j, k),
-                    )
-                    self.m.addConstr(
-                        LinExpr([1] * len(right_l), right_l) + p == 1,
-                        name="p_{}_root_right_{}".format(j, k),
-                    )
-                else:
-                    self.m.addConstr(
-                        LinExpr([1] * len(left_l), left_l) - p <= 0,
-                        name="p{}_left_{}".format(j, k),
-                    )
-                    self.m.addConstr(
-                        LinExpr([1] * len(right_l), right_l) + p <= 1,
-                        name="p{}_right_{}".format(j, k),
-                    )
-        self.m.update()
-
     def optimal_adversarial_example(self, sample, label):
         pred = 1 if self.check(sample, self.json_file) >= self.pred_threshold else 0
         x = np.copy(sample)
@@ -610,7 +359,7 @@ class xgbKantchelianAttack(object):
             pass
         if (not self.binary) or label == 1:
             self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold,
+                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold - self.guard_val,
                 name="mislabel",
             )
         else:
@@ -743,9 +492,41 @@ def score_dataset(
     sample_limit=500,
     pred_threshold=0.5,
 ):
+    """
+    Scores the tree ensemble in JSON format on the given dataset (samples X, labels y)
+    using the regular accuracy score.
+    
+    Parameters
+    ----------
+    json_filename : str
+        Path to the JSON file export of a decision tree ensemble.
+    X : array-like of shape (n_samples, n_features)
+        The training samples.
+    y : array-like of shape (n_samples,)
+        The class labels as integers 0 (benign) or 1 (malicious).
+    guard_val : float, optional (default=GUARD_VAL)
+        Guard value to combat inaccuracy between JSON and GUROBI floats.
+        For example if the prediction threshold is 0.5, the solver needs to reach
+        a threshold of 0.5 + guard_val or 0.5 - guard_val for it to count.
+    round_digits : int, optional (default=ROUND_DIGITS)
+        Number of digits to round threshold values to in order to combat the inaccuracy
+        between JSON and GUROBI floats.
+    sample_limit : int, optional (default=500)
+        Maximum number of samples to attack, useful for large datasets.
+    pred_threshold : float, optional (default=0.5)
+        Threshold for predicting class labels 0/1. For random forests and
+        decision trees this value should be 0.5. For tree ensembles such as
+        gradient boosting that often use a sigmoid function, this value
+        should be 0.0.
+
+    Returns
+    -------
+    accuracy : float
+        Regular accuracy score for the model on this dataset.
+    """
     json_model = json.load(open(json_filename, "r"))
 
-    attack = KantchelianAttackLinfEpsilon(
+    attack = KantchelianAttack(
         json_model,
         guard_val=guard_val,
         round_digits=round_digits,
@@ -770,17 +551,139 @@ def optimal_adversarial_example(
     json_filename,
     sample,
     label,
+    order=np.inf,
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
     pred_threshold=0.5,
+    n_threads=8,
+    verbose=True,
 ):
+    """
+    Find a minimal adversarial example on the given tree ensemble in JSON
+    format using Kantchelian's MILP attack.
+    
+    Parameters
+    ----------
+    json_filename : str
+        Path to the JSON file export of a decision tree ensemble.
+    sample : array-like of shape (n_features)
+        Original sample.
+    y : int
+        Original label (0 or 1).
+    order : {0, 1, 2, np.inf}, optional (default=np.inf)
+        Order of the L norm.
+    guard_val : float, optional (default=GUARD_VAL)
+        Guard value to combat inaccuracy between JSON and GUROBI floats.
+        For example if the prediction threshold is 0.5, the solver needs to reach
+        a threshold of 0.5 + guard_val or 0.5 - guard_val for it to count.
+    round_digits : int, optional (default=ROUND_DIGITS)
+        Number of digits to round threshold values to in order to combat the inaccuracy
+        between JSON and GUROBI floats.
+    pred_threshold : float, optional (default=0.5)
+        Threshold for predicting class labels 0/1. For random forests and
+        decision trees this value should be 0.5. For tree ensembles such as
+        gradient boosting that often use a sigmoid function, this value
+        should be 0.0.
+    n_threads : int, optional (default=8)
+        Number of threads to use in the solver. For large / deep ensembles
+        a value higher than 1 can speed up the search significantly.
+    verbose : bool, optional (default=True)
+        Whether the solver outputs solving progress.
+
+    Returns
+    -------
+    adv_example : array-like of shape (n_features)
+        Minimal adversarial example.
+    """
     json_model = json.load(open(json_filename, "r"))
 
-    attack = xgbKantchelianAttack(
+    attack = KantchelianAttack(
         json_model,
+        guard_val=guard_val,
+        round_digits=round_digits,
+        pred_threshold=pred_threshold,
+        order=order,
+        verbose=verbose,
+        n_threads=n_threads,
+    )
+
+    return attack.optimal_adversarial_example(sample, label)
+
+
+def attack_epsilon_feasibility(
+    json_filename,
+    X,
+    y,
+    epsilon,
+    guard_val=GUARD_VAL,
+    round_digits=ROUND_DIGITS,
+    sample_limit=None,
+    pred_threshold=0.5,
+):
+    """
+    Scores the tree ensemble in JSON format on the given dataset (samples X, labels y)
+    using the adversarial accuracy score. It uses Kantchelian's MILP attack but
+    in its feasibility variant to check if attacks fail or succeed.
+    
+    Parameters
+    ----------
+    json_filename : str
+        Path to the JSON file export of a decision tree ensemble.
+    X : array-like of shape (n_samples, n_features)
+        The training samples.
+    y : array-like of shape (n_samples,)
+        The class labels as integers 0 (benign) or 1 (malicious).
+    epsilon : float
+        L-infinity radius in which samples can be perturbed.
+    guard_val : float, optional (default=GUARD_VAL)
+        Guard value to combat inaccuracy between JSON and GUROBI floats.
+        For example if the prediction threshold is 0.5, the solver needs to reach
+        a threshold of 0.5 + guard_val or 0.5 - guard_val for it to count.
+    round_digits : int, optional (default=ROUND_DIGITS)
+        Number of digits to round threshold values to in order to combat the inaccuracy
+        between JSON and GUROBI floats.
+    sample_limit : int, optional (default=500)
+        Maximum number of samples to attack, useful for large datasets.
+    pred_threshold : float, optional (default=0.5)
+        Threshold for predicting class labels 0/1. For random forests and
+        decision trees this value should be 0.5. For tree ensembles such as
+        gradient boosting that often use a sigmoid function, this value
+        should be 0.0.
+
+    Returns
+    -------
+    adv_accuracy : float
+        Adversarial accuracy score for the model on this dataset.
+    """
+    json_model = json.load(open(json_filename, "r"))
+
+    attack = KantchelianAttack(
+        json_model,
+        epsilon,
         guard_val=guard_val,
         round_digits=round_digits,
         pred_threshold=pred_threshold,
     )
 
-    return attack.optimal_adversarial_example(sample, label)
+    if sample_limit:
+        X = X[:sample_limit]
+        y = y[:sample_limit]
+
+    n_correct_within_epsilon = 0
+    global_start = time.time()
+    progress_bar = tqdm(total=X.shape[0])
+    for sample, label in zip(X, y):
+        correct_within_epsilon = attack.attack(sample, label)
+        if correct_within_epsilon:
+            n_correct_within_epsilon += 1
+
+        progress_bar.update()
+    progress_bar.close()
+
+    total_time = time.time() - global_start
+    print("Total time:", total_time)
+    print("Avg time per instance:", total_time / len(X))
+
+    adv_accuracy = n_correct_within_epsilon / len(X)
+
+    return adv_accuracy
