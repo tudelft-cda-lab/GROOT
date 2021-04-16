@@ -1863,16 +1863,16 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
     attack_model : array-like of shape (n_features,), default=None
         Attacker capabilities for perturbing X. The attack model needs to
         describe for every feature in which way it can be perturbed:
-        - '': the feature can not be perturbed
-        - '<': the feature value can be made lower
-        - '>': the feature value can be made higher
-        - '<>': the feature value can be changed arbitrarily
-        - float: the feature can be changed by at most this value
-        - tuple: of the form (low, high), the feature can be perturbed
-            made 'low' lower and 'high' higher
-        - dict: mapping from feature values to other values that it can be
-            perturbed to. The dict should map an integer representing the
-            category to another integer or a list of integers
+        '', the feature can not be perturbed
+        '<', the feature value can be made lower
+        '>', the feature value can be made higher
+        '<>', the feature value can be changed arbitrarily
+        float, the feature can be changed by at most this value
+        tuple, of the form (low, high), the feature can be perturbed
+        made 'low' lower and 'high' higher
+        dict, mapping from feature values to other values that it can be
+        perturbed to. The dict should map an integer representing the
+        category to another integer or a list of integers
     is_numerical : array-like of shape (n_features,), default=None
         Boolean mask for whether each feature is numerical or categorical.
     one_adversarial_class : bool, optional (default=False)
@@ -1894,7 +1894,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    estimators_ : list of RobustFairDecisionTree
+    estimators_ : list of GrootTree
         The collection of fitted sub-estimators.
     n_samples_ : int
         The number of samples when `fit` is performed.
