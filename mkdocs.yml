@@ -62,7 +62,7 @@ extra_css:
   - "stylesheets/extra.css"
 
 nav:
-- Overview: index.md
+- Home: index.md
 - Getting started: getting_started.md
 - Code Reference:
   - Models:
