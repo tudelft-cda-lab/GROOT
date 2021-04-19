@@ -1,0 +1,78 @@
+site_name: GROOT
+site_author: Daniël Vos
+site_description: >-
+  Fit robust decision trees in a matter of seconds.
+
+repo_url: "https://github.com/tudelft-cda-lab/GROOT"
+repo_name: "tudelft-cda-lab/GROOT"
+edit_uri: ""
+
+copyright: Copyright &copy; 2021 Daniël Vos
+
+theme:
+  name: "material"
+  palette:
+    # Light mode
+    - pink: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      accent: deep orange
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: deep orange
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  features:
+    - navigation.sections
+
+plugins:
+- search
+- mkdocstrings:
+    handlers:
+      python:
+        setup_commands:
+        - import sys
+        - from unittest.mock import MagicMock as mock
+        - sys.modules["gurobipy"] = mock()
+        - sys.path.append("docs")
+        selection:
+          new_path_syntax: yes
+          docstring_style: "numpy"
+        rendering:
+          show_root_heading: yes
+          show_source: no
+    watch:
+    - src/groot
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+extra_css:
+  - "stylesheets/extra.css"
+
+nav:
+- Overview: index.md
+- Getting started: getting_started.md
+- Code Reference:
+  - Models:
+    - GROOT tree: reference/models/groot_tree.md
+    - GROOT forest: reference/models/groot_forest.md
+    - TREANT: reference/models/treant.md
+    - Provably robust boosting: reference/models/boosting.md
+  - Adversaries: reference/adversary.md
+  - Robustness verification: reference/verification.md
+  - Datasets: reference/datasets.md
+  - Visualization: reference/visualization.md
+  - Utilities: reference/util.md
+- License: license.md
