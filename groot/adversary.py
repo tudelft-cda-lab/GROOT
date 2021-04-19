@@ -13,6 +13,7 @@ def convert_numpy(obj):
 
 
 class Leaf:
+    """ Representation of a decision leaf by its bounding box and value. """
     def __init__(self, conditions, value, is_numeric, attack_model, n_categories):
         # Conditions is a list with at every position the condition on
         # a single feature, numerical features are bounded by [low, high] and
@@ -24,7 +25,7 @@ class Leaf:
         self.attack_model = attack_model
         self.n_categories = n_categories
 
-    def can_reach_numerical_feature(self, position, condition, attack):
+    def __can_reach_numerical_feature(self, position, condition, attack):
         # If the point is already in the leaf
         if position > condition[0] and position <= condition[1]:
             return True
@@ -52,7 +53,7 @@ class Leaf:
         # If the point is not in the leaf and cannot be perturbed to be in it
         return False
 
-    def can_reach_categorical_feature(self, category, condition, attack):
+    def __can_reach_categorical_feature(self, category, condition, attack):
         # If the point is already in the leaf
         if category not in condition:
             return True
@@ -75,28 +76,66 @@ class Leaf:
         # If the point is not in the leaf and cannot be perturbed to be in it
         return False
 
-    def can_reach_feature(self, position, numeric, condition, attack):
+    def __can_reach_feature(self, position, numeric, condition, attack):
         if numeric:
-            return self.can_reach_numerical_feature(position, condition, attack)
-        return self.can_reach_categorical_feature(
+            return self.__can_reach_numerical_feature(position, condition, attack)
+        return self.__can_reach_categorical_feature(
             int(round(position)), condition, attack
         )
 
     def can_reach(self, point):
+        """
+        Checks whether this leaf is in reach of the given point by the attacker.
+
+        Parameters
+        ----------
+        point : array-like of shape (n_features,)
+            Point's unperturbed values.
+
+        Returns
+        -------
+        in_reach : bool
+            Whether or not the point is in reach of this leaf. 
+        """
         for position, numeric, condition, attack in zip(
             point, self.is_numeric, self.conditions, self.attack_model
         ):
-            if not self.can_reach_feature(position, numeric, condition, attack):
+            if not self.__can_reach_feature(position, numeric, condition, attack):
                 return False
         return True
 
     def get_bounding_box(self):
+        """
+        Get the bounding box of this leaf.
+
+        Returns
+        -------
+        bbox : ndarray of shape (n_features, 2)
+            Bounding box given by [low, high] for each feature.
+        value : float
+            Prediction value of this leaf.
+        """
         if not all(self.is_numeric):
             raise Exception("Can only generate bounding box for numerical variables")
 
         return np.array(self.conditions), self.value
 
     def minimal_distance(self, point, order):
+        """
+        Compute the minimum perturbation distance between this leaf and the given sample in the given L-p norm.
+
+        Parameters
+        ----------
+        point : array-like of shape (n_features,)
+            Point's unperturbed values.
+        order : {0, 1, 2, np.inf}
+            L-p norm to compute distance in.
+
+        Returns
+        -------
+        in_reach : bool
+            Whether or not the point is in reach of this leaf. 
+        """
         bounds, _ = self.get_bounding_box()
 
         nearest_point = np.clip(point, bounds[:, 0], bounds[:, 1])
@@ -126,44 +165,19 @@ class Leaf:
         # Else the leaves intersect and are reachable by the given sample
         return True
 
-    def intersects(self, other, reachable_categories):
-        """
-        Check whether this leaf intersects with another leaf. 
-        
-        Use the category information to check for intersections in categorical
-        variables since these do not satisfy the reasoning: if sample reaches
-        leaf A and sample reaches leaf B then sample reaches A intersect B.
-        """
-        for (
-            numeric,
-            n_all_categories,
-            condition,
-            other_condition,
-            sample_categories,
-        ) in zip(
-            self.is_numeric,
-            self.n_categories,
-            self.conditions,
-            other.conditions,
-            reachable_categories,
-        ):
-            if numeric:
-                if not self.__numerical_conditions_intersect(
-                    condition, other_condition
-                ):
-                    return False
-            else:
-                if not self.__categorical_conditions_intersect(
-                    condition, other_condition, n_all_categories, sample_categories
-                ):
-                    return False
-        return True
-
     def compute_intersection(self, other):
         """
-        Computes the intersection (a new Leaf object) of this leaf with another
-        leaf. The intersection leaf represents the overlapping region of the
-        two leaves. The new Leaf's value is the average of the original values.
+        Computes the intersection (a new Leaf object) of this leaf with another leaf. The intersection leaf represents the overlapping region of the two leaves. The new Leaf's value is the average of the original values.
+
+        Parameters
+        ----------
+        other : Leaf
+            Leaf to compute intersection with.
+        
+        Returns
+        -------
+        intersection : Leaf
+            Leaf representing the intersection between this leaf and the other leaf.
         """
         intersection_conditions = []
         for this_condition, other_condition, numeric in zip(
@@ -186,6 +200,7 @@ class Leaf:
             self.attack_model,
             self.n_categories,
         )
+        return intersection
 
     def to_json(self):
         summary = {}
@@ -196,6 +211,8 @@ class Leaf:
 
 
 class DecisionTreeAdversary:
+    """ Adversary that can attack and score decision trees against adversarial examples. """
+
     def __init__(
         self,
         decision_tree,
@@ -208,37 +225,19 @@ class DecisionTreeAdversary:
         """
         Parameters
         ----------
-        decision_tree : models.decision_tree.DecisionTree or
-                        sklearn.tree.DecisionTreeClassifier or
-                        treant.parallel_robust_forest.RobustDecisionTree
+        decision_tree : groot.model.GrootTree or sklearn.tree.DecisionTreeClassifier or groot.treant.RobustDecisionTree
             The decision tree to attack following our decision tree
             implementation.
         kind : {"ours", "groot", "sklearn", "treant"}
-            The kind of decision tree to attack, different kinds require
-            different conditions for categorical variables.
-        attack_model : array-like of shape (n_features,), default=None
-            Attacker capabilities for perturbing X, it is only required for
-            when kind is 'sklearn', 'treant' or 'robust'. The attack model 
-            describes for every feature in which way it can be perturbed:
-            - '': the feature can not be perturbed
-            - '<': the feature value can be made lower
-            - '>': the feature value can be made higher
-            - '<>': the feature value can be changed arbitrarily
-            - float: the feature can be changed by at most this value
-            - tuple: of the form (low, high), the feature can be perturbed
-              made 'low' lower and 'high' higher
-            - dict: mapping from feature values to other values that it can be
-              perturbed to. The dict should map an integer representing the
-              category to another integer or a list of integers
-            By default, all features are considered not perturbable.
-        is_numeric : array-like of shape (n_features,)
+            The kind of decision tree to attack, different kinds require different conditions for categorical variables.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X, it is only required for when kind is 'sklearn', 'treant' or 'robust'. The attack model describes for every feature in which way it can be perturbed. By default, all features are considered not perturbable.
+        is_numeric : array-like of shape (n_features,), optional
             Boolean mask for whether each feature is numerical or categorical.
-        n_categories : array-like of shape (n_features,)
-            Number of categories per feature, entries for numerical features
-            are ignored.
-        one_adversarial_class : bool, optional (default=False)
-            Whether one class (malicious, 1) perturbs their samples or if both
-            classes (benign and malicious, 0 and 1) do so.
+        n_categories : array-like of shape (n_features,), optional
+            Number of categories per feature, entries for numerical features are ignored.
+        one_adversarial_class : bool, optional
+            Whether one class (malicious, 1) perturbs their samples or if both classes (benign and malicious, 0 and 1) do so.
         """
 
         self.decision_tree = decision_tree
@@ -520,6 +519,11 @@ class DecisionTreeAdversary:
             Test samples.
         y : array-like of shape (n_samples,)
             True labels for X.
+
+        Returns
+        -------
+        adv_accuracy : float
+            Adversarial accuracy score.
         """
 
         _, false_negatives, _, false_positives = self.__count_misclassifications(X, y)
@@ -537,6 +541,11 @@ class DecisionTreeAdversary:
             Test samples.
         y : array-like of shape (n_samples,)
             True labels for X.
+
+        Returns
+        -------
+        adv_f1 : float
+            Adversarial f1 score.
         """
 
         _, fn, tp, fp = self.__count_misclassifications(X, y)
@@ -572,6 +581,11 @@ class DecisionTreeAdversary:
             Test samples.
         y : array-like of shape (n_samples,)
             True labels for X.
+
+        Returns
+        -------
+        mean_distance : np.float
+            Mean perturbation distance.
         """
 
         distances = []
