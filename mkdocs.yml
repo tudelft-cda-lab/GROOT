@@ -53,6 +53,7 @@ plugins:
 
 markdown_extensions:
   - attr_list
+  - footnotes
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
   - pymdownx.highlight
