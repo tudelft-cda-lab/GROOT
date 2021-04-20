@@ -568,7 +568,7 @@ def optimal_adversarial_example(
         Path to the JSON file export of a decision tree ensemble.
     sample : array-like of shape (n_features)
         Original sample.
-    y : int
+    label : int
         Original label (0 or 1).
     order : {0, 1, 2, np.inf}, optional (default=np.inf)
         Order of the L norm.
