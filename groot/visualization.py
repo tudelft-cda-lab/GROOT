@@ -4,6 +4,20 @@ import numpy as np
 
 
 def plot_adversary(X, y, adversary, ax=None):
+    """
+    Plot the decision tree and samples for a 2D dataset using the adversary. Uses matplotlib.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Feature values.
+    y : array-like of shape (n_samples,)
+        Class labels as integers 0 (benign) or 1 (malicious).
+    adversary : groot.adversary.DecisionTreeAdversary
+        Adversary for this decision tree.
+    ax : matplotlib.axes.Axes, optional
+        Axes object to plot on.
+    """
     if ax is None:
         _, ax = plt.subplots(figsize=(3, 3))
 
