@@ -3,6 +3,7 @@ site_author: Daniël Vos
 site_description: >-
   Fit robust decision trees in a matter of seconds.
 
+site_url: "https://groot.cyber-analytics.nl"
 repo_url: "https://github.com/tudelft-cda-lab/GROOT"
 repo_name: "tudelft-cda-lab/GROOT"
 edit_uri: ""
@@ -13,12 +14,12 @@ theme:
   name: "material"
   palette:
     # Light mode
-    - pink: "(prefers-color-scheme: light)"
+    - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: green
       accent: deep orange
       toggle:
-        icon: material/toggle-switch-off-outline
+        icon: material/weather-night
         name: Switch to dark mode
 
     # Dark mode
@@ -27,7 +28,7 @@ theme:
       primary: teal
       accent: deep orange
       toggle:
-        icon: material/toggle-switch
+        icon: material/weather-sunny
         name: Switch to light mode
   features:
     - navigation.sections
