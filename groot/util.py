@@ -23,6 +23,10 @@ def convert_numpy(obj):
 
 
 def _sklearn_tree_to_dict(tree, scale=1.0, classifier=True):
+    if classifier:
+        assert hasattr(tree, "classes_"), "Not a classifier but classifier=True"
+        assert tree.classes_.shape == (2,), "Currently only binary classifiers are supported"
+
     n_nodes = tree.tree_.node_count
     children_left = tree.tree_.children_left
     children_right = tree.tree_.children_right
