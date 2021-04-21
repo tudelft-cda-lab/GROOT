@@ -774,66 +774,7 @@ def _identify_intersection_categories(
 
 class GrootTree(BaseEstimator, ClassifierMixin):
     """
-    A robust and fair decision tree for binary classification. Use class 0 for 
-    a negative and class 1 for a positive label.
-
-    Parameters
-    ----------
-    max_depth : int, optional (default=5)
-        The maximum depth for the decision tree once fitted.
-    min_samples_split : int, optional (default=2)
-        The minimum number of samples required to split a node.
-    min_samples_leaf : int, optional (default=1)
-        The minimum number of samples required to make a leaf.
-    max_features : int or {"sqrt", "log2"}, optional (default=None)
-        The number of features to consider while making each split,
-        if None then all features are considered.
-    robust_weight : float, optional (default 1.0)
-        The ratio of samples that are actually moved by an adversary.
-    attack_model : array-like of shape (n_features,), default=None
-        Attacker capabilities for perturbing X. The attack model needs to
-        describe for every feature in which way it can be perturbed:
-        - '': the feature can not be perturbed
-        - '<': the feature value can be made lower
-        - '>': the feature value can be made higher
-        - '<>': the feature value can be changed arbitrarily
-        - float: the feature can be changed by at most this value
-        - tuple: of the form (low, high), the feature can be perturbed
-        made 'low' lower and 'high' higher
-        - dict: mapping from feature values to other values that it can be
-        perturbed to. The dict should map an integer representing the
-        category to another integer or a list of integers
-        
-        By default, all features are considered not perturbable.
-    is_numerical : array-like of shape (n_features,), default=None
-        Boolean mask for whether each feature is numerical or categorical.
-        By default, all features are considered numerical.
-    one_adversarial_class : bool, optional (default=False)
-        Whether one class (malicious, 1) perturbs their samples or if both
-        classes (benign and malicious, 0 and 1) do so.
-    chen_heuristic : bool, optional (default=False)
-        Whether to use the heuristic for the adversarial Gini impurity from
-        Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
-    random_state : int, optional (default=None)
-        Controls the sampling of the features to consider when looking for
-        the best split at each node.
-
-    Attributes
-    ----------
-    classes_ : ndarray of shape (n_classes,)
-        The class labels.
-    max_features_ : int
-        The inferred value of max_features.
-    n_samples_ : int
-        The number of samples when `fit` is performed.
-    n_features_ : int
-        The number of features when `fit` is performed.
-    n_categories_ : list of length n_features
-        The number of categories occuring in each feature. Each position
-        in the list is a positive integer for if that feature is
-        categorical and None if numerical.
-    root_ : Node
-        The root node of the tree after fitting.
+    A robust and fair decision tree for binary classification. Use class 0 for a negative and class 1 for a positive label.
     """
 
     def __init__(
@@ -849,6 +790,47 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         chen_heuristic=False,
         random_state=None,
     ):
+        """
+        Parameters
+        ----------
+        max_depth : int, optional
+            The maximum depth for the decision tree once fitted.
+        min_samples_split : int, optional
+            The minimum number of samples required to split a node.
+        min_samples_leaf : int, optional
+            The minimum number of samples required to make a leaf.
+        max_features : int or {"sqrt", "log2"}, optional
+            The number of features to consider while making each split, if None then all features are considered.
+        robust_weight : float, optional
+            The ratio of samples that are actually moved by an adversary.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X. By default, all features are considered not perturbable.
+        is_numerical : array-like of shape (n_features,), optional
+            Boolean mask for whether each feature is numerical or categorical. By default, all features are considered numerical.
+        one_adversarial_class : bool, optional
+            Whether one class (malicious, 1) perturbs their samples or if both classes (benign and malicious, 0 and 1) do so.
+        chen_heuristic : bool, optional
+            Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        random_state : int, optional
+            Controls the sampling of the features to consider when looking for the best split at each node.
+
+        Attributes
+        ----------
+        classes_ : ndarray of shape (n_classes,)
+            The class labels.
+        max_features_ : int
+            The inferred value of max_features.
+        n_samples_ : int
+            The number of samples when `fit` is performed.
+        n_features_ : int
+            The number of features when `fit` is performed.
+        n_categories_ : list of length n_features
+            The number of categories occuring in each feature. Each position
+            in the list is a positive integer for if that feature is
+            categorical and None if numerical.
+        root_ : Node
+            The root node of the tree after fitting.
+        """
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -1844,62 +1826,6 @@ def _build_tree_parallel(base_tree, X, y, indices, seed, verbose, n_samples):
 class GrootRandomForest(BaseEstimator, ClassifierMixin):
     """
     A robust random forest for binary classification.
-
-    Parameters
-    ----------
-    n_estimators : int, optional (default=100)
-        The number of decision trees to fit in the forest.
-    max_depth : int, optional (default=None)
-        The maximum depth for the decision trees once fitted.
-    max_features : int or {"sqrt", "log2", None}, optional (default="sqrt")
-        The number of features to consider while making each split,
-        if None then all features are considered.
-    min_samples_split : int, optional (default=2)
-        The minimum number of samples required to split a tree node.
-    min_samples_leaf : int, optional (default=1)
-        The minimum number of samples required to make a tree leaf.
-    robust_weight : float, optional (default 1.0)
-        The ratio of samples that are actually moved by an adversary.
-    attack_model : array-like of shape (n_features,), default=None
-        Attacker capabilities for perturbing X. The attack model needs to
-        describe for every feature in which way it can be perturbed:
-        - '': the feature can not be perturbed
-        - '<': the feature value can be made lower
-        - '>': the feature value can be made higher
-        - '<>': the feature value can be changed arbitrarily
-        - float: the feature can be changed by at most this value
-        - tuple: of the form (low, high), the feature can be perturbed
-            made 'low' lower and 'high' higher
-        - dict: mapping from feature values to other values that it can be
-            perturbed to. The dict should map an integer representing the
-            category to another integer or a list of integers
-    is_numerical : array-like of shape (n_features,), default=None
-        Boolean mask for whether each feature is numerical or categorical.
-    one_adversarial_class : bool, optional (default=False)
-        Whether one class (malicious, 1) perturbs their samples or if both
-        classes (benign and malicious, 0 and 1) do so.
-    verbose : bool, optional (default=False)
-        Whether to print fitting progress on screen.
-    chen_heuristic : bool, optional (default=False)
-        Whether to use the heuristic for the adversarial Gini impurity from
-        Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
-    max_samples : float, optional (default=None)
-        The fraction of samples to draw from X to train each decision tree.
-        If None (default), then draw X.shape[0] samples.
-    n_jobs : int, optional (default=None)
-        The number of jobs to run in parallel when fitting trees. See joblib.
-    random_state : int, optional (default=None)
-        Controls the sampling of the features to consider when looking for
-        the best split at each node.
-
-    Attributes
-    ----------
-    estimators_ : list of RobustFairDecisionTree
-        The collection of fitted sub-estimators.
-    n_samples_ : int
-        The number of samples when `fit` is performed.
-    n_features_ : int
-        The number of features when `fit` is performed.
     """
 
     def __init__(
@@ -1919,6 +1845,47 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
         n_jobs=None,
         random_state=None,
     ):
+        """
+        Parameters
+        ----------
+        n_estimators : int, optional
+            The number of decision trees to fit in the forest.
+        max_depth : int, optional
+            The maximum depth for the decision trees once fitted.
+        max_features : int or {"sqrt", "log2", None}, optional
+            The number of features to consider while making each split, if None then all features are considered.
+        min_samples_split : int, optional
+            The minimum number of samples required to split a tree node.
+        min_samples_leaf : int, optional
+            The minimum number of samples required to make a tree leaf.
+        robust_weight : float, optional
+            The ratio of samples that are actually moved by an adversary.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X. The attack model needs to describe for every feature in which way it can be perturbed.
+        is_numerical : array-like of shape (n_features,), optional
+            Boolean mask for whether each feature is numerical or categorical.
+        one_adversarial_class : bool, optional
+            Whether one class (malicious, 1) perturbs their samples or if both classes (benign and malicious, 0 and 1) do so.
+        verbose : bool, optional
+            Whether to print fitting progress on screen.
+        chen_heuristic : bool, optional
+            Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        max_samples : float, optional
+            The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
+        n_jobs : int, optional
+            The number of jobs to run in parallel when fitting trees. See joblib.
+        random_state : int, optional
+            Controls the sampling of the features to consider when looking for the best split at each node.
+
+        Attributes
+        ----------
+        estimators_ : list of GrootTree
+            The collection of fitted sub-estimators.
+        n_samples_ : int
+            The number of samples when `fit` is performed.
+        n_features_ : int
+            The number of features when `fit` is performed.
+        """
         self.n_estimators = n_estimators
         self.max_depth = max_depth
         self.max_features = max_features
