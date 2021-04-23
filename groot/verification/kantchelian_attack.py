@@ -548,18 +548,19 @@ def score_dataset(
     
 
 def attack_json_for_X_y(
-        json_filename,
-        X,
-        y,
-        order=np.inf,
-        guard_val=GUARD_VAL,
-        round_digits=ROUND_DIGITS,
-        pred_threshold=0.0,
-        n_threads=8,
-        verbose=True,
+    json_filename,
+    X,
+    y,
+    order=np.inf,
+    guard_val=GUARD_VAL,
+    round_digits=ROUND_DIGITS,
+    sample_limit=None,
+    pred_threshold=0.0,
+    n_threads=8,
+    verbose=True,
 ):
     """
-    Find a minimal adversarial examples on the given tree ensemble in JSON
+    Find minimal adversarial examples on the given tree ensemble in JSON
     format using Kantchelian's MILP attack.
 
     Parameters
@@ -570,8 +571,8 @@ def attack_json_for_X_y(
         The adversarial victims.
     y : array-like of shape (n_samples,)
         The class labels as integers 0 or 1.
-    order : {np.inf}, optional (default=np.inf)
-        Order of the L norm. {0, 1, 2} to be supported.
+    order : {0, 1, 2, np.inf}, optional (default=np.inf)
+        Order of the L norm.
     guard_val : float, optional (default=GUARD_VAL)
         Guard value to combat inaccuracy between JSON and GUROBI floats.
         For example if the prediction threshold is 0.5, the solver needs to reach
@@ -579,6 +580,9 @@ def attack_json_for_X_y(
     round_digits : int, optional (default=ROUND_DIGITS)
         Number of digits to round threshold values to in order to combat the inaccuracy
         between JSON and GUROBI floats.
+    sample_limit : int, optional (default=None)
+        Maximum number of samples to attack, to limit execution time on large datasets.
+        If None, all samples from X, y are used.
     pred_threshold : float, optional (default=0.5)
         Threshold for predicting class labels 0/1. For random forests and
         decision trees this value should be 0.5. For tree ensembles such as
@@ -592,14 +596,18 @@ def attack_json_for_X_y(
 
     Returns
     -------
-    avg_distance : average distance with norm "order" op the optimal adversarial examples
-    avg_time: average time for attacking a victim
+    avg_distance : float
+        Average distance of the optimal adversarial examples calculated with norm "order"
+    avg_time: float
+        Average time it took to attack a victim
     adv_examples : array-like of shape (n_samples, n_features)
         Minimal adversarial examples (only the features).
     """
-    assert order == np.inf, "only l-inf norm is supported for now"
 
     json_model = json.load(open(json_filename, "r"))
+
+    X = X[:sample_limit]
+    y = y[:sample_limit]
 
     attack = KantchelianAttack(
         json_model,
@@ -623,7 +631,7 @@ def attack_json_for_X_y(
         optimal_examples.append(optimal_ae_features)
 
     t_1 = time.time()
-    return avg_dist / len(optimal_examples), (t_1 - t_0) / len(optimal_examples), optimal_examples
+    return avg_dist / len(optimal_examples), (t_1 - t_0) / len(optimal_examples), np.array(optimal_examples)
 
 
 def optimal_adversarial_example(
@@ -721,8 +729,9 @@ def attack_epsilon_feasibility(
     round_digits : int, optional (default=ROUND_DIGITS)
         Number of digits to round threshold values to in order to combat the inaccuracy
         between JSON and GUROBI floats.
-    sample_limit : int, optional (default=500)
-        Maximum number of samples to attack, useful for large datasets.
+    sample_limit : int, optional (default=None)
+        Maximum number of samples to attack, to limit execution time on large datasets.
+        If None, all samples from X, y are used.
     pred_threshold : float, optional (default=0.5)
         Threshold for predicting class labels 0/1. For random forests and
         decision trees this value should be 0.5. For tree ensembles such as
