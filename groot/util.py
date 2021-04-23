@@ -78,7 +78,7 @@ def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1):
 
 def sklearn_tree_to_xgboost_json(tree: DecisionTreeClassifier, filename: str):
     """
-    Export a scikit-learn decision tree to a JSON file in xgboost format.
+    Export a scikit-learn decision tree to a JSON file in xgboost format. A multiclass tree gets turned into a one-vs-all representation inside the JSON file.
 
     Parameters
     ----------
