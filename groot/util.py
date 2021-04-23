@@ -12,10 +12,10 @@ def convert_numpy(obj):
 
     Parameters
     ----------
-    obj : {np.int32, np.int64, np.float32, np.float64}
+    obj : {np.int32, np.int64, np.float32, np.float64, np.longlong}
         Number to convert to python int or float.
     """
-    if isinstance(obj, np.int32) or isinstance(obj, np.int64):
+    if isinstance(obj, np.int32) or isinstance(obj, np.int64) or isinstance(obj, np.longlong):
         return int(obj)
     elif isinstance(obj, np.float32) or isinstance(obj, np.float64):
         return float(obj)
@@ -124,12 +124,19 @@ def sklearn_booster_to_xgboost_json(booster: GradientBoostingClassifier, filenam
     filename : str
         Exported JSON filename or path.
     """
-    booster_dict = [
-        _sklearn_tree_to_dict(tree[0], classifier=False) for tree in booster.estimators_
-    ]
+    if booster.loss_.K == 1:
+        json_trees = [
+            _sklearn_tree_to_dict(tree[0], classifier=False) for tree in booster.estimators_
+        ]
+    else:
+        json_trees = []
+        for round_estimators in booster.estimators_:
+            for tree in round_estimators:
+                json_tree = _sklearn_tree_to_dict(tree, classifier=False)
+                json_trees.append(json_tree)
 
     with open(filename, "w") as file:
-        json.dump(booster_dict, file, indent=2, default=convert_numpy)
+        json.dump(json_trees, file, indent=2, default=convert_numpy)
 
 
 def numpy_to_chensvmlight(X, y, filename):
