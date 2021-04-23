@@ -31,7 +31,7 @@ The changes made were related to:
 """
 
 
-GUARD_VAL = 5e-7
+GUARD_VAL = 5e-6
 ROUND_DIGITS = 6
 
 
@@ -89,11 +89,9 @@ class KantchelianAttack(object):
         order=np.inf,
         guard_val=GUARD_VAL,
         round_digits=ROUND_DIGITS,
-        LP=False,
-        binary=True,
         pos_json_input=None,
         neg_json_input=None,
-        pred_threshold=0,
+        pred_threshold=0.0,
         verbose=False,
         n_threads=1,
     ):
@@ -101,11 +99,12 @@ class KantchelianAttack(object):
 
         self.pred_threshold = pred_threshold
         self.epsilon = epsilon
-        self.LP = LP
-        self.binary = binary or (pos_json_input == None) or (neg_json_input == None)
+        self.binary = (pos_json_input == None) or (neg_json_input == None)
+        self.pos_json_input = pos_json_input
+        self.neg_json_input = neg_json_input
         self.guard_val = guard_val
         self.round_digits = round_digits
-        self.json_file = json_model
+        self.json_model = json_model
         self.order = order
         self.verbose = verbose
         self.n_threads = n_threads
@@ -174,36 +173,39 @@ class KantchelianAttack(object):
                 return left_leaves + right_leaves
 
         if self.binary:
-            for i, tree in enumerate(self.json_file):
+            for i, tree in enumerate(self.json_model):
                 dfs(tree, i, root=True)
                 self.leaf_count.append(len(self.leaf_v_list))
-            if len(self.json_file) + 1 != len(self.leaf_count):
+            if len(self.json_model) + 1 != len(self.leaf_count):
                 print("self.leaf_count:", self.leaf_count)
                 raise ValueError("leaf count error")
         else:
-            for i, tree in enumerate(self.pos_json_file):
+            for i, tree in enumerate(self.pos_json_input):
                 dfs(tree, i, root=True)
                 self.leaf_count.append(len(self.leaf_v_list))
-            for i, tree in enumerate(self.neg_json_file):
-                dfs(tree, i + len(self.pos_json_file), root=True, neg=True)
+            for i, tree in enumerate(self.neg_json_input):
+                dfs(tree, i + len(self.pos_json_input), root=True, neg=True)
                 self.leaf_count.append(len(self.leaf_v_list))
-            if len(self.pos_json_file) + len(self.neg_json_file) + 1 != len(
+            if len(self.pos_json_input) + len(self.neg_json_input) + 1 != len(
                 self.leaf_count
             ):
                 print("self.leaf_count:", self.leaf_count)
                 raise ValueError("leaf count error")
 
         self.m = Model("attack")
-        self.m.setParam("Threads", self.n_threads)
+
         if not self.verbose:
             self.m.setParam(
                 "OutputFlag", 0
             )  # suppress Gurobi output, gives a small speed-up and prevents huge logs
+
+        self.m.setParam("Threads", self.n_threads)
+
+        # Most datasets require a very low tolerance
+        self.m.setParam("IntFeasTol", 1e-9)
+        self.m.setParam("FeasibilityTol", 1e-9)
         
-        if self.LP:
-            self.P = self.m.addVars(len(self.node_list), lb=0, ub=1, name="p")
-        else:
-            self.P = self.m.addVars(len(self.node_list), vtype=GRB.BINARY, name="p")
+        self.P = self.m.addVars(len(self.node_list), vtype=GRB.BINARY, name="p")
         self.L = self.m.addVars(len(self.leaf_v_list), lb=0, ub=1, name="l")
         if epsilon:
             self.B = self.m.addVar(
@@ -237,7 +239,7 @@ class KantchelianAttack(object):
                     min_diff = min(
                         min_diff, self.pdict[key][i + 1][0] - self.pdict[key][i][0]
                     )
-                # print('attr {} min difference between thresholds:{}'.format(key,min_diff))
+
                 if min_diff < 2 * self.guard_val:
                     self.guard_val = min_diff / 3
                     print(
@@ -302,7 +304,7 @@ class KantchelianAttack(object):
                 name="mislabel",
             )
 
-        # model objective
+        # Generate constraints for self.B, the l-infinity distance.
         for key in self.pdict.keys():
             if len(self.pdict[key]) == 0:
                 raise ValueError("self.pdict list empty")
@@ -342,7 +344,10 @@ class KantchelianAttack(object):
         return self.m.status == 3  # 3 -> infeasible -> no adv example -> True
 
     def optimal_adversarial_example(self, sample, label):
-        pred = 1 if self.check(sample, self.json_file) >= self.pred_threshold else 0
+        if self.binary:
+            pred = 1 if self.check(sample, self.json_model) >= self.pred_threshold else 0
+        else:
+            pred = 1 if self.check(sample, self.pos_json_input) >= self.check(sample, self.neg_json_input) else 0
         x = np.copy(sample)
 
         if pred != label:
@@ -428,6 +433,10 @@ class KantchelianAttack(object):
         self.m.update()
         self.m.optimize()
 
+        # If infeasible
+        if self.m.status == 3:
+            return None
+
         # Assert that the adversarial example causes a misclassification
         for key in self.pdict.keys():
             for node in self.pdict[key]:
@@ -436,13 +445,17 @@ class KantchelianAttack(object):
                 if node[1].x <= 0.5 and x[key] < node[0]:
                     x[key] = node[0] + self.guard_val
 
-        pred_proba = self.check(x, self.json_file)
-        pred = 1 if self.check(x, self.json_file) >= self.pred_threshold else 0
-        print("New prediction:", pred_proba, pred)
-        print("Original label:", label)
+        if self.binary:
+            pred = 1 if self.check(x, self.json_model) >= self.pred_threshold else 0
+        else:
+            pos_value = self.check(x, self.pos_json_input)
+            neg_value = self.check(x, self.neg_json_input)
+            pred = 1 if pos_value >= neg_value else 0
 
         if pred == label:
+            print("!" * 50)
             print("MILP result did not cause a misclassification!")
+            print("!" * 50)
 
         return x
 
@@ -481,6 +494,72 @@ class KantchelianAttack(object):
             leaf_values.append(tree["leaf"])
         manual_res = np.sum(leaf_values)
         return manual_res
+
+
+class KantchelianAttackMultiClass(object):
+    def __init__(
+        self,
+        json_model,
+        n_classes,
+        order=np.inf,
+        guard_val=GUARD_VAL,
+        round_digits=ROUND_DIGITS,
+        pred_threshold=0.0,
+        verbose=False,
+        n_threads=1
+    ):
+        if n_classes <= 2:
+            raise ValueError('multiclass attack must be used when number of class > 2')
+
+        self.n_classes = n_classes
+        self.order = order
+
+        # Create all attacker models, this takes quadratic space in terms
+        # of n_classes, but speeds up attacks for many samples.
+        one_vs_all_models = [[] for _ in range(self.n_classes)]
+        for i, json_tree in enumerate(json_model):
+            one_vs_all_models[i % n_classes].append(json_tree)
+
+        self.binary_attackers = []
+        for class_label in range(self.n_classes):
+            attackers = []
+            for other_label in range(self.n_classes):
+                if class_label == other_label:
+                    attackers.append(None)
+
+                attacker = KantchelianAttack(
+                    None,
+                    epsilon=None,
+                    order=order,
+                    guard_val=guard_val,
+                    round_digits=round_digits,
+                    pred_threshold=pred_threshold,
+                    verbose=verbose,
+                    n_threads=n_threads,
+                    pos_json_input=one_vs_all_models[class_label],
+                    neg_json_input=one_vs_all_models[other_label],
+                )
+
+                attackers.append(attacker)
+            self.binary_attackers.append(attackers)
+
+    def optimal_adversarial_example(self, sample, label):
+        best_distance = float("inf")
+
+        for other_label in range(self.n_classes):
+            if other_label == label:
+                continue
+
+            attacker = self.binary_attackers[label][other_label]
+            adv_example = attacker.optimal_adversarial_example(sample, 1)
+
+            if adv_example is not None:
+                distance = np.linalg.norm(sample - adv_example, ord=self.order)
+                if distance < best_distance:
+                    best_adv_example = adv_example
+                    best_distance = distance
+        
+        return best_adv_example
 
 
 def score_dataset(
@@ -552,6 +631,7 @@ def optimal_adversarial_example(
     sample,
     label,
     order=np.inf,
+    n_classes=2,
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
     pred_threshold=0.0,
@@ -572,6 +652,8 @@ def optimal_adversarial_example(
         Original label (0 or 1).
     order : {0, 1, 2, np.inf}, optional (default=np.inf)
         Order of the L norm.
+    n_classes : int, optional
+        Number of classes that the model can predict.
     guard_val : float, optional (default=GUARD_VAL)
         Guard value to combat inaccuracy between JSON and GUROBI floats.
         For example if the prediction threshold is 0.5, the solver needs to reach
@@ -597,15 +679,27 @@ def optimal_adversarial_example(
     """
     json_model = json.load(open(json_filename, "r"))
 
-    attack = KantchelianAttack(
-        json_model,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-        order=order,
-        verbose=verbose,
-        n_threads=n_threads,
-    )
+    if n_classes == 2:
+        attack = KantchelianAttack(
+            json_model,
+            guard_val=guard_val,
+            round_digits=round_digits,
+            pred_threshold=pred_threshold,
+            order=order,
+            verbose=verbose,
+            n_threads=n_threads,
+        )
+    else:
+        attack = KantchelianAttackMultiClass(
+            json_model,
+            n_classes,
+            guard_val=guard_val,
+            round_digits=round_digits,
+            pred_threshold=pred_threshold,
+            order=order,
+            verbose=verbose,
+            n_threads=n_threads,
+        )
 
     return attack.optimal_adversarial_example(sample, label)
 
