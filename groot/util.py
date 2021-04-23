@@ -22,10 +22,9 @@ def convert_numpy(obj):
     raise TypeError(f"Cannot convert type {type(obj)} to int or float")
 
 
-def _sklearn_tree_to_dict(tree, scale=1.0, classifier=True):
+def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1):
     if classifier:
-        assert hasattr(tree, "classes_"), "Not a classifier but classifier=True"
-        assert tree.classes_.shape == (2,), "Currently only binary classifiers are supported"
+        assert len(tree.classes_.shape) == 1, "Multi-output is not supported"
 
     n_nodes = tree.tree_.node_count
     children_left = tree.tree_.children_left
@@ -44,17 +43,19 @@ def _sklearn_tree_to_dict(tree, scale=1.0, classifier=True):
                 # A decision tree classifier contains the counts of samples
                 # that reach the leaf
                 class_counts = value[node_id][0]
-                prediction = class_counts[1] / (class_counts[0] + class_counts[1])
+
+                # Map the prediction probability to a value in the range [-1, 1]
+                leaf_value = (class_counts[one_vs_all_class] / np.sum(class_counts)) * 2 - 1
                 return {
                     "nodeid": node_id,
-                    "leaf": prediction * scale,
+                    "leaf": leaf_value,
                 }
             else:
                 # A decision tree regressor contains the raw prediction value
                 prediction = value[node_id][0][0]
                 return {
                     "nodeid": node_id,
-                    "leaf": prediction * scale,
+                    "leaf": prediction,
                 }
         else:
             # If decision node
@@ -86,15 +87,21 @@ def sklearn_tree_to_xgboost_json(tree: DecisionTreeClassifier, filename: str):
     filename : str
         Exported JSON filename or path.
     """
-    tree_dict = _sklearn_tree_to_dict(tree)
+    if tree.n_classes_ == 2:
+        json_trees = [_sklearn_tree_to_dict(tree, classifier=True)]
+    else:
+        json_trees = []
+        for class_label in range(tree.n_classes_):
+            json_tree = _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=class_label)
+            json_trees.append(json_tree)
 
     with open(filename, "w") as file:
-        json.dump([tree_dict], file, indent=2, default=convert_numpy)
+        json.dump(json_trees, file, indent=2, default=convert_numpy)
 
 
 def sklearn_forest_to_xgboost_json(forest: RandomForestClassifier, filename: str):
     """
-    Export a scikit-learn random forest to a JSON file in xgboost format.
+    Export a scikit-learn random forest to a JSON file in xgboost format. A multiclass forest gets turned into a one-vs-all representation inside the JSON file.
 
     Parameters
     ----------
@@ -103,14 +110,20 @@ def sklearn_forest_to_xgboost_json(forest: RandomForestClassifier, filename: str
     filename : str
         Exported JSON filename or path.
     """
-    scale = 1 / forest.n_estimators
-    forest_dict = [
-        _sklearn_tree_to_dict(tree, scale=scale, classifier=True)
-        for tree in forest.estimators_
-    ]
+    if forest.n_classes_ == 2:
+        json_trees = [
+            _sklearn_tree_to_dict(tree, classifier=True)
+            for tree in forest.estimators_
+        ]
+    else:
+        json_trees = []
+        for tree in forest.estimators_:
+            for class_label in range(forest.n_classes_):
+                json_tree = _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=class_label)
+                json_trees.append(json_tree)
 
     with open(filename, "w") as file:
-        json.dump(forest_dict, file, indent=2, default=convert_numpy)
+        json.dump(json_trees, file, indent=2, default=convert_numpy)
 
 
 def sklearn_booster_to_xgboost_json(booster: GradientBoostingClassifier, filename: str):
