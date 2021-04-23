@@ -490,7 +490,7 @@ def score_dataset(
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
     sample_limit=500,
-    pred_threshold=0.5,
+    pred_threshold=0.0,
 ):
     """
     Scores the tree ensemble in JSON format on the given dataset (samples X, labels y)
@@ -554,7 +554,7 @@ def optimal_adversarial_example(
     order=np.inf,
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
-    pred_threshold=0.5,
+    pred_threshold=0.0,
     n_threads=8,
     verbose=True,
 ):
@@ -618,7 +618,7 @@ def attack_epsilon_feasibility(
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
     sample_limit=None,
-    pred_threshold=0.5,
+    pred_threshold=0.0,
 ):
     """
     Scores the tree ensemble in JSON format on the given dataset (samples X, labels y)

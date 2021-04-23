@@ -152,6 +152,85 @@ def sklearn_booster_to_xgboost_json(booster: GradientBoostingClassifier, filenam
         json.dump(json_trees, file, indent=2, default=convert_numpy)
 
 
+def predict_json_file(X, filename, n_classes=2):
+    """
+    Make class predictions based on a json_file. The prediction values are turned into class labels.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Samples to predict.
+    filename : str
+        Name of the JSON file to predict on.
+    n_classes : int, optional
+        Number of classes that the encoded model predicts.
+
+    Returns
+    -------
+    ndarray of shape (n_samples)
+        Predicted class labels.
+    """
+    prediction_values = predict_values_json_file(X, filename, n_classes)
+    if n_classes == 2:
+        return (prediction_values >= 0).astype(int)
+    else:
+        return np.argmax(prediction_values, axis=1)
+
+
+def predict_values_json_file(X, filename, n_classes=2):
+    """
+    Compute prediction values based on a json_file. These values are the sum of leaf values in which the samples end up.
+    
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Samples to predict.
+    filename : str
+        Name of the JSON file to predict on.
+    n_classes : int, optional
+        Number of classes that the encoded model predicts.
+
+    Returns
+    -------
+    ndarray of shape (n_samples) or ndarray of shape (n_samples, n_classes)
+        Predicted values. Returns a 1-dimensional array if n_classes=2, else a 2-dimensional array.
+    """
+    json_trees = json.load(open(filename))
+
+    if n_classes == 2:
+        values = []
+        for sample in X:
+            value = 0
+            for tree in json_trees:
+                value += _predict_proba_json_tree(tree, sample)
+            values.append(value)
+    else:
+        values = []
+        for sample in X:
+            class_values = np.zeros(n_classes)
+            for i, tree in enumerate(json_trees):
+                class_values[i % n_classes] += _predict_proba_json_tree(tree, sample)
+            values.append(class_values)
+    
+    return np.array(values)
+
+def _predict_proba_json_tree(json_tree, sample):
+    """
+    Recursively follow the path of a sample through the JSON tree and return the resulting leaf's value.
+    """
+    if "leaf" in json_tree:
+        return json_tree["leaf"]
+    
+    if sample[json_tree["split"]] <= json_tree["split_condition"]:
+        next_node_id = json_tree["yes"]
+    else:
+        next_node_id = json_tree["no"]
+
+    for sub_tree in json_tree["children"]:
+        if sub_tree["nodeid"] == next_node_id:
+            return _predict_proba_json_tree(sub_tree, sample)
+
+
 def numpy_to_chensvmlight(X, y, filename):
     """
     Export a numpy dataset to the SVM-Light format that is needed for Chen et al. (2019).
