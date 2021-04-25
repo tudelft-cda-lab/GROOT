@@ -452,7 +452,7 @@ class KantchelianAttack(object):
             neg_value = self.check(x, self.neg_json_input)
             pred = 1 if pos_value >= neg_value else 0
 
-        if pred == label:
+        if pred == label and self.verbose:
             print("!" * 50)
             print("MILP result did not cause a misclassification!")
             print("!" * 50)
