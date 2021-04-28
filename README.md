@@ -1,7 +1,7 @@
 # GROOT: Growing Robust Trees
 Growing Robust Trees (GROOT) is an algorithm that fits binary classification decision trees such that they are robust against user-specified adversarial examples. The algorithm closely resembles algorithms used for fitting normal decision trees (i.e. CART) but changes the splitting criterion and the way samples propagate when creating a split. 
 
-This repository contains the module `groot` that implements GROOT as a Scikit-learn compatible classifier, an adversary for model evaluation and easy functions to import datasets.
+This repository contains the module `groot` that implements GROOT as a Scikit-learn compatible classifier, an adversary for model evaluation and easy functions to import datasets. For documentation see https://groot.cyber-analytics.nl
 
 ## Simple example
 To train and evaluate GROOT on a toy dataset against an attacker that can move samples by 0.5 in each direction one can use the following code:
