@@ -196,14 +196,14 @@ def predict_json_file(X, filename, n_classes=2):
     ndarray of shape (n_samples)
         Predicted class labels.
     """
-    prediction_values = predict_values_json_file(X, filename, n_classes)
+    prediction_values = decision_function_json_file(X, filename, n_classes)
     if n_classes == 2:
         return (prediction_values >= 0).astype(int)
     else:
         return np.argmax(prediction_values, axis=1)
 
 
-def predict_values_json_file(X, filename, n_classes=2):
+def decision_function_json_file(X, filename, n_classes=2):
     """
     Compute prediction values based on a json_file. These values are the sum of leaf values in which the samples end up.
     
