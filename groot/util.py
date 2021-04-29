@@ -1,5 +1,6 @@
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.dummy import DummyClassifier
 
 import json
 
@@ -22,7 +23,7 @@ def convert_numpy(obj):
     raise TypeError(f"Cannot convert type {type(obj)} to int or float")
 
 
-def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1):
+def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1, learning_rate=1.0):
     if classifier:
         assert len(tree.classes_.shape) == 1, "Multi-output is not supported"
 
@@ -55,7 +56,7 @@ def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1):
                 prediction = value[node_id][0][0]
                 return {
                     "nodeid": node_id,
-                    "leaf": prediction,
+                    "leaf": learning_rate * prediction,
                 }
         else:
             # If decision node
@@ -126,6 +127,10 @@ def sklearn_forest_to_xgboost_json(forest: RandomForestClassifier, filename: str
         json.dump(json_trees, file, indent=2, default=convert_numpy)
 
 
+def _sigmoid_inverse(proba: float):
+    return np.log(proba / (1 - proba))
+
+
 def sklearn_booster_to_xgboost_json(booster: GradientBoostingClassifier, filename: str):
     """
     Export a scikit-learn gradient boosting classifier to a JSON file in xgboost format.
@@ -137,15 +142,36 @@ def sklearn_booster_to_xgboost_json(booster: GradientBoostingClassifier, filenam
     filename : str
         Exported JSON filename or path.
     """
+    init = booster.init_
+    if not (isinstance(init, DummyClassifier) and init.strategy == "prior") and not init == "zero":
+        raise ValueError("Only 'zero' or prior DummyClassifier init is supported")
+
+    json_trees = []
     if booster.loss_.K == 1:
-        json_trees = [
-            _sklearn_tree_to_dict(tree[0], classifier=False) for tree in booster.estimators_
-        ]
+        if init != "zero":
+            # For the binary case sklearn inverts the sigmoid function
+            json_trees.append({
+                "nodeid": 0,
+                "leaf": _sigmoid_inverse(init.class_prior_[1]),
+            })
+
+        json_trees.extend([
+            _sklearn_tree_to_dict(tree[0], classifier=False, learning_rate=booster.learning_rate) for tree in booster.estimators_
+        ])
     else:
         json_trees = []
+
+        if init != "zero":
+            for i in range(booster.loss_.K):
+                # For the multiclass case sklearn uses the log prior probability
+                json_trees.append({
+                    "nodeid": 0,
+                    "leaf": np.log(init.class_prior_[i]),
+                })
+
         for round_estimators in booster.estimators_:
             for tree in round_estimators:
-                json_tree = _sklearn_tree_to_dict(tree, classifier=False)
+                json_tree = _sklearn_tree_to_dict(tree, classifier=False, learning_rate=booster.learning_rate)
                 json_trees.append(json_tree)
 
     with open(filename, "w") as file:

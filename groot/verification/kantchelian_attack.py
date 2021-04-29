@@ -545,6 +545,7 @@ class KantchelianAttackMultiClass(object):
 
     def optimal_adversarial_example(self, sample, label):
         best_distance = float("inf")
+        best_adv_example = None
 
         for other_label in range(self.n_classes):
             if other_label == label:
@@ -558,6 +559,9 @@ class KantchelianAttackMultiClass(object):
                 if distance < best_distance:
                     best_adv_example = adv_example
                     best_distance = distance
+
+        if best_adv_example is None:
+            raise Exception("No adversarial example found, does your model predict a constant value?")
         
         return best_adv_example
 
