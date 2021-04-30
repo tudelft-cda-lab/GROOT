@@ -562,14 +562,74 @@ class KantchelianAttackMultiClass(object):
         return best_adv_example
 
 
+def _get_attack(
+    """
+    abl
+
+    n_classes : int, optional (default=2)
+        The number of classes
+    order : {0, 1, 2, np.inf}, optional (default=np.inf)
+        Order of the L norm.
+    guard_val : float, optional (default=GUARD_VAL)
+        Guard value to combat inaccuracy between JSON and GUROBI floats.
+        For example if the prediction threshold is 0.5, the solver needs to reach
+        a threshold of 0.5 + guard_val or 0.5 - guard_val for it to count.
+    round_digits : int, optional (default=ROUND_DIGITS)
+        Number of digits to round threshold values to in order to combat the inaccuracy
+        between JSON and GUROBI floats.
+    pred_threshold : float, optional (default=0.5)
+        Threshold for predicting class labels 0/1. For random forests and
+        decision trees this value should be 0.5. For tree ensembles such as
+        gradient boosting that often use a sigmoid function, this value
+        should be 0.0.
+    n_threads : int, optional (default=8)
+        Number of threads to use in the solver. For large / deep ensembles
+        a value higher than 1 can speed up the search significantly.
+    verbose : bool, optional (default=True)
+        Whether the solver outputs solving progress.
+    """
+    json_filename,
+    *,
+    order=np.inf,
+    n_classes=2,
+    guard_val=GUARD_VAL,
+    round_digits=ROUND_DIGITS,
+    pred_threshold=0.0,
+    n_threads=8,
+    verbose=True,
+    ):
+    json_model = json.load(open(json_filename, "r"))
+
+    if n_classes == 2:
+        attack = KantchelianAttack(
+            json_model,
+            guard_val=guard_val,
+            round_digits=round_digits,
+            pred_threshold=pred_threshold,
+            order=order,
+            verbose=verbose,
+            n_threads=n_threads,
+        )
+    else:
+        attack = KantchelianAttackMultiClass(
+            json_model,
+            n_classes,
+            guard_val=guard_val,
+            round_digits=round_digits,
+            pred_threshold=pred_threshold,
+            order=order,
+            verbose=verbose,
+            n_threads=n_threads,
+        )
+    return attack
+
+
 def score_dataset(
     json_filename,
     X,
     y,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    sample_limit=500,
-    pred_threshold=0.0,
+    n_classes=2,
+    **kwargs,
 ):
     """
     Scores the tree ensemble in JSON format on the given dataset (samples X, labels y)
@@ -583,37 +643,13 @@ def score_dataset(
         The training samples.
     y : array-like of shape (n_samples,)
         The class labels as integers 0 (benign) or 1 (malicious).
-    guard_val : float, optional (default=GUARD_VAL)
-        Guard value to combat inaccuracy between JSON and GUROBI floats.
-        For example if the prediction threshold is 0.5, the solver needs to reach
-        a threshold of 0.5 + guard_val or 0.5 - guard_val for it to count.
-    round_digits : int, optional (default=ROUND_DIGITS)
-        Number of digits to round threshold values to in order to combat the inaccuracy
-        between JSON and GUROBI floats.
-    sample_limit : int, optional (default=500)
-        Maximum number of samples to attack, useful for large datasets.
-    pred_threshold : float, optional (default=0.5)
-        Threshold for predicting class labels 0/1. For random forests and
-        decision trees this value should be 0.5. For tree ensembles such as
-        gradient boosting that often use a sigmoid function, this value
-        should be 0.0.
 
     Returns
     -------
     accuracy : float
         Regular accuracy score for the model on this dataset.
     """
-    json_model = json.load(open(json_filename, "r"))
-
-    attack = KantchelianAttack(
-        json_model,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-    )
-
-    X = X[:sample_limit]
-    y = y[:sample_limit]
+    attack = _get_attack(json_filename, n_classes=n_classes, **kwargs)
 
     n_correct = 0
     for sample, label in zip(X, y):
@@ -631,12 +667,7 @@ def attack_json_for_X_y(
     X,
     y,
     order=np.inf,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    sample_limit=None,
-    pred_threshold=0.5,
-    n_threads=8,
-    verbose=True,
+    **kwargs,
 ):
     """
     Find minimal adversarial examples on the given tree ensemble in JSON
@@ -650,6 +681,8 @@ def attack_json_for_X_y(
         The adversarial victims.
     y : array-like of shape (n_samples,)
         The class labels as integers 0 or 1.
+    n_classes : int, optional (default=2)
+        The number of classes
     order : {0, 1, 2, np.inf}, optional (default=np.inf)
         Order of the L norm.
     guard_val : float, optional (default=GUARD_VAL)
@@ -659,9 +692,6 @@ def attack_json_for_X_y(
     round_digits : int, optional (default=ROUND_DIGITS)
         Number of digits to round threshold values to in order to combat the inaccuracy
         between JSON and GUROBI floats.
-    sample_limit : int, optional (default=None)
-        Maximum number of samples to attack, to limit execution time on large datasets.
-        If None, all samples from X, y are used.
     pred_threshold : float, optional (default=0.5)
         Threshold for predicting class labels 0/1. For random forests and
         decision trees this value should be 0.5. For tree ensembles such as
@@ -683,20 +713,7 @@ def attack_json_for_X_y(
         Minimal adversarial examples (only the features).
     """
 
-    json_model = json.load(open(json_filename, "r"))
-
-    X = X[:sample_limit]
-    y = y[:sample_limit]
-
-    attack = KantchelianAttack(
-        json_model,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-        order=order,
-        verbose=verbose,
-        n_threads=n_threads,
-    )
+    attack = _get_attack(json_filename, order=order, **kwargs)
 
     t_0 = time.time()
 
@@ -711,19 +728,14 @@ def attack_json_for_X_y(
 
     t_1 = time.time()
     return avg_dist / len(optimal_examples), (t_1 - t_0) / len(optimal_examples), np.array(optimal_examples)
+    
 
 
 def optimal_adversarial_example(
     json_filename,
     sample,
     label,
-    order=np.inf,
-    n_classes=2,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    pred_threshold=0.0,
-    n_threads=8,
-    verbose=True,
+    **kwargs,
 ):
     """
     Find a minimal adversarial example on the given tree ensemble in JSON
@@ -748,11 +760,8 @@ def optimal_adversarial_example(
     round_digits : int, optional (default=ROUND_DIGITS)
         Number of digits to round threshold values to in order to combat the inaccuracy
         between JSON and GUROBI floats.
-    pred_threshold : float, optional (default=0.5)
-        Threshold for predicting class labels 0/1. For random forests and
-        decision trees this value should be 0.5. For tree ensembles such as
-        gradient boosting that often use a sigmoid function, this value
-        should be 0.0.
+    pred_threshold : float, optional (default=0.0)
+        Threshold for predicting class labels 0/1.
     n_threads : int, optional (default=8)
         Number of threads to use in the solver. For large / deep ensembles
         a value higher than 1 can speed up the search significantly.
@@ -764,31 +773,7 @@ def optimal_adversarial_example(
     adv_example : array-like of shape (n_features)
         Minimal adversarial example.
     """
-    json_model = json.load(open(json_filename, "r"))
-
-    if n_classes == 2:
-        attack = KantchelianAttack(
-            json_model,
-            guard_val=guard_val,
-            round_digits=round_digits,
-            pred_threshold=pred_threshold,
-            order=order,
-            verbose=verbose,
-            n_threads=n_threads,
-        )
-    else:
-        attack = KantchelianAttackMultiClass(
-            json_model,
-            n_classes,
-            guard_val=guard_val,
-            round_digits=round_digits,
-            pred_threshold=pred_threshold,
-            order=order,
-            verbose=verbose,
-            n_threads=n_threads,
-        )
-
-    return attack.optimal_adversarial_example(sample, label)
+    return attack_json_for_X_y(json_filename, [sample], [label], **kwargs)[2][0]
 
 
 def attack_epsilon_feasibility(
@@ -796,10 +781,8 @@ def attack_epsilon_feasibility(
     X,
     y,
     epsilon,
-    guard_val=GUARD_VAL,
-    round_digits=ROUND_DIGITS,
-    sample_limit=None,
-    pred_threshold=0.0,
+    n_classes=2,
+    **kwargs,
 ):
     """
     Scores the tree ensemble in JSON format on the given dataset (samples X, labels y)
@@ -823,9 +806,6 @@ def attack_epsilon_feasibility(
     round_digits : int, optional (default=ROUND_DIGITS)
         Number of digits to round threshold values to in order to combat the inaccuracy
         between JSON and GUROBI floats.
-    sample_limit : int, optional (default=None)
-        Maximum number of samples to attack, to limit execution time on large datasets.
-        If None, all samples from X, y are used.
     pred_threshold : float, optional (default=0.5)
         Threshold for predicting class labels 0/1. For random forests and
         decision trees this value should be 0.5. For tree ensembles such as
@@ -837,19 +817,7 @@ def attack_epsilon_feasibility(
     adv_accuracy : float
         Adversarial accuracy score for the model on this dataset.
     """
-    json_model = json.load(open(json_filename, "r"))
-
-    attack = KantchelianAttack(
-        json_model,
-        epsilon,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-    )
-
-    if sample_limit:
-        X = X[:sample_limit]
-        y = y[:sample_limit]
+    attack = _get_attack(json_filename, n_classes=n_classes, **kwargs)
 
     n_correct_within_epsilon = 0
     global_start = time.time()
