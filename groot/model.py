@@ -53,8 +53,9 @@ class Node:
             "value": [self.value[0], self.value[1]],
         }
 
-    def to_xgboost_json(self, node_id, depth, scale):
-        return {"nodeid": node_id, "leaf": scale * self.value[1]}, node_id
+    def to_xgboost_json(self, node_id, depth):
+        # Return leaf value in range [-1, 1]
+        return {"nodeid": node_id, "leaf": self.value[1] * 2 - 1}, node_id
 
     def is_leaf(self):
         return self.left_child == _TREE_LEAF and self.right_child == _TREE_LEAF
@@ -101,7 +102,7 @@ class CategoricalNode(Node):
             "right_child": self.right_child.to_json(),
         }
 
-    def to_xgboost_json(self, node_id, depth, scale):
+    def to_xgboost_json(self, node_id, depth):
         raise NotImplementedError(
             "XGBoost JSON is not yet supported for categorical features"
         )
@@ -143,15 +144,15 @@ class NumericalNode(Node):
             "right_child": self.right_child.to_json(),
         }
 
-    def to_xgboost_json(self, node_id, depth, scale):
+    def to_xgboost_json(self, node_id, depth):
         left_id = node_id + 1
         left_dict, new_node_id = self.left_child.to_xgboost_json(
-            left_id, depth + 1, scale
+            left_id, depth + 1
         )
 
         right_id = new_node_id + 1
         right_dict, new_node_id = self.right_child.to_xgboost_json(
-            right_id, depth + 1, scale
+            right_id, depth + 1
         )
 
         return (
@@ -1742,9 +1743,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             with open(output_file, "w") as fp:
                 json.dump(dictionary, fp, indent=2, default=convert_numpy)
 
-    def to_xgboost_json(self, output_file="tree.json", scale=1.0):
+    def to_xgboost_json(self, output_file="tree.json"):
         if hasattr(self, "root_"):
-            dictionary, _ = self.root_.to_xgboost_json(0, 0, scale)
+            dictionary, _ = self.root_.to_xgboost_json(0, 0)
         else:
             raise Exception("Tree is not yet fitted")
 
@@ -2029,18 +2030,18 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
                 json.dump(dictionary, fp)
 
     def to_xgboost_json(self, output_file="forest.json"):
-        with open(output_file, "w") as fp:
-            if hasattr(self, "estimators_"):
-                # scale leaf predictions by inverse of n_estimators so we find
-                # prediction value by summing all individual predictions
-                scale = 1 / self.n_estimators
+        if hasattr(self, "estimators_"):
+            dictionary = [
+                tree.to_xgboost_json(None) for tree in self.estimators_
+            ]
 
-                dictionary = [
-                    tree.to_xgboost_json(None, scale) for tree in self.estimators_
-                ]
-                json.dump(dictionary, fp, indent=2, default=convert_numpy)
+            if output_file:
+                with open(output_file, "w") as fp:
+                    json.dump(dictionary, fp, indent=2, default=convert_numpy)
             else:
-                raise Exception("Forest not yet fitted")
+                return dictionary
+        else:
+            raise Exception("Forest not yet fitted")
 
 
 class JsonTree(BaseEstimator, ClassifierMixin):
