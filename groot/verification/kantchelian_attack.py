@@ -359,7 +359,6 @@ class KantchelianAttack(object):
         try:
             c = self.m.getConstrByName("mislabel")
             self.m.remove(c)
-            self.m.update()
         except Exception:
             pass
         if (not self.binary) or label == 1:
@@ -373,7 +372,6 @@ class KantchelianAttack(object):
                 >= self.pred_threshold + self.guard_val,
                 name="mislabel",
             )
-        self.m.update()
 
         if self.order == np.inf:
             rho = 1
@@ -412,7 +410,6 @@ class KantchelianAttack(object):
                 try:
                     c = self.m.getConstrByName("linf_constr_attr{}".format(key))
                     self.m.remove(c)
-                    self.m.update()
                 except Exception:
                     pass
                 self.m.addConstr(
@@ -420,7 +417,6 @@ class KantchelianAttack(object):
                     <= self.B,
                     name="linf_constr_attr{}".format(key),
                 )
-                self.m.update()
 
         if self.order != np.inf:
             self.m.setObjective(
@@ -505,6 +501,7 @@ class KantchelianAttackMultiClass(object):
         guard_val=GUARD_VAL,
         round_digits=ROUND_DIGITS,
         pred_threshold=0.0,
+        low_memory=False,
         verbose=False,
         n_threads=1
     ):
@@ -513,13 +510,23 @@ class KantchelianAttackMultiClass(object):
 
         self.n_classes = n_classes
         self.order = order
+        self.guard_val = guard_val
+        self.round_digits = round_digits
+        self.pred_threshold = pred_threshold
+        self.low_memory = low_memory
+        self.verbose = verbose
+        self.n_threads = n_threads
 
         # Create all attacker models, this takes quadratic space in terms
         # of n_classes, but speeds up attacks for many samples.
-        one_vs_all_models = [[] for _ in range(self.n_classes)]
+        self.one_vs_all_models = [[] for _ in range(self.n_classes)]
         for i, json_tree in enumerate(json_model):
-            one_vs_all_models[i % n_classes].append(json_tree)
+            self.one_vs_all_models[i % n_classes].append(json_tree)
 
+        if not low_memory:
+            self.__create_cached_attackers()
+
+    def __create_cached_attackers(self):
         self.binary_attackers = []
         for class_label in range(self.n_classes):
             attackers = []
@@ -530,18 +537,19 @@ class KantchelianAttackMultiClass(object):
                 attacker = KantchelianAttack(
                     None,
                     epsilon=None,
-                    order=order,
-                    guard_val=guard_val,
-                    round_digits=round_digits,
-                    pred_threshold=pred_threshold,
-                    verbose=verbose,
-                    n_threads=n_threads,
-                    pos_json_input=one_vs_all_models[class_label],
-                    neg_json_input=one_vs_all_models[other_label],
+                    order=self.order,
+                    guard_val=self.guard_val,
+                    round_digits=self.round_digits,
+                    pred_threshold=self.pred_threshold,
+                    verbose=self.verbose,
+                    n_threads=self.n_threads,
+                    pos_json_input=self.one_vs_all_models[class_label],
+                    neg_json_input=self.one_vs_all_models[other_label],
                 )
 
                 attackers.append(attacker)
             self.binary_attackers.append(attackers)
+        return self.binary_attackers
 
     def optimal_adversarial_example(self, sample, label):
         best_distance = float("inf")
@@ -551,9 +559,27 @@ class KantchelianAttackMultiClass(object):
             if other_label == label:
                 continue
 
-            attacker = self.binary_attackers[label][other_label]
+            # Create new attacker or use a cached attacker
+            if self.low_memory:
+                attacker = KantchelianAttack(
+                    None,
+                    epsilon=None,
+                    order=self.order,
+                    guard_val=self.guard_val,
+                    round_digits=self.round_digits,
+                    pred_threshold=self.pred_threshold,
+                    verbose=self.verbose,
+                    n_threads=self.n_threads,
+                    pos_json_input=self.one_vs_all_models[label],
+                    neg_json_input=self.one_vs_all_models[other_label],
+                )
+            else:
+                attacker = self.binary_attackers[label][other_label]
+
+            # Generate adversarial example on this binary attacker
             adv_example = attacker.optimal_adversarial_example(sample, 1)
 
+            # If this binary attacker example was better than the previous ones, keep it
             if adv_example is not None:
                 distance = np.linalg.norm(sample - adv_example, ord=self.order)
                 if distance < best_distance:
@@ -634,11 +660,13 @@ def attack_json_for_X_y(
     json_filename,
     X,
     y,
+    n_classes=2,
     order=np.inf,
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
     sample_limit=None,
     pred_threshold=0.5,
+    low_memory=False,
     n_threads=8,
     verbose=True,
 ):
@@ -692,15 +720,28 @@ def attack_json_for_X_y(
     X = X[:sample_limit]
     y = y[:sample_limit]
 
-    attack = KantchelianAttack(
-        json_model,
-        guard_val=guard_val,
-        round_digits=round_digits,
-        pred_threshold=pred_threshold,
-        order=order,
-        verbose=verbose,
-        n_threads=n_threads,
-    )
+    if n_classes == 2:
+        attack = KantchelianAttack(
+            json_model,
+            guard_val=guard_val,
+            round_digits=round_digits,
+            pred_threshold=pred_threshold,
+            order=order,
+            verbose=verbose,
+            n_threads=n_threads,
+        )
+    else:
+        attack = KantchelianAttackMultiClass(
+            json_model,
+            n_classes,
+            guard_val=guard_val,
+            round_digits=round_digits,
+            pred_threshold=pred_threshold,
+            order=order,
+            low_memory=low_memory,
+            verbose=verbose,
+            n_threads=n_threads,
+        )
 
     t_0 = time.time()
 
@@ -726,6 +767,7 @@ def optimal_adversarial_example(
     guard_val=GUARD_VAL,
     round_digits=ROUND_DIGITS,
     pred_threshold=0.0,
+    low_memory=False,
     n_threads=8,
     verbose=True,
 ):
@@ -788,6 +830,7 @@ def optimal_adversarial_example(
             round_digits=round_digits,
             pred_threshold=pred_threshold,
             order=order,
+            low_memory=low_memory,
             verbose=verbose,
             n_threads=n_threads,
         )
