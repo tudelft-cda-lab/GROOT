@@ -12,7 +12,7 @@ import numpy as np
 class Model:
     def __init__(self, json_model, n_classes):
         """
-        General model class that exposes a common API for evaluating decision tree (ensemble) models. Usually you won't have to call this constructor manually, instead use `from_json_file`, `from_sklearn` or `from_groot`.
+        General model class that exposes a common API for evaluating decision tree (ensemble) models. Usually you won't have to call this constructor manually, instead use `from_json_file`, `from_sklearn`, `from_treant`, `from_provably_robust_boosting` or `from_groot`.
 
         Parameters
         ----------
