@@ -4,6 +4,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.tree import DecisionTreeClassifier
 
+from groot.verification.kantchelian_attack import KantchelianAttackWrapper
 from groot.util import convert_numpy
 
 import numpy as np
@@ -107,6 +108,24 @@ class Model:
         for sub_tree in json_tree["children"]:
             if sub_tree["nodeid"] == next_node_id:
                 return self.__predict_proba_tree_sample(sub_tree, sample)
+
+    def __get_attack_wrapper(self, attack_name):
+        if attack_name in {"milp", "kantchelian", "gurobi"}:
+            return KantchelianAttackWrapper(self.json_model, self.n_classes)
+        else:
+            raise ValueError(f"Attack '{attack_name}' not supported.")
+
+    def attack_feasibility(self, X, y, attack="milp",order=np.inf, epsilon=0.0):
+        attack_wrapper = self.__get_attack_wrapper(attack)
+        return attack_wrapper.attack_feasibility(X, y, order=order, epsilon=epsilon)
+        
+    def attack_distance(self, X, y, attack="milp", order=np.inf):
+        attack_wrapper = self.__get_attack_wrapper(attack)
+        return attack_wrapper.attack_distance(X, y, order=order)
+
+    def adversarial_examples(self, X, y, attack="milp", order=np.inf):
+        attack_wrapper = self.__get_attack_wrapper(attack)
+        return attack_wrapper.adversarial_examples(X, y, order=order)
 
     def to_json(self, filename, indent=2):
         """
