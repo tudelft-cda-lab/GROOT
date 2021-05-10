@@ -24,6 +24,7 @@ class Model:
         self.json_model = json_model
         self.n_classes = n_classes
     
+
     @staticmethod
     def from_json_file(filename, n_classes):
         """
@@ -45,6 +46,7 @@ class Model:
             json_model = json.load(file)
 
         return Model(json_model, n_classes)
+
 
     @staticmethod
     def from_sklearn(classifier):
@@ -70,6 +72,7 @@ class Model:
         else:
             raise ValueError("Only decision tree, random forest and gradient boosting classifiers are supported, not " + type(classifier))
     
+
     @staticmethod
     def from_groot(classifier):
         """
@@ -88,6 +91,49 @@ class Model:
         json_trees = classifier.to_xgboost_json(output_file=None)
         if not isinstance(json_trees, list):
             json_trees = [json_trees]
+
+        return Model(json_trees, 2)
+
+
+    @staticmethod
+    def from_treant(classifier):
+        """
+        Create a Model instance from a TREANT decision tree.
+
+        Parameters
+        ----------
+        classifier : groot.treant.RobustDecisionTree
+            TREANT model to load.
+
+        Returns
+        -------
+        Model
+            Instantiated Model object.
+        """
+        json_trees = [classifier.to_xgboost_json(output_file=None)]
+
+        return Model(json_trees, 2)
+
+
+    @staticmethod
+    def from_provably_robust_boosting(classifier):
+        """
+        Create a Model instance from a Provably Robust Boosting TreeEnsemble.
+
+        Parameters
+        ----------
+        classifier : groot.provably_robust_boosting.TreeEnsemble
+            Provably Robust Boosting model to load.
+
+        Returns
+        -------
+        Model
+            Instantiated Model object.
+        """
+        json_trees = [
+            tree.get_json_dict(counter_terminal_nodes=-10)[0]
+            for tree in ensemble.trees
+        ]
 
         return Model(json_trees, 2)
 
