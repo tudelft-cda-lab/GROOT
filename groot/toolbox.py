@@ -11,11 +11,36 @@ import numpy as np
 
 class Model:
     def __init__(self, json_model, n_classes):
+        """
+        General model class that exposes a common API for evaluating decision tree (ensemble) models. Usually you won't have to call this constructor manually, instead use `from_json_file`, `from_sklearn` or `from_groot`.
+
+        Parameters
+        ----------
+        json_model : list of dicts
+            List of decision trees encoded as dicts. See the XGBoost JSON format.
+        n_classes : int 
+            Number of classes that this model predicts.
+        """
         self.json_model = json_model
         self.n_classes = n_classes
     
     @staticmethod
     def from_json_file(filename, n_classes):
+        """
+        Create a Model instance from a JSON file.
+
+        Parameters
+        ----------
+        filename : str
+            Path to JSON file that contains a list of decision trees encoded as dicts. See the XGBoost JSON format.
+        n_classes : int
+            Number of classes that this model predicts.
+
+        Returns
+        -------
+        Model
+            Instantiated Model object.
+        """
         with open(filename, "r") as file:
             json_model = json.load(file)
 
@@ -23,6 +48,19 @@ class Model:
 
     @staticmethod
     def from_sklearn(classifier):
+        """
+        Create a Model instance from a Scikit-learn classifier.
+
+        Parameters
+        ----------
+        classifier : DecisionTreeClassifier, RandomForestClassifier or GradientBoostingClassifier
+            Scikit-learn model to load.
+
+        Returns
+        -------
+        Model
+            Instantiated Model object.
+        """
         if isinstance(classifier, DecisionTreeClassifier):
             return _sklearn_tree_to_model(classifier)
         elif isinstance(classifier, RandomForestClassifier):
@@ -34,6 +72,19 @@ class Model:
     
     @staticmethod
     def from_groot(classifier):
+        """
+        Create a Model instance from a GrootTree or GrootRandomForest.
+
+        Parameters
+        ----------
+        classifier : GrootTree or GrootRandomForest
+            GROOT model to load.
+
+        Returns
+        -------
+        Model
+            Instantiated Model object.
+        """
         json_trees = classifier.to_xgboost_json(output_file=None)
         if not isinstance(json_trees, list):
             json_trees = [json_trees]
@@ -110,22 +161,130 @@ class Model:
                 return self.__predict_proba_tree_sample(sub_tree, sample)
 
     def __get_attack_wrapper(self, attack_name):
+        """
+        Return the instantiated attack wrapper for the appropriate attack.
+        """
         if attack_name in {"milp", "kantchelian", "gurobi"}:
             return KantchelianAttackWrapper(self.json_model, self.n_classes)
         else:
             raise ValueError(f"Attack '{attack_name}' not supported.")
 
-    def attack_feasibility(self, X, y, attack="milp",order=np.inf, epsilon=0.0):
+    def attack_feasibility(self, X, y, attack="milp", order=np.inf, epsilon=0.0):
+        """
+        Determine whether an adversarial example is feasible for each sample given the maximum perturbation radius epsilon.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples to attack.
+        y : array-like of shape (n_samples,)
+            True labels for the samples.
+        attack : {"milp",}, optional
+            The attack to use. Currently only the optimal MILP attack is supported.
+        order : {0, 1, 2, inf}, optional
+            L-norm order to use. See numpy documentation of more explanation.
+        epsilon : float, optional
+            Maximum distance by which samples can move.
+        
+        Returns
+        -------
+        ndarray of shape (n_samples,) of booleans
+            Vector of True/False. Whether an adversarial example is feasible.
+        """
         attack_wrapper = self.__get_attack_wrapper(attack)
         return attack_wrapper.attack_feasibility(X, y, order=order, epsilon=epsilon)
         
     def attack_distance(self, X, y, attack="milp", order=np.inf):
+        """
+        Determine the perturbation distance for each sample to make an adversarial example.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples to attack.
+        y : array-like of shape (n_samples,)
+            True labels for the samples.
+        attack : {"milp",}, optional
+            The attack to use. Currently only the optimal MILP attack is supported.
+        order : {0, 1, 2, inf}, optional
+            L-norm order to use. See numpy documentation of more explanation.
+        
+        Returns
+        -------
+        ndarray of shape (n_samples,) of floats
+            Distances to create adversarial examples.
+        """
         attack_wrapper = self.__get_attack_wrapper(attack)
         return attack_wrapper.attack_distance(X, y, order=order)
 
     def adversarial_examples(self, X, y, attack="milp", order=np.inf):
+        """
+        Create adversarial examples for each input sample.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples to attack.
+        y : array-like of shape (n_samples,)
+            True labels for the samples.
+        attack : {"milp",}, optional
+            The attack to use. Currently only the optimal MILP attack is supported.
+        order : {0, 1, 2, inf}, optional
+            L-norm order to use. See numpy documentation of more explanation.
+        
+        Returns
+        -------
+        ndarray of shape (n_samples, n_features)
+            Adversarial examples.
+        """
         attack_wrapper = self.__get_attack_wrapper(attack)
         return attack_wrapper.adversarial_examples(X, y, order=order)
+
+    def accuracy(self, X, y):
+        """
+        Determine the accuracy of the model on unperturbed samples.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Input samples.
+        y : array-like of shape (n_samples,)
+            True labels.
+
+        Returns
+        -------
+        float
+            Accuracy on unperturbed samples.
+        """
+        attacks_feasible = self.attack_feasibility(X, y, attack, order, epsilon)
+        return np.sum(1 - attacks_feasible) / len(attacks_feasible)
+        y_pred = self.predict(X)
+        return np.sum(y_pred == y) / len(y)
+
+    def adversarial_accuracy(self, X, y, attack="milp", order=np.inf, epsilon=0.0):
+        """
+        Determine the accuracy against adversarial examples within maximum perturbation radius epsilon.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples to attack.
+        y : array-like of shape (n_samples,)
+            True labels for the samples.
+        attack : {"milp",}, optional
+            The attack to use. Currently only the optimal MILP attack is supported.
+        order : {0, 1, 2, inf}, optional
+            L-norm order to use. See numpy documentation of more explanation.
+        epsilon : float, optional
+            Maximum distance by which samples can move.
+        
+        Returns
+        -------
+        float
+            Adversarial accuracy given the maximum perturbation radius epsilon.
+        """
+        attacks_feasible = self.attack_feasibility(X, y, attack, order, epsilon)
+        return np.sum(1 - attacks_feasible) / len(attacks_feasible)
 
     def to_json(self, filename, indent=2):
         """
@@ -241,6 +400,9 @@ def _sklearn_forest_to_model(forest: RandomForestClassifier):
 
 
 def _sigmoid_inverse(proba: float):
+    """
+    Invert the sigmoid function that is used in the Scikit-learn binary gradient boosting classifier.
+    """
     return np.log(proba / (1 - proba))
 
 
