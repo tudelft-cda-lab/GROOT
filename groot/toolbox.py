@@ -2,6 +2,7 @@ import json
 
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from groot.verification.kantchelian_attack import KantchelianAttackWrapper
@@ -76,11 +77,11 @@ class Model:
     @staticmethod
     def from_groot(classifier):
         """
-        Create a Model instance from a GrootTree or GrootRandomForest.
+        Create a Model instance from a GrootTree, GrootRandomForest or GROOT OneVsRestClassifier.
 
         Parameters
         ----------
-        classifier : GrootTree or GrootRandomForest
+        classifier : GrootTree, GrootRandomForest or OneVsRestClassifier (of GROOT models)
             GROOT model to load.
 
         Returns
@@ -88,6 +89,22 @@ class Model:
         Model
             Instantiated Model object.
         """
+        if isinstance(classifier, OneVsRestClassifier):
+            one_vs_all_models = []
+            for model in classifier.estimators_:
+                json_model = model.to_xgboost_json(output_file=None)
+
+                if not isinstance(json_model, list):
+                    json_model = [json_model]
+                
+                one_vs_all_models.append(json_model)
+            
+            json_trees = []
+            for grouped_models in zip(*one_vs_all_models):
+                json_trees.extend(grouped_models)
+
+            return Model(json_trees, classifier.n_classes_)
+
         json_trees = classifier.to_xgboost_json(output_file=None)
         if not isinstance(json_trees, list):
             json_trees = [json_trees]

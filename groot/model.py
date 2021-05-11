@@ -37,12 +37,12 @@ class Node:
         assert self.left_child == _TREE_LEAF
         assert self.right_child == _TREE_LEAF
 
-        n_samples_in_leaf = self.value[0] + self.value[1]
+        n_samples_in_leaf = np.sum(self.value)
         if n_samples_in_leaf == 0:
             # By default predict malicious
-            return 1.0
+            return [0.0, 1.0]
         else:
-            return self.value[1] / n_samples_in_leaf
+            return self.value / n_samples_in_leaf
 
     def pretty_print(self, depth=0):
         indentation = depth * "  "
@@ -1715,7 +1715,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         X = check_array(X)
 
-        return np.round(self.predict_proba(X))
+        return np.round(self.predict_proba(X)[:, 1])
 
     def to_string(self):
         result = ""
@@ -1960,8 +1960,6 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             )
             for seed in seeds
         )
-        # self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads")(
-        #     delayed(_build_tree_parallel)(tree, X, y, indices, seed, self.verbose, n_bootstrap_samples) for seed in seeds)
 
     def predict_proba(self, X):
         """
@@ -1979,7 +1977,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
         proba : array of shape (n_samples,)
             The probability for each input sample of being malicious.
         """
-        probability_sum = np.zeros(len(X))
+        probability_sum = np.zeros((self.n_samples_, 2))
 
         for tree in self.estimators_:
             probabilities = tree.predict_proba(X)
@@ -2003,7 +2001,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             The predicted class labels
         """
 
-        return np.round(self.predict_proba(X))
+        return np.round(self.predict_proba(X)[:, 1])
 
     def __str__(self):
         result = ""
