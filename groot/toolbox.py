@@ -232,7 +232,7 @@ class Model:
         else:
             raise ValueError(f"Attack '{attack_name}' not supported.")
 
-    def attack_feasibility(self, X, y, attack="milp", order=np.inf, epsilon=0.0):
+    def attack_feasibility(self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}):
         """
         Determine whether an adversarial example is feasible for each sample given the maximum perturbation radius epsilon.
 
@@ -257,7 +257,7 @@ class Model:
         attack_wrapper = self.__get_attack_wrapper(attack)
         return attack_wrapper.attack_feasibility(X, y, order=order, epsilon=epsilon)
         
-    def attack_distance(self, X, y, attack="milp", order=np.inf):
+    def attack_distance(self, X, y, attack="milp", order=np.inf, options={}):
         """
         Determine the perturbation distance for each sample to make an adversarial example.
 
@@ -280,7 +280,7 @@ class Model:
         attack_wrapper = self.__get_attack_wrapper(attack)
         return attack_wrapper.attack_distance(X, y, order=order)
 
-    def adversarial_examples(self, X, y, attack="milp", order=np.inf):
+    def adversarial_examples(self, X, y, attack="milp", order=np.inf, options={}):
         """
         Create adversarial examples for each input sample.
 
@@ -319,12 +319,10 @@ class Model:
         float
             Accuracy on unperturbed samples.
         """
-        attacks_feasible = self.attack_feasibility(X, y, attack, order, epsilon)
-        return np.sum(1 - attacks_feasible) / len(attacks_feasible)
         y_pred = self.predict(X)
         return np.sum(y_pred == y) / len(y)
 
-    def adversarial_accuracy(self, X, y, attack="milp", order=np.inf, epsilon=0.0):
+    def adversarial_accuracy(self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}):
         """
         Determine the accuracy against adversarial examples within maximum perturbation radius epsilon.
 
@@ -346,7 +344,7 @@ class Model:
         float
             Adversarial accuracy given the maximum perturbation radius epsilon.
         """
-        attacks_feasible = self.attack_feasibility(X, y, attack, order, epsilon)
+        attacks_feasible = self.attack_feasibility(X, y, attack, order, epsilon, options)
         return np.sum(1 - attacks_feasible) / len(attacks_feasible)
 
     def to_json(self, filename, indent=2):
