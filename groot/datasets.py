@@ -46,7 +46,7 @@ def epsilon_attacker(n_features, radius=0.1, max_depth=4):
 
 def load_adult():
     # Refered to as 'census'
-    data = fetch_openml("adult", version=2, return_X_y=False)
+    data = fetch_openml("adult", version=2, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
     is_numeric = [
@@ -80,7 +80,7 @@ def load_adult():
 
 def load_wine():
     # Refered to as 'wine'
-    data = fetch_openml("wine_quality", version=1, return_X_y=False)
+    data = fetch_openml("wine_quality", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -98,7 +98,7 @@ def load_wine():
 
 def load_credit():
     # Refered to as 'credit'
-    data = fetch_openml("default_credit_card_p", version=1, return_X_y=False)
+    data = fetch_openml("default_credit_card_p", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = np.copy(X[:, 21]).astype(int)  # Extract target variable
 
@@ -144,7 +144,7 @@ def load_credit():
 
 def load_diabetes():
     # Refered to as 'diabetes'
-    data = fetch_openml("diabetes", version=1, return_X_y=False)
+    data = fetch_openml("diabetes", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -163,7 +163,7 @@ def load_diabetes():
 
 def load_cod_rna():
     # Refered to as 'cod-rna'
-    data = fetch_openml("codrnaNorm", version=1, return_X_y=False)
+    data = fetch_openml("codrnaNorm", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -183,7 +183,7 @@ def load_cod_rna():
 
 def load_ionosphere():
     # Refered to as 'ionosphere'
-    data = fetch_openml("ionosphere", version=1, return_X_y=False)
+    data = fetch_openml("ionosphere", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -237,7 +237,7 @@ def load_ionosphere():
 
 def load_ijcnn():
     # Refered to as 'ijcnn'
-    data = fetch_openml("ijcnn", version=1, return_X_y=False)
+    data = fetch_openml("ijcnn", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -280,7 +280,7 @@ def load_ijcnn():
 
 def load_spambase():
     # Refered to as 'spambase'
-    data = fetch_openml("spambase", version=1, return_X_y=False)
+    data = fetch_openml("spambase", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -357,7 +357,7 @@ def load_spambase():
 
 def load_diabetes():
     # Refered to as 'diabetes'
-    data = fetch_openml("diabetes", version=1, return_X_y=False)
+    data = fetch_openml("diabetes", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -386,7 +386,7 @@ def load_diabetes():
 
 def load_balance_scale():
     # Refered to as 'balance-scale'
-    data = fetch_openml("balance-scale", version=2, return_X_y=False)
+    data = fetch_openml("balance-scale", version=2, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -415,7 +415,7 @@ def load_balance_scale():
 
 def load_banknote_authentication():
     # Refered to as 'banknote-authentication'
-    data = fetch_openml("banknote-authentication", version=1, return_X_y=False)
+    data = fetch_openml("banknote-authentication", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -439,7 +439,7 @@ def load_banknote_authentication():
 
 def load_cylinder_bands():
     # Refered to as 'cylinder-bands'
-    data = fetch_openml("cylinder-bands", version=2, return_X_y=False)
+    data = fetch_openml("cylinder-bands", version=2, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -463,7 +463,7 @@ def load_cylinder_bands():
 
 def load_blood_transfusion():
     # Refered to as 'blood-transfusion'
-    data = fetch_openml("blood-transfusion-service-center", version=1, return_X_y=False)
+    data = fetch_openml("blood-transfusion-service-center", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -483,7 +483,7 @@ def load_blood_transfusion():
 
 def load_climate_model_simulation():
     # Refered to as 'climate-model-simulation'
-    data = fetch_openml("climate-model-simulation-crashes", version=4, return_X_y=False)
+    data = fetch_openml("climate-model-simulation-crashes", version=4, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -502,7 +502,7 @@ def load_climate_model_simulation():
 
 def load_sonar():
     # Refered to as 'sonar'
-    data = fetch_openml("sonar", version=1, return_X_y=False)
+    data = fetch_openml("sonar", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -522,7 +522,7 @@ def load_sonar():
 
 def load_haberman():
     # Refered to as 'haberman'
-    data = fetch_openml("haberman", version=1, return_X_y=False)
+    data = fetch_openml("haberman", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -542,7 +542,7 @@ def load_haberman():
 
 def load_parkinsons():
     # Refered to as 'parkinsons'
-    data = fetch_openml("parkinsons", version=1, return_X_y=False)
+    data = fetch_openml("parkinsons", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -562,7 +562,7 @@ def load_parkinsons():
 
 def load_planning_relax():
     # Refered to as 'planning-relax'
-    data = fetch_openml("planning-relax", version=1, return_X_y=False)
+    data = fetch_openml("planning-relax", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -582,7 +582,7 @@ def load_planning_relax():
 
 def load_SPECTF():
     # Refered to as 'SPECTF'
-    data = fetch_openml("SPECTF", version=2, return_X_y=False)
+    data = fetch_openml("SPECTF", version=2, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -601,7 +601,7 @@ def load_SPECTF():
 
 def load_breast_cancer():
     # Refered to as 'breast-cancer'
-    data = fetch_openml("breast-w", version=1, return_X_y=False)
+    data = fetch_openml("breast-w", version=1, return_X_y=False, as_frame=False)
 
     X = data.data
     y = data.target
@@ -624,7 +624,7 @@ def load_breast_cancer():
 
 def load_mnist():
     # Refered to as 'MNIST'
-    data = fetch_openml("mnist_784", version=1, return_X_y=False)
+    data = fetch_openml("mnist_784", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
@@ -643,7 +643,7 @@ def load_mnist():
 
 def load_fashion_mnist():
     # Refered to as 'MNIST'
-    data = fetch_openml("Fashion-MNIST", version=1, return_X_y=False)
+    data = fetch_openml("Fashion-MNIST", version=1, return_X_y=False, as_frame=False)
     X = data.data
     y = data.target
 
