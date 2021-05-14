@@ -681,8 +681,9 @@ class KantchelianAttackWrapper(AttackWrapper):
         return attack
     
     def attack_feasibility(self, X, y, order, epsilon, options={}):
-        options = DEFAULT_OPTIONS.copy()
-        options.update(options)
+        default_options = DEFAULT_OPTIONS.copy()
+        default_options.update(options)
+        options = default_options
         options["epsilon"] = epsilon
 
         attack = self.__get_attacker(order, options)
@@ -702,8 +703,9 @@ class KantchelianAttackWrapper(AttackWrapper):
         return np.array(attack_feasible)
 
     def adversarial_examples(self, X, y, order, options={}):
-        options = DEFAULT_OPTIONS.copy()
-        options.update(options)
+        default_options = DEFAULT_OPTIONS.copy()
+        default_options.update(options)
+        options = default_options
 
         attack = self.__get_attacker(order, options)
 
