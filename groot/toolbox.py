@@ -255,7 +255,7 @@ class Model:
             Vector of True/False. Whether an adversarial example is feasible.
         """
         attack_wrapper = self.__get_attack_wrapper(attack)
-        return attack_wrapper.attack_feasibility(X, y, order=order, epsilon=epsilon)
+        return attack_wrapper.attack_feasibility(X, y, order=order, epsilon=epsilon, options=options)
         
     def attack_distance(self, X, y, attack="milp", order=np.inf, options={}):
         """
@@ -278,7 +278,7 @@ class Model:
             Distances to create adversarial examples.
         """
         attack_wrapper = self.__get_attack_wrapper(attack)
-        return attack_wrapper.attack_distance(X, y, order=order)
+        return attack_wrapper.attack_distance(X, y, order=order, options=options)
 
     def adversarial_examples(self, X, y, attack="milp", order=np.inf, options={}):
         """
@@ -301,7 +301,7 @@ class Model:
             Adversarial examples.
         """
         attack_wrapper = self.__get_attack_wrapper(attack)
-        return attack_wrapper.adversarial_examples(X, y, order=order)
+        return attack_wrapper.adversarial_examples(X, y, order=order, options=options)
 
     def accuracy(self, X, y):
         """

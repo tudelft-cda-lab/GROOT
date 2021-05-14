@@ -550,6 +550,7 @@ class KantchelianAttackMultiClass(object):
             for other_label in range(self.n_classes):
                 if class_label == other_label:
                     attackers.append(None)
+                    continue
 
                 attacker = KantchelianAttack(
                     None,
