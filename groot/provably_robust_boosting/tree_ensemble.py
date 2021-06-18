@@ -127,7 +127,7 @@ class Tree:
         return s
 
     def __eq__(self, other):
-        """ Overrides the default equality comparison operator == """
+        """Overrides the default equality comparison operator =="""
         if isinstance(other, Tree):
             return (
                 self.left == other.left
@@ -161,7 +161,7 @@ class Tree:
         return [curr_node] + tree_lst_left + tree_lst_right  # concatenate both lists
 
     def to_array_contiguous(self):
-        """ Make ids correspond to node positions in the array. """
+        """Make ids correspond to node positions in the array."""
         nodes = np.array(self.to_list())
         max_node_id = int(nodes[:, 0].max())
         nodes_new = np.zeros([max_node_id + 1, len(nodes[0])])
@@ -180,7 +180,7 @@ class Tree:
 
     def predict_native(self, X):
         def predict_recursive(curr_tree, idx):
-            """ To avoid copying the whole matrix X many times, we use global indices `idx` to directly use
+            """To avoid copying the whole matrix X many times, we use global indices `idx` to directly use
             the single matrix X as a closure variable. The only overhead is that the threshold comparison is done
             for *all* examples.
 
@@ -458,7 +458,7 @@ class TreeEnsemble:
 
     def add_weak_learner(self, tree, apply_lr=True):
         def adjust_lr(tree, lr):
-            """ Recursively goes over all node values and scales the weights by the learning rate. """
+            """Recursively goes over all node values and scales the weights by the learning rate."""
             tree.w_l, tree.w_r = tree.w_l * lr, tree.w_r * lr
             if tree.node_list != []:  # i.e. if root
                 for node_tuple in tree.node_list:

@@ -146,14 +146,10 @@ class NumericalNode(Node):
 
     def to_xgboost_json(self, node_id, depth):
         left_id = node_id + 1
-        left_dict, new_node_id = self.left_child.to_xgboost_json(
-            left_id, depth + 1
-        )
+        left_dict, new_node_id = self.left_child.to_xgboost_json(left_id, depth + 1)
 
         right_id = new_node_id + 1
-        right_dict, new_node_id = self.right_child.to_xgboost_json(
-            right_id, depth + 1
-        )
+        right_dict, new_node_id = self.right_child.to_xgboost_json(right_id, depth + 1)
 
         return (
             {
@@ -292,7 +288,13 @@ def _split_left_right_fast(self, X, y, rule, feature, inc, dec, chen_heuristic):
 
 @jit(nopython=True, nogil=NOGIL)
 def _scan_numerical_feature_fast(
-    samples, y, dec, inc, left_bound, right_bound, chen_heuristic,
+    samples,
+    y,
+    dec,
+    inc,
+    left_bound,
+    right_bound,
+    chen_heuristic,
 ):
     # TODO: so far we assume attack_mode is a tuple (dec, inc), and both
     # classes can move
@@ -849,8 +851,8 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         """
-        Build a robust and fair binary decision tree from the training set 
-        (X, y) using greedy splitting according to the weighted adversarial 
+        Build a robust and fair binary decision tree from the training set
+        (X, y) using greedy splitting according to the weighted adversarial
         Gini impurity and fairness impurity.
 
         Parameters
@@ -859,7 +861,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             The training samples.
         y : array-like of shape (n_samples,)
             The class labels as integers 0 (benign) or 1 (malicious)
-        
+
         Returns
         -------
         self : object
@@ -913,8 +915,8 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
     def __fit_recursive(self, X, y, constraints, depth=0):
         """
-        Recursively fit the decision tree on the training dataset (X, y). 
-        
+        Recursively fit the decision tree on the training dataset (X, y).
+
         The constraints make sure that leaves are well formed, e.g. don't
         cross an earlier split. Stop when the depth has reached self.max_depth,
         when a leaf is pure or when the leaf contains too few samples.
@@ -1367,12 +1369,19 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         else:
             n_categories = self.n_categories_[feature]
             return self.__scan_feature_categorical(
-                samples, y, attack_mode, n_categories, constraint,
+                samples,
+                y,
+                attack_mode,
+                n_categories,
+                constraint,
             )
 
     def __initialize_scan(self, samples, y, attack_mode):
         queue = []
-        counts = np.array([[0, 0], [0, 0], [0, 0], [0, 0]], dtype=np.int64,)
+        counts = np.array(
+            [[0, 0], [0, 0], [0, 0], [0, 0]],
+            dtype=np.int64,
+        )
 
         if attack_mode == "":
             counts[RIGHT] = np.bincount(y)
@@ -1422,9 +1431,15 @@ class GrootTree(BaseEstimator, ClassifierMixin):
                 if label == 0 and self.one_adversarial_class:
                     queue.append((sample, label, RIGHT, LEFT))
                 else:
-                    queue.append((sample - attack_mode, label, RIGHT, RIGHT_INTERSECT),)
-                    queue.append((sample, label, RIGHT_INTERSECT, LEFT_INTERSECT),)
-                    queue.append((sample + attack_mode, label, LEFT_INTERSECT, LEFT),)
+                    queue.append(
+                        (sample - attack_mode, label, RIGHT, RIGHT_INTERSECT),
+                    )
+                    queue.append(
+                        (sample, label, RIGHT_INTERSECT, LEFT_INTERSECT),
+                    )
+                    queue.append(
+                        (sample + attack_mode, label, LEFT_INTERSECT, LEFT),
+                    )
 
         elif isinstance(attack_mode, tuple):
             counts[RIGHT] = np.bincount(y)
@@ -1436,7 +1451,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
                     queue.append(
                         (sample - attack_mode[0], label, RIGHT, RIGHT_INTERSECT),
                     )
-                    queue.append((sample, label, RIGHT_INTERSECT, LEFT_INTERSECT),)
+                    queue.append(
+                        (sample, label, RIGHT_INTERSECT, LEFT_INTERSECT),
+                    )
                     queue.append(
                         (sample + attack_mode[1], label, LEFT_INTERSECT, LEFT),
                     )
@@ -1447,7 +1464,12 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         return queue, counts
 
     def __scan_feature_numerical(
-        self, samples, y, attack_mode, left_bound, right_bound,
+        self,
+        samples,
+        y,
+        attack_mode,
+        left_bound,
+        right_bound,
     ):
         """
         Scan a numerical feature for the optimal split by identifying every
@@ -1504,7 +1526,12 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         return True, best_score, best_split
 
     def __scan_feature_categorical(
-        self, samples, y, attack_mode, n_categories, ignore_categories,
+        self,
+        samples,
+        y,
+        attack_mode,
+        n_categories,
+        ignore_categories,
     ):
         """
         Scan a categorical feature for the optimal split either by brute
@@ -1624,7 +1651,11 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         )
 
     def __score_categorical_split(
-        self, left_categories, right_categories, attack_mode_matrix, categories_counts,
+        self,
+        left_categories,
+        right_categories,
+        attack_mode_matrix,
+        categories_counts,
     ):
         # Count 0 and 1 labels on each side of the split
         left_counts = np.sum(categories_counts[left_categories], axis=0)
@@ -1699,7 +1730,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         """
         Predict the classes of the input samples X.
 
-        The predicted class is the most frequently occuring class label in a 
+        The predicted class is the most frequently occuring class label in a
         leaf.
 
         Parameters
@@ -1904,8 +1935,8 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
     def fit(self, X, y):
         """
-        Build a robust and fair random forest of binary decision trees from 
-        the training set (X, y) using greedy splitting according to the 
+        Build a robust and fair random forest of binary decision trees from
+        the training set (X, y) using greedy splitting according to the
         adversarial Gini combined with fair gini under the given attack model.
 
         Parameters
@@ -1914,7 +1945,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             The training samples.
         y : array-like of shape (n_samples,)
             The class labels as integers 0 (benign) or 1 (malicious)
-        
+
         Returns
         -------
         self : object
@@ -1994,7 +2025,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
         ----------
         X : array-like of shape (n_samples, n_features)
             The input samples to predict.
-            
+
         Returns
         -------
         y : array-like of shape (n_samples,)
@@ -2029,9 +2060,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
 
     def to_xgboost_json(self, output_file="forest.json"):
         if hasattr(self, "estimators_"):
-            dictionary = [
-                tree.to_xgboost_json(None) for tree in self.estimators_
-            ]
+            dictionary = [tree.to_xgboost_json(None) for tree in self.estimators_]
 
             if output_file:
                 with open(output_file, "w") as fp:
@@ -2083,7 +2112,7 @@ class JsonTree(BaseEstimator, ClassifierMixin):
         """
         Predict the classes of the input samples X.
 
-        The predicted class is the most frequently occuring class label in a 
+        The predicted class is the most frequently occuring class label in a
         leaf.
 
         Parameters

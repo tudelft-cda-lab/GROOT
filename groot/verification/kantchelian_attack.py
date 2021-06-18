@@ -100,7 +100,9 @@ class KantchelianAttack(object):
         verbose=False,
         n_threads=1,
     ):
-        assert epsilon is None or order == np.inf, "feasibility epsilon can only be used with order inf"
+        assert (
+            epsilon is None or order == np.inf
+        ), "feasibility epsilon can only be used with order inf"
 
         self.pred_threshold = pred_threshold
         self.epsilon = epsilon
@@ -209,13 +211,11 @@ class KantchelianAttack(object):
         # Most datasets require a very low tolerance
         self.m.setParam("IntFeasTol", 1e-9)
         self.m.setParam("FeasibilityTol", 1e-9)
-        
+
         self.P = self.m.addVars(len(self.node_list), vtype=GRB.BINARY, name="p")
         self.L = self.m.addVars(len(self.leaf_v_list), lb=0, ub=1, name="l")
         if epsilon:
-            self.B = self.m.addVar(
-                name="b", lb=0.0, ub=self.epsilon - 0.0001
-            )
+            self.B = self.m.addVar(name="b", lb=0.0, ub=self.epsilon - 0.0001)
         elif self.order == np.inf:
             self.B = self.m.addVar(name="b")
         self.llist = [self.L[key] for key in range(len(self.L))]
@@ -290,9 +290,16 @@ class KantchelianAttack(object):
 
     def attack_feasible(self, sample, label):
         if self.binary:
-            pred = 1 if self.check(sample, self.json_model) >= self.pred_threshold else 0
+            pred = (
+                1 if self.check(sample, self.json_model) >= self.pred_threshold else 0
+            )
         else:
-            pred = 1 if self.check(sample, self.pos_json_input) >= self.check(sample, self.neg_json_input) else 0
+            pred = (
+                1
+                if self.check(sample, self.pos_json_input)
+                >= self.check(sample, self.neg_json_input)
+                else 0
+            )
         x = np.copy(sample)
 
         if pred != label:
@@ -307,7 +314,8 @@ class KantchelianAttack(object):
             pass
         if (not self.binary) or label == 1:
             self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold - self.guard_val,
+                LinExpr(self.leaf_v_list, self.llist)
+                <= self.pred_threshold - self.guard_val,
                 name="mislabel",
             )
         else:
@@ -358,9 +366,16 @@ class KantchelianAttack(object):
 
     def optimal_adversarial_example(self, sample, label):
         if self.binary:
-            pred = 1 if self.check(sample, self.json_model) >= self.pred_threshold else 0
+            pred = (
+                1 if self.check(sample, self.json_model) >= self.pred_threshold else 0
+            )
         else:
-            pred = 1 if self.check(sample, self.pos_json_input) >= self.check(sample, self.neg_json_input) else 0
+            pred = (
+                1
+                if self.check(sample, self.pos_json_input)
+                >= self.check(sample, self.neg_json_input)
+                else 0
+            )
         x = np.copy(sample)
 
         if pred != label:
@@ -376,7 +391,8 @@ class KantchelianAttack(object):
             pass
         if (not self.binary) or label == 1:
             self.m.addConstr(
-                LinExpr(self.leaf_v_list, self.llist) <= self.pred_threshold - self.guard_val,
+                LinExpr(self.leaf_v_list, self.llist)
+                <= self.pred_threshold - self.guard_val,
                 name="mislabel",
             )
         else:
@@ -517,12 +533,14 @@ class KantchelianAttackMultiClass(object):
         pred_threshold=0.0,
         low_memory=False,
         verbose=False,
-        n_threads=1
+        n_threads=1,
     ):
         if n_classes <= 2:
-            raise ValueError('multiclass attack must be used when number of class > 2')
+            raise ValueError("multiclass attack must be used when number of class > 2")
 
-        assert epsilon is None or order == np.inf, "feasibility epsilon can only be used with order inf"
+        assert (
+            epsilon is None or order == np.inf
+        ), "feasibility epsilon can only be used with order inf"
 
         self.n_classes = n_classes
         self.order = order
@@ -605,8 +623,10 @@ class KantchelianAttackMultiClass(object):
                     best_distance = distance
 
         if best_adv_example is None:
-            raise Exception("No adversarial example found, does your model predict a constant value?")
-        
+            raise Exception(
+                "No adversarial example found, does your model predict a constant value?"
+            )
+
         return best_adv_example
 
     def attack_feasible(self, sample, label):
@@ -649,6 +669,7 @@ DEFAULT_OPTIONS = {
     "n_threads": 1,
 }
 
+
 class KantchelianAttackWrapper(AttackWrapper):
     def __init__(self, json_model, n_classes):
         self.json_model = json_model
@@ -680,7 +701,7 @@ class KantchelianAttackWrapper(AttackWrapper):
                 n_threads=options["n_threads"],
             )
         return attack
-    
+
     def attack_feasibility(self, X, y, order, epsilon, options={}):
         default_options = DEFAULT_OPTIONS.copy()
         default_options.update(options)

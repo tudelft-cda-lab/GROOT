@@ -10,6 +10,7 @@ from groot.util import convert_numpy
 
 import numpy as np
 
+
 class Model:
     def __init__(self, json_model, n_classes):
         """
@@ -19,12 +20,11 @@ class Model:
         ----------
         json_model : list of dicts
             List of decision trees encoded as dicts. See the XGBoost JSON format.
-        n_classes : int 
+        n_classes : int
             Number of classes that this model predicts.
         """
         self.json_model = json_model
         self.n_classes = n_classes
-    
 
     @staticmethod
     def from_json_file(filename, n_classes):
@@ -48,7 +48,6 @@ class Model:
 
         return Model(json_model, n_classes)
 
-
     @staticmethod
     def from_sklearn(classifier):
         """
@@ -71,8 +70,10 @@ class Model:
         elif isinstance(classifier, GradientBoostingClassifier):
             return _sklearn_booster_to_model(classifier)
         else:
-            raise ValueError("Only decision tree, random forest and gradient boosting classifiers are supported, not " + type(classifier))
-    
+            raise ValueError(
+                "Only decision tree, random forest and gradient boosting classifiers are supported, not "
+                + type(classifier)
+            )
 
     @staticmethod
     def from_groot(classifier):
@@ -96,9 +97,9 @@ class Model:
 
                 if not isinstance(json_model, list):
                     json_model = [json_model]
-                
+
                 one_vs_all_models.append(json_model)
-            
+
             json_trees = []
             for grouped_models in zip(*one_vs_all_models):
                 json_trees.extend(grouped_models)
@@ -110,7 +111,6 @@ class Model:
             json_trees = [json_trees]
 
         return Model(json_trees, 2)
-
 
     @staticmethod
     def from_treant(classifier):
@@ -131,7 +131,6 @@ class Model:
 
         return Model(json_trees, 2)
 
-
     @staticmethod
     def from_provably_robust_boosting(classifier):
         """
@@ -148,13 +147,11 @@ class Model:
             Instantiated Model object.
         """
         json_trees = [
-            tree.get_json_dict(counter_terminal_nodes=-10)[0]
-            for tree in ensemble.trees
+            tree.get_json_dict(counter_terminal_nodes=-10)[0] for tree in ensemble.trees
         ]
 
         return Model(json_trees, 2)
 
-    
     def predict(self, X):
         """
         Predict classes for some samples. The raw prediction values are turned into class labels.
@@ -175,11 +172,10 @@ class Model:
         else:
             return np.argmax(prediction_values, axis=1)
 
-
     def decision_function(self, X):
         """
         Compute prediction values for some samples. These values are the sum of leaf values in which the samples end up.
-        
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -201,11 +197,12 @@ class Model:
             for sample in X:
                 class_values = np.zeros(self.n_classes)
                 for i, tree in enumerate(self.json_model):
-                    class_values[i % self.n_classes] += self.__predict_proba_tree_sample(tree, sample)
+                    class_values[
+                        i % self.n_classes
+                    ] += self.__predict_proba_tree_sample(tree, sample)
                 values.append(class_values)
-        
-        return np.array(values)
 
+        return np.array(values)
 
     def __predict_proba_tree_sample(self, json_tree, sample):
         """
@@ -213,7 +210,7 @@ class Model:
         """
         if "leaf" in json_tree:
             return json_tree["leaf"]
-        
+
         if sample[json_tree["split"]] <= json_tree["split_condition"]:
             next_node_id = json_tree["yes"]
         else:
@@ -232,7 +229,9 @@ class Model:
         else:
             raise ValueError(f"Attack '{attack_name}' not supported.")
 
-    def attack_feasibility(self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}):
+    def attack_feasibility(
+        self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}
+    ):
         """
         Determine whether an adversarial example is feasible for each sample given the maximum perturbation radius epsilon.
 
@@ -248,15 +247,17 @@ class Model:
             L-norm order to use. See numpy documentation of more explanation.
         epsilon : float, optional
             Maximum distance by which samples can move.
-        
+
         Returns
         -------
         ndarray of shape (n_samples,) of booleans
             Vector of True/False. Whether an adversarial example is feasible.
         """
         attack_wrapper = self.__get_attack_wrapper(attack)
-        return attack_wrapper.attack_feasibility(X, y, order=order, epsilon=epsilon, options=options)
-        
+        return attack_wrapper.attack_feasibility(
+            X, y, order=order, epsilon=epsilon, options=options
+        )
+
     def attack_distance(self, X, y, attack="milp", order=np.inf, options={}):
         """
         Determine the perturbation distance for each sample to make an adversarial example.
@@ -271,7 +272,7 @@ class Model:
             The attack to use. Currently only the optimal MILP attack is supported.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
-        
+
         Returns
         -------
         ndarray of shape (n_samples,) of floats
@@ -294,7 +295,7 @@ class Model:
             The attack to use. Currently only the optimal MILP attack is supported.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
-        
+
         Returns
         -------
         ndarray of shape (n_samples, n_features)
@@ -322,7 +323,9 @@ class Model:
         y_pred = self.predict(X)
         return np.sum(y_pred == y) / len(y)
 
-    def adversarial_accuracy(self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}):
+    def adversarial_accuracy(
+        self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}
+    ):
         """
         Determine the accuracy against adversarial examples within maximum perturbation radius epsilon.
 
@@ -338,13 +341,15 @@ class Model:
             L-norm order to use. See numpy documentation of more explanation.
         epsilon : float, optional
             Maximum distance by which samples can move.
-        
+
         Returns
         -------
         float
             Adversarial accuracy given the maximum perturbation radius epsilon.
         """
-        attacks_feasible = self.attack_feasibility(X, y, attack, order, epsilon, options)
+        attacks_feasible = self.attack_feasibility(
+            X, y, attack, order, epsilon, options
+        )
         return np.sum(1 - attacks_feasible) / len(attacks_feasible)
 
     def to_json(self, filename, indent=2):
@@ -385,7 +390,9 @@ def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1, learning_ra
                 class_counts = value[node_id][0]
 
                 # Map the prediction probability to a value in the range [-1, 1]
-                leaf_value = (class_counts[one_vs_all_class] / np.sum(class_counts)) * 2 - 1
+                leaf_value = (
+                    class_counts[one_vs_all_class] / np.sum(class_counts)
+                ) * 2 - 1
                 return {
                     "nodeid": node_id,
                     "leaf": leaf_value,
@@ -430,7 +437,9 @@ def _sklearn_tree_to_model(tree: DecisionTreeClassifier):
     else:
         json_trees = []
         for class_label in range(tree.n_classes_):
-            json_tree = _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=class_label)
+            json_tree = _sklearn_tree_to_dict(
+                tree, classifier=True, one_vs_all_class=class_label
+            )
             json_trees.append(json_tree)
 
     return Model(json_trees, tree.n_classes_)
@@ -447,14 +456,15 @@ def _sklearn_forest_to_model(forest: RandomForestClassifier):
     """
     if forest.n_classes_ == 2:
         json_trees = [
-            _sklearn_tree_to_dict(tree, classifier=True)
-            for tree in forest.estimators_
+            _sklearn_tree_to_dict(tree, classifier=True) for tree in forest.estimators_
         ]
     else:
         json_trees = []
         for tree in forest.estimators_:
             for class_label in range(forest.n_classes_):
-                json_tree = _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=class_label)
+                json_tree = _sklearn_tree_to_dict(
+                    tree, classifier=True, one_vs_all_class=class_label
+                )
                 json_trees.append(json_tree)
 
     return Model(json_trees, forest.n_classes_)
@@ -469,43 +479,57 @@ def _sigmoid_inverse(proba: float):
 
 def _sklearn_booster_to_model(booster: GradientBoostingClassifier):
     """
-    Load a scikit-learn gradient boosting classifier as a Model instance. A multiclass booster gets turned into a one-vs-all representation inside the JSON.
-.
-    Parameters
-    ----------
-    booster : sklearn.ensemble.GradientBoostingClassifier
-        Gradient boosting ensemble to export
+        Load a scikit-learn gradient boosting classifier as a Model instance. A multiclass booster gets turned into a one-vs-all representation inside the JSON.
+    .
+        Parameters
+        ----------
+        booster : sklearn.ensemble.GradientBoostingClassifier
+            Gradient boosting ensemble to export
     """
     init = booster.init_
-    if not (isinstance(init, DummyClassifier) and init.strategy == "prior") and not init == "zero":
+    if (
+        not (isinstance(init, DummyClassifier) and init.strategy == "prior")
+        and not init == "zero"
+    ):
         raise ValueError("Only 'zero' or prior DummyClassifier init is supported")
 
     json_trees = []
     if booster.loss_.K == 1:
         if init != "zero":
             # For the binary case sklearn inverts the sigmoid function
-            json_trees.append({
-                "nodeid": 0,
-                "leaf": _sigmoid_inverse(init.class_prior_[1]),
-            })
+            json_trees.append(
+                {
+                    "nodeid": 0,
+                    "leaf": _sigmoid_inverse(init.class_prior_[1]),
+                }
+            )
 
-        json_trees.extend([
-            _sklearn_tree_to_dict(tree[0], classifier=False, learning_rate=booster.learning_rate) for tree in booster.estimators_
-        ])
+        json_trees.extend(
+            [
+                _sklearn_tree_to_dict(
+                    tree[0], classifier=False, learning_rate=booster.learning_rate
+                )
+                for tree in booster.estimators_
+            ]
+        )
     else:
         json_trees = []
 
         if init != "zero":
             for i in range(booster.loss_.K):
                 # For the multiclass case sklearn uses the log prior probability
-                json_trees.append({
-                    "nodeid": 0,
-                    "leaf": np.log(init.class_prior_[i]),
-                })
+                json_trees.append(
+                    {
+                        "nodeid": 0,
+                        "leaf": np.log(init.class_prior_[i]),
+                    }
+                )
 
         for round_estimators in booster.estimators_:
             for tree in round_estimators:
-                json_tree = _sklearn_tree_to_dict(tree, classifier=False, learning_rate=booster.learning_rate)
+                json_tree = _sklearn_tree_to_dict(
+                    tree, classifier=False, learning_rate=booster.learning_rate
+                )
                 json_trees.append(json_tree)
 
     return Model(json_trees, booster.n_classes_)

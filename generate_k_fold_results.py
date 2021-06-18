@@ -201,7 +201,9 @@ if not use_cached_scores_df:
         accuracy = model.accuracy(X_test, y_test)
 
         options = {"n_threads": 8}
-        adv_accuracy = model.adversarial_accuracy(X_test, y_test, epsilon=epsilon, options=options)
+        adv_accuracy = model.adversarial_accuracy(
+            X_test, y_test, epsilon=epsilon, options=options
+        )
 
         algorithm = filename_to_alg[algorithm]
         scores.append((algorithm, data_name, fold, accuracy, "accuracy"))
@@ -436,7 +438,8 @@ column_order = [
 ]
 combined_trees = combined[column_order]
 combined_trees.to_latex(
-    output_dir + "result_table_trees.tex", index=False,
+    output_dir + "result_table_trees.tex",
+    index=False,
 )
 
 # Export only ensembles
@@ -459,5 +462,6 @@ column_order = [
 ]
 combined_forests = combined[column_order]
 combined_forests.to_latex(
-    output_dir + "result_table_forests.tex", index=False,
+    output_dir + "result_table_forests.tex",
+    index=False,
 )

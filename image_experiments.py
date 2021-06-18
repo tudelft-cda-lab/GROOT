@@ -126,7 +126,13 @@ chen_adv_acc = chen_model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
 provably_adv_acc = provably_model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
 
 print("Accuracy", normal_acc, groot_acc, chen_acc, provably_acc)
-print("Adversarial accuracy", normal_adv_acc, groot_adv_acc, chen_adv_acc, provably_adv_acc)
+print(
+    "Adversarial accuracy",
+    normal_adv_acc,
+    groot_adv_acc,
+    chen_adv_acc,
+    provably_adv_acc,
+)
 
 with open(f"{mnist_dir}scores.txt", "w") as file:
     file.writelines(
@@ -170,10 +176,18 @@ _, ax = plt.subplots(4, 5)
 
 for row, (original, label) in enumerate(plot_samples):
     options = {"n_threads": 6}
-    normal_adv_sample = normal_model.adversarial_examples(original.reshape(1, -1), [label], options=options)[0]
-    groot_adv_sample = groot_model.adversarial_examples(original.reshape(1, -1), [label], options=options)[0]
-    chen_adv_sample = chen_model.adversarial_examples(original.reshape(1, -1), [label], options=options)[0]
-    provably_adv_sample = provably_model.adversarial_examples(original.reshape(1, -1), [label], options=options)[0]
+    normal_adv_sample = normal_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
+    groot_adv_sample = groot_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
+    chen_adv_sample = chen_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
+    provably_adv_sample = provably_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
 
     ax[row][0].imshow(original.reshape(28, 28), cmap="gray")
     ax[row][0].set_title("original")

@@ -98,7 +98,9 @@ def load_wine():
 
 def load_credit():
     # Refered to as 'credit'
-    data = fetch_openml("default_credit_card_p", version=1, return_X_y=False, as_frame=False)
+    data = fetch_openml(
+        "default_credit_card_p", version=1, return_X_y=False, as_frame=False
+    )
     X = data.data
     y = np.copy(X[:, 21]).astype(int)  # Extract target variable
 
@@ -415,7 +417,9 @@ def load_balance_scale():
 
 def load_banknote_authentication():
     # Refered to as 'banknote-authentication'
-    data = fetch_openml("banknote-authentication", version=1, return_X_y=False, as_frame=False)
+    data = fetch_openml(
+        "banknote-authentication", version=1, return_X_y=False, as_frame=False
+    )
     X = data.data
     y = data.target
 
@@ -463,7 +467,9 @@ def load_cylinder_bands():
 
 def load_blood_transfusion():
     # Refered to as 'blood-transfusion'
-    data = fetch_openml("blood-transfusion-service-center", version=1, return_X_y=False, as_frame=False)
+    data = fetch_openml(
+        "blood-transfusion-service-center", version=1, return_X_y=False, as_frame=False
+    )
     X = data.data
     y = data.target
 
@@ -483,7 +489,9 @@ def load_blood_transfusion():
 
 def load_climate_model_simulation():
     # Refered to as 'climate-model-simulation'
-    data = fetch_openml("climate-model-simulation-crashes", version=4, return_X_y=False, as_frame=False)
+    data = fetch_openml(
+        "climate-model-simulation-crashes", version=4, return_X_y=False, as_frame=False
+    )
     X = data.data
     y = data.target
 

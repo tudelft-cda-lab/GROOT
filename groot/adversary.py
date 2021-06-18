@@ -3,6 +3,7 @@ import numbers
 from copy import deepcopy
 import json
 
+
 def convert_numpy(obj):
     if isinstance(obj, np.int32) or isinstance(obj, np.int64):
         return int(obj)
@@ -12,7 +13,8 @@ def convert_numpy(obj):
 
 
 class Leaf:
-    """ Representation of a decision leaf by its bounding box and value. """
+    """Representation of a decision leaf by its bounding box and value."""
+
     def __init__(self, conditions, value, is_numeric, attack_model, n_categories):
         # Conditions is a list with at every position the condition on
         # a single feature, numerical features are bounded by [low, high] and
@@ -94,7 +96,7 @@ class Leaf:
         Returns
         -------
         in_reach : bool
-            Whether or not the point is in reach of this leaf. 
+            Whether or not the point is in reach of this leaf.
         """
         for position, numeric, condition, attack in zip(
             point, self.is_numeric, self.conditions, self.attack_model
@@ -133,7 +135,7 @@ class Leaf:
         Returns
         -------
         in_reach : bool
-            Whether or not the point is in reach of this leaf. 
+            Whether or not the point is in reach of this leaf.
         """
         bounds, _ = self.get_bounding_box()
 
@@ -172,7 +174,7 @@ class Leaf:
         ----------
         other : Leaf
             Leaf to compute intersection with.
-        
+
         Returns
         -------
         intersection : Leaf
@@ -210,7 +212,7 @@ class Leaf:
 
 
 class DecisionTreeAdversary:
-    """ Adversary that can attack and score decision trees against adversarial examples. """
+    """Adversary that can attack and score decision trees against adversarial examples."""
 
     def __init__(
         self,

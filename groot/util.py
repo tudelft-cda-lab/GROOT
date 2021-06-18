@@ -10,7 +10,11 @@ def convert_numpy(obj):
     obj : {np.int32, np.int64, np.float32, np.float64, np.longlong}
         Number to convert to python int or float.
     """
-    if isinstance(obj, np.int32) or isinstance(obj, np.int64) or isinstance(obj, np.longlong):
+    if (
+        isinstance(obj, np.int32)
+        or isinstance(obj, np.int64)
+        or isinstance(obj, np.longlong)
+    ):
         return int(obj)
     elif isinstance(obj, np.float32) or isinstance(obj, np.float64):
         return float(obj)

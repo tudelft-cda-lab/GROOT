@@ -56,7 +56,7 @@ def clip(val, val_min, val_max):
 
 
 def print_arr(arr):
-    """ Pretty printing of a 2D numpy array. """
+    """Pretty printing of a 2D numpy array."""
     for i, row in enumerate(arr):
         string = ""
         for el in row:
