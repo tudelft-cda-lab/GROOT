@@ -247,6 +247,8 @@ class Model:
             L-norm order to use. See numpy documentation of more explanation.
         epsilon : float, optional
             Maximum distance by which samples can move.
+        options : dict, optional
+            Extra attack-specific options.
 
         Returns
         -------
@@ -272,6 +274,8 @@ class Model:
             The attack to use. Currently only the optimal MILP attack is supported.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
+        options : dict, optional
+            Extra attack-specific options.
 
         Returns
         -------
@@ -295,6 +299,8 @@ class Model:
             The attack to use. Currently only the optimal MILP attack is supported.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
+        options : dict, optional
+            Extra attack-specific options.
 
         Returns
         -------
