@@ -1,14 +1,7 @@
 from groot.model import GrootRandomForest
-from groot.util import sklearn_forest_to_xgboost_json
 from groot.datasets import load_mnist, load_fashion_mnist
 from groot.provably_robust_boosting.wrapper import fit_provably_robust_boosting
-
-from groot.verification.kantchelian_attack import (
-    optimal_adversarial_example,
-    attack_binary_dataset_epsilon,
-    score_dataset,
-    attack_epsilon_feasibility,
-)
+from groot.toolbox import Model
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
@@ -25,13 +18,13 @@ import seaborn as sns
 sns.set(style="whitegrid")
 
 # Change the dataset variable for MNIST / FMNIST results
-dataset = "mnist"  # "fmnist"
+dataset = "mnist"
+# dataset = "fmnist"
 
 # If False, fit MNIST/FMNIST models, if True then use the fitted models
-cached_mnist = False
+cached_mnist = True
 
-mnist_epsilon = 0.4
-fashion_epsilon = 0.1
+epsilon = 0.4
 n_trees = 100
 sample_limit = 10000
 
@@ -71,7 +64,7 @@ if not cached_mnist:
         random_state=1,
     )
     normal_rf.fit(X_train, y_train)
-    sklearn_forest_to_xgboost_json(normal_rf, mnist_normal_path)
+    Model.from_sklearn(normal_rf).to_json(mnist_normal_path)
 
     print("Fitting GROOT RF...")
     groot_rf = GrootRandomForest(
@@ -80,7 +73,7 @@ if not cached_mnist:
         min_samples_split=10,
         min_samples_leaf=5,
         one_adversarial_class=False,
-        attack_model=[mnist_epsilon] * X.shape[1],
+        attack_model=[epsilon] * X.shape[1],
         n_jobs=1,
         verbose=True,
         random_state=1,
@@ -95,7 +88,7 @@ if not cached_mnist:
         min_samples_split=10,
         min_samples_leaf=5,
         one_adversarial_class=False,
-        attack_model=[mnist_epsilon] * X.shape[1],
+        attack_model=[epsilon] * X.shape[1],
         verbose=True,
         random_state=1,
         chen_heuristic=True,
@@ -109,7 +102,7 @@ if not cached_mnist:
         y_train,
         n_trees=n_trees,
         max_depth=8,
-        epsilon=mnist_epsilon,
+        epsilon=epsilon,
         filename=mnist_provably_path,
         verbose=True,
     )
@@ -117,20 +110,29 @@ if not cached_mnist:
     print("Done fitting.")
 
 
-normal_acc = score_dataset(mnist_normal_path, X_test, y_test, sample_limit=10000)
-groot_acc = score_dataset(mnist_groot_path, X_test, y_test, sample_limit=10000)
-chen_acc = score_dataset(mnist_chen_path, X_test, y_test, sample_limit=10000)
-provably_acc = score_dataset(mnist_provably_path, X_test, y_test, sample_limit=10000, pred_threshold=0.0)
+normal_model = Model.from_json_file(mnist_normal_path, 2)
+groot_model = Model.from_json_file(mnist_groot_path, 2)
+chen_model = Model.from_json_file(mnist_chen_path, 2)
+provably_model = Model.from_json_file(mnist_provably_path, 2)
 
-normal_adv_acc = attack_epsilon_feasibility(mnist_normal_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit)
-groot_adv_acc = attack_epsilon_feasibility(
-    mnist_groot_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit
-)
-chen_adv_acc = attack_epsilon_feasibility(mnist_chen_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit)
-provably_adv_acc = attack_epsilon_feasibility(mnist_provably_path, X_test, y_test, mnist_epsilon, sample_limit=sample_limit, pred_threshold=0.0)
+normal_acc = normal_model.accuracy(X_test, y_test)
+groot_acc = groot_model.accuracy(X_test, y_test)
+chen_acc = chen_model.accuracy(X_test, y_test)
+provably_acc = provably_model.accuracy(X_test, y_test)
+
+normal_adv_acc = normal_model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
+groot_adv_acc = groot_model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
+chen_adv_acc = chen_model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
+provably_adv_acc = provably_model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
 
 print("Accuracy", normal_acc, groot_acc, chen_acc, provably_acc)
-print("Adversarial accuracy", normal_adv_acc, groot_adv_acc, chen_adv_acc, provably_adv_acc)
+print(
+    "Adversarial accuracy",
+    normal_adv_acc,
+    groot_adv_acc,
+    chen_adv_acc,
+    provably_adv_acc,
+)
 
 with open(f"{mnist_dir}scores.txt", "w") as file:
     file.writelines(
@@ -173,12 +175,19 @@ elif dataset == "fmnist":
 _, ax = plt.subplots(4, 5)
 
 for row, (original, label) in enumerate(plot_samples):
-    normal_adv_sample = optimal_adversarial_example(mnist_normal_path, original, label)
-    groot_adv_sample = optimal_adversarial_example(mnist_groot_path, original, label)
-    chen_adv_sample = optimal_adversarial_example(mnist_chen_path, original, label)
-    provably_adv_sample = optimal_adversarial_example(
-        mnist_provably_path, original, label
-    )
+    options = {"n_threads": 6}
+    normal_adv_sample = normal_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
+    groot_adv_sample = groot_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
+    chen_adv_sample = chen_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
+    provably_adv_sample = provably_model.adversarial_examples(
+        original.reshape(1, -1), [label], options=options
+    )[0]
 
     ax[row][0].imshow(original.reshape(28, 28), cmap="gray")
     ax[row][0].set_title("original")

@@ -72,6 +72,7 @@ nav:
     - GROOT forest: reference/models/groot_forest.md
     - TREANT: reference/models/treant.md
     - Provably robust boosting: reference/models/boosting.md
+  - Toolbox: reference/toolbox.md
   - Adversaries: reference/adversary.md
   - Robustness verification: reference/verification.md
   - Datasets: reference/datasets.md

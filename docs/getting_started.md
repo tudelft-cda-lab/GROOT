@@ -70,6 +70,8 @@ print("Accuracy:", accuracy)
 print("Adversarial Accuracy:", adversarial_accuracy)
 ```
 
+The `groot.adversary.DecisionTreeAdversary` is an optimal python attack for decision trees but cannot be used for tree ensembles. For attacking ensembles see the [groot.toolbox](../reference/toolbox).
+
 ### Putting it all together
 The full script is given below.
 

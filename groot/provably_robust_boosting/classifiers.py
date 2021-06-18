@@ -91,7 +91,7 @@ class OneVsAllClassifier:
         )
 
     def dump_model(self):
-        """ Returns the model in JSON format compatible with XGBoost. """
+        """Returns the model in JSON format compatible with XGBoost."""
         # Works for trees
         n_cls = len(self.models)
         n_trees = max([len(model.trees) for model in self.models])

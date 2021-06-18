@@ -139,7 +139,7 @@ class StumpEnsemble:
         return Fx
 
     def attack_by_sampling(self, X, y, eps, n_trials):
-        """ A simple attack just by sampling in the Linf-box around the points. More of a sanity check. """
+        """A simple attack just by sampling in the Linf-box around the points. More of a sanity check."""
         num, dim = X.shape
         f_x_vals = np.zeros((num, n_trials))
         # Note: for efficiency, we sample the same random direction for all points
