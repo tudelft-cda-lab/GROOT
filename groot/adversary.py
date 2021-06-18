@@ -3,7 +3,6 @@ import numbers
 from copy import deepcopy
 import json
 
-
 def convert_numpy(obj):
     if isinstance(obj, np.int32) or isinstance(obj, np.int64):
         return int(obj)

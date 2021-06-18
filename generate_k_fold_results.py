@@ -1,7 +1,7 @@
 import os
 
 from groot.adversary import DecisionTreeAdversary
-from groot.verification.kantchelian_attack import score_dataset, attack_epsilon_feasibility
+from groot.toolbox import Model
 from groot.datasets import load_all, load_epsilons_dict
 from groot.model import json_tree_from_file
 
@@ -24,10 +24,9 @@ output_dir = "out/"
 runtime_file = output_dir + "runtimes.csv"
 chen_runtime_file = output_dir + "chenboost_runtimes.csv"
 
+sample_limit = -1
 k_folds = 5
-sample_limit = 1000
-
-use_cached_scores_df = True
+use_cached_scores_df = False
 clip_runtimes = 0.01  # Clip runtimes below this value to the value
 
 # Load and process runtimes file
@@ -141,8 +140,8 @@ if not use_cached_scores_df:
 
         k_folds_cv = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=1)
         for fold_i, (_, test_index) in enumerate(k_folds_cv.split(X, y)):
-            X_test = X[test_index]
-            y_test = y[test_index]
+            X_test = X[test_index][:sample_limit]
+            y_test = y[test_index][:sample_limit]
 
             test_sets[(name, fold_i)] = (X_test, y_test)
 
@@ -166,10 +165,9 @@ if not use_cached_scores_df:
         epsilon = epsilons[data_name]
 
         # Use modified kantchelian attack to compute accuracy and adv_accuracy
-        accuracy = score_dataset(path, X_test, y_test, sample_limit=None)
-        adv_accuracy = attack_epsilon_feasibility(
-            path, X_test, y_test, epsilon, sample_limit=None
-        )
+        model = Model.from_json_file(path, 2)
+        accuracy = model.accuracy(X_test, y_test)
+        adv_accuracy = model.adversarial_accuracy(X_test, y_test, epsilon=epsilon)
 
         algorithm = filename_to_alg[algorithm]
         scores.append((algorithm, data_name, fold, accuracy, "accuracy"))
@@ -199,25 +197,11 @@ if not use_cached_scores_df:
         epsilon = epsilons[data_name]
 
         # Use modified Kantchelian attack to compute accuracy and adv_accuracy
-        accuracy = score_dataset(path, X_test, y_test, sample_limit=sample_limit)
-        if algorithm in ["boost", "provable", "chenboost"]:
-            adv_accuracy = attack_epsilon_feasibility(
-                path,
-                X_test,
-                y_test,
-                epsilon,
-                sample_limit=sample_limit,
-                pred_threshold=0.0,
-            )
-        else:
-            adv_accuracy = attack_epsilon_feasibility(
-                path,
-                X_test,
-                y_test,
-                epsilon,
-                sample_limit=sample_limit,
-                pred_threshold=0.5,
-            )
+        model = Model.from_json_file(path, 2)
+        accuracy = model.accuracy(X_test, y_test)
+
+        options = {"n_threads": 8}
+        adv_accuracy = model.adversarial_accuracy(X_test, y_test, epsilon=epsilon, options=options)
 
         algorithm = filename_to_alg[algorithm]
         scores.append((algorithm, data_name, fold, accuracy, "accuracy"))

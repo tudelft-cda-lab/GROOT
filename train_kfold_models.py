@@ -1,11 +1,7 @@
 from groot.datasets import epsilon_attacker, load_all, load_epsilons_dict
 from groot.model import GrootTree, GrootRandomForest
 from groot.treant import RobustDecisionTree
-from groot.util import (
-    sklearn_tree_to_xgboost_json,
-    sklearn_forest_to_xgboost_json,
-    sklearn_booster_to_xgboost_json,
-)
+from groot.toolbox import Model
 from groot.provably_robust_boosting.wrapper import fit_provably_robust_boosting
 
 from sklearn.preprocessing import MinMaxScaler
@@ -88,7 +84,7 @@ def train_sklearn_tree(X, y, _, filename):
     runtime = time.time() - start_time
     print(filename, runtime, flush=True)
 
-    sklearn_tree_to_xgboost_json(tree, filename)
+    Model.from_sklearn(tree).to_json(filename)
 
     return runtime
 
@@ -177,7 +173,7 @@ def train_sklearn_forest(X, y, _, filename):
     runtime = time.time() - start_time
     print(filename, runtime, flush=True)
 
-    sklearn_forest_to_xgboost_json(forest, filename)
+    Model.from_sklearn(forest).to_json(filename)
 
     return runtime
 
@@ -196,7 +192,7 @@ def train_sklearn_boosting(X, y, _, filename):
     runtime = time.time() - start_time
     print(filename, runtime, flush=True)
 
-    sklearn_booster_to_xgboost_json(booster, filename)
+    Model.from_sklearn(booster).to_json(filename)
 
     return runtime
 
@@ -221,7 +217,7 @@ def train_provably_robust_boosting(X, y, epsilon, filename):
 
 if __name__ == "__main__":
     k_folds = 5
-    n_processes = 16
+    n_processes = 4
     output_dir = "out/"
     tree_dir = "out/trees/"
     forest_dir = "out/forests/"

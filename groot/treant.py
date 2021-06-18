@@ -679,21 +679,21 @@ class Node(object):
                 "right": self.right.to_json(),
             }
 
-    def to_xgboost_json(self, node_id, depth, scale):
+    def to_xgboost_json(self, node_id, depth):
         if self.is_leaf():
             return (
-                {"nodeid": node_id, "leaf": scale * self.get_node_prediction()[1]},
+                {"nodeid": node_id, "leaf": self.get_node_prediction()[1] * 2 - 1},
                 node_id,
             )
         else:
             left_id = node_id + 1
             left_dict, new_node_id = self.left.to_xgboost_json(
-                left_id, depth + 1, scale
+                left_id, depth + 1
             )
 
             right_id = new_node_id + 1
             right_dict, new_node_id = self.right.to_xgboost_json(
-                right_id, depth + 1, scale
+                right_id, depth + 1
             )
 
             return (
@@ -2279,7 +2279,7 @@ class RobustDecisionTree(BaseEstimator, ClassifierMixin):
 
     def to_xgboost_json(self, output_file="treant_tree_xgboost.json"):
         if hasattr(self, "root"):
-            dictionary, _ = self.root.to_xgboost_json(0, 0, 1)
+            dictionary, _ = self.root.to_xgboost_json(0, 0)
         else:
             raise Exception("Tree is not yet fitted")
 
