@@ -1,4 +1,6 @@
 *.DS_Store
 *__pycache__/
+*groot_trees.egg-info/
 venv/
+dist/
 out/treant.log
