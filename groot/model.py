@@ -10,7 +10,7 @@ from sklearn.utils.validation import check_X_y, check_array
 from sklearn.utils import check_random_state
 from joblib import Parallel, delayed
 from sklearn.base import clone
-from groot.util import convert_numpy
+from .util import convert_numpy
 
 
 _TREE_LEAF = -1

@@ -19,7 +19,7 @@ def load_epsilons_dict(epsilon=0.1):
 
 
 def epsilon_attacker(n_features, radius=0.1, max_depth=4):
-    from groot.treant import AttackerRule, Attacker
+    from .treant import AttackerRule, Attacker
 
     attacks = []
     for feature in range(n_features):

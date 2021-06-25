@@ -5,8 +5,8 @@ from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
-from groot.verification.kantchelian_attack import KantchelianAttackWrapper
-from groot.util import convert_numpy
+from .verification.kantchelian_attack import KantchelianAttackWrapper
+from .util import convert_numpy
 
 import numpy as np
 

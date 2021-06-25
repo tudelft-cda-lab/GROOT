@@ -22,9 +22,9 @@ from scipy.optimize import minimize
 from sklearn.base import BaseEstimator, ClassifierMixin
 
 # Added to turn TREANT trees into GROOT trees
-from groot.model import Node as GrootNode
-from groot.model import NumericalNode as GrootNumericalNode
-from groot.model import _TREE_LEAF, _TREE_UNDEFINED
+from .model import Node as GrootNode
+from .model import NumericalNode as GrootNumericalNode
+from .model import _TREE_LEAF, _TREE_UNDEFINED
 
 """
 Logging setup

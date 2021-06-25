@@ -1,14 +1,14 @@
 import numpy as np
 from numba import jit
 from collections import OrderedDict
-from groot.provably_robust_boosting.robust_boosting import (
+from .robust_boosting import (
     exp_loss_robust,
     dtype,
     fit_plain_stumps,
     fit_robust_bound_stumps,
     fit_robust_exact_stumps,
 )
-from groot.provably_robust_boosting.utils import (
+from .utils import (
     minimum,
     get_contiguous_indices,
     get_n_proc,

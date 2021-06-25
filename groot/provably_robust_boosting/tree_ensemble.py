@@ -2,13 +2,13 @@ import numpy as np
 import copy
 from collections import OrderedDict
 from numba import njit, prange
-from groot.provably_robust_boosting.robust_boosting import (
+from .robust_boosting import (
     exp_loss_robust,
     dtype,
     fit_plain_stumps,
     fit_robust_bound_stumps,
 )
-from groot.provably_robust_boosting.utils import get_contiguous_indices, get_n_proc
+from .utils import get_contiguous_indices, get_n_proc
 from concurrent.futures import ThreadPoolExecutor
 
 

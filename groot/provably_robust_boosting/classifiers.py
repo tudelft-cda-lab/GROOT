@@ -1,5 +1,5 @@
 import numpy as np
-from groot.provably_robust_boosting.tree_ensemble import Tree
+from .tree_ensemble import Tree
 
 
 class OneVsAllClassifier:

@@ -7,7 +7,7 @@ from tensorflow.keras.datasets import (
     cifar10 as cifar10_keras,
 )
 
-from groot.datasets import load_mnist
+from ..datasets import load_mnist
 
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler

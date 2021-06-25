@@ -1,5 +1,5 @@
-from groot.provably_robust_boosting.tree_ensemble import TreeEnsemble
-from groot.util import convert_numpy
+from .tree_ensemble import TreeEnsemble
+from ..util import convert_numpy
 
 import numpy as np
 

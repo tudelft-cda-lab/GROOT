@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from numba import jit, prange
-from groot.provably_robust_boosting.utils import minimum, clip
+from .utils import minimum, clip
 
 
 dtype = np.float32  # float32 is much faster than float64 because of exp
