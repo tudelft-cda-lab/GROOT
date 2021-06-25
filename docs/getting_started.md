@@ -14,15 +14,11 @@ The GROOT repository contains several useful modules for fitting and scoring dec
 For an introduction to decision trees and adversarial examples see [this blogpost](https://cyber-analytics.nl/blogposts/2021-03-15-trees-adversarial-examples/).
 
 ## Installing
-GROOT is not yet available for installation using pip so for the time being you can clone the repo and place the `groot` directory at the root of your code. To install the required packages (preferably within a virtual environment) run:
-```
-pip install -r requirements.txt
-```
+GROOT can be directly install from PyPi:
+```pip install groot-trees```
 
-To use Kantchelian's attack it is required that you have [GUROBI](https://www.gurobi.com/) installed along with their python package:
-```
-python -m pip install -i https://pypi.gurobi.com gurobipy
-```
+To use Kantchelian's MILP attack it is required that you have [GUROBI](https://www.gurobi.com/) installed along with their python package:
+```python -m pip install -i https://pypi.gurobi.com gurobipy```
 
 ## Example
 Below is a very simple example demonstrating how to train and score a GROOT tree on a toy dataset. We start by creating a 2D dataset using scikit-learn then split it into a train and test set.

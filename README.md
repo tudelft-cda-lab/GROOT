@@ -28,8 +28,10 @@ print("Adversarial Accuracy:", adversarial_accuracy)
 ```
 
 ## Installation
-The experiment code runs on python version 3.6 and up. After installing python and pip one can install all required libraries using:
+`groot` can be installed from PyPi:
+```pip install groot-trees```
 
+To reproduce our experiments with exact package versions you can clone the repository and run:
 ```pip3 install -r requirements.txt```
 
 Or on windows:
