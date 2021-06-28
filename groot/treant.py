@@ -687,14 +687,10 @@ class Node(object):
             )
         else:
             left_id = node_id + 1
-            left_dict, new_node_id = self.left.to_xgboost_json(
-                left_id, depth + 1
-            )
+            left_dict, new_node_id = self.left.to_xgboost_json(left_id, depth + 1)
 
             right_id = new_node_id + 1
-            right_dict, new_node_id = self.right.to_xgboost_json(
-                right_id, depth + 1
-            )
+            right_dict, new_node_id = self.right.to_xgboost_json(right_id, depth + 1)
 
             return (
                 {
@@ -777,12 +773,12 @@ class SplitOptimizer(object):
         Args:
             split_function (func): The function used as splitting criterion.
                                      Defaults to None, if so it falls back to __gini_impurity implemented internally.
-        
-       
+
+
         if split_function is None:
             self.split_function = SplitOptimizer._SplitOptimizer__sse
             self.split_function_name = "SSE"
-        
+
         else:
             self.split_function = split_function
             if split_function_name is None:
