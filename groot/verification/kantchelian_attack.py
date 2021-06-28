@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 import numpy as np
 
-from .attack import AttackWrapper
+from ..attack import AttackWrapper
 
 
 """

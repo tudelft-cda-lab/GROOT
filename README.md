@@ -31,11 +31,11 @@ print("Adversarial Accuracy:", adversarial_accuracy)
 `groot` can be installed from PyPi:
 ```pip install groot-trees```
 
+To use Kantchelian's MILP attack it is required that you have [GUROBI](https://www.gurobi.com/) installed along with their python package:
+```python -m pip install -i https://pypi.gurobi.com gurobipy```
+
+### Specific dependency versions
 To reproduce our experiments with exact package versions you can clone the repository and run:
-```pip3 install -r requirements.txt```
-
-Or on windows:
-
 ```pip install -r requirements.txt```
 
 We recommend using virtual environments.

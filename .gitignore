@@ -1,4 +1,5 @@
 *.DS_Store
+*.pyc
 *__pycache__/
 *groot_trees.egg-info/
 venv/
