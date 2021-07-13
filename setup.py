@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="groot-trees",                     # This is the name of the package
-    version="0.0.2",                        # The initial release version
+    version="0.0.3",                        # The initial release version
     author="Daniel Vos",                    # Full name of the author
     author_email="D.A.Vos@tudelft.nl",
     url="https://github.com/tudelft-cda-lab/GROOT",
