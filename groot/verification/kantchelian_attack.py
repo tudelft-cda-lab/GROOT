@@ -1,8 +1,11 @@
 import pprint
-import json
 import time
 
-from gurobipy import *
+try:
+    from gurobipy import *
+except:
+    raise ImportError("""The python GUROBI package could not be imported. 
+    To install it, run: python -m pip install -i https://pypi.gurobi.com gurobipy""")
 
 from tqdm import tqdm
 
