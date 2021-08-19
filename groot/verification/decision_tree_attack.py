@@ -8,6 +8,7 @@ from collections import defaultdict
 
 from copy import deepcopy
 
+
 def _extract_bounding_boxes(tree, bounds):
     if "leaf" in tree:
         return [(deepcopy(bounds), tree["leaf"])]
@@ -40,6 +41,7 @@ def _extract_bounding_boxes(tree, bounds):
 
         return leaves
 
+
 class DecisionTreeAttackWrapper(AttackWrapper):
     def __init__(self, json_model, n_classes):
         if len(json_model) != 1:
@@ -63,7 +65,7 @@ class DecisionTreeAttackWrapper(AttackWrapper):
             for i, bound in bound_dict.items():
                 bounding_box[i] = bound
             bounding_boxes.append(bounding_box)
-        
+
         for box, prediction in zip(bounding_boxes, predictions):
             print(box)
             print(prediction)
@@ -75,7 +77,9 @@ class DecisionTreeAttackWrapper(AttackWrapper):
             best_distance = np.inf
             for bounding_box, prediction in zip(bounding_boxes, predictions):
                 if prediction != label:
-                    adv_example = np.clip(sample, bounding_box[:, 0], bounding_box[:, 1])
+                    adv_example = np.clip(
+                        sample, bounding_box[:, 0], bounding_box[:, 1]
+                    )
                     distance = np.linalg.norm(adv_example - sample, ord=order)
 
                     if distance < best_distance:
