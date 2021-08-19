@@ -6,6 +6,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from .verification.kantchelian_attack import KantchelianAttackWrapper
+from .verification.decision_tree_attack import DecisionTreeAttackWrapper
 from .util import convert_numpy
 
 import numpy as np
@@ -224,8 +225,10 @@ class Model:
         """
         Return the instantiated attack wrapper for the appropriate attack.
         """
-        if attack_name in {"milp", "kantchelian", "gurobi"}:
+        if attack_name == "milp":
             return KantchelianAttackWrapper(self.json_model, self.n_classes)
+        elif attack_name == "tree":
+            return DecisionTreeAttackWrapper(self.json_model, self.n_classes)
         else:
             raise ValueError(f"Attack '{attack_name}' not supported.")
 
