@@ -66,10 +66,6 @@ class DecisionTreeAttackWrapper(AttackWrapper):
                 bounding_box[i] = bound
             bounding_boxes.append(bounding_box)
 
-        for box, prediction in zip(bounding_boxes, predictions):
-            print(box)
-            print(prediction)
-
         X_adv = []
         for sample, label in tqdm(zip(X, y), total=X.shape[0]):
             # Create a minimal adversarial example for each leaf
