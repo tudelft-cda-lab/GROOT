@@ -17,27 +17,35 @@ def _extract_bounding_boxes(tree, bounds):
 
         # If the split's new right threshold (so the node on the left) is more specific
         # than the previous one, update the bound and recurse
-        if tree["split_condition"] < bounds[tree["split"]][1]:
-            old_bound = bounds[tree["split"]][1]
+        old_bound = bounds[tree["split"]][1]
+
+        if (
+            tree["split_condition"] < bounds[tree["split"]][1]
+            and tree["split_condition"] > bounds[tree["split"]][0]
+        ):
             bounds[tree["split"]][1] = tree["split_condition"]
 
-            for subtree in tree["children"]:
-                if subtree["nodeid"] == tree["yes"]:
-                    leaves.extend(_extract_bounding_boxes(subtree, bounds))
+        for subtree in tree["children"]:
+            if subtree["nodeid"] == tree["yes"]:
+                leaves.extend(_extract_bounding_boxes(subtree, bounds))
 
-            bounds[tree["split"]][1] = old_bound
+        bounds[tree["split"]][1] = old_bound
 
         # If the split's new left threshold (so the node on the right) is more specific
         # than the previous one, update the bound and recurse
-        if tree["split_condition"] > bounds[tree["split"]][0]:
-            old_bound = bounds[tree["split"]][0]
+        old_bound = bounds[tree["split"]][0]
+
+        if (
+            tree["split_condition"] > bounds[tree["split"]][0]
+            and tree["split_condition"] < bounds[tree["split"]][1]
+        ):
             bounds[tree["split"]][0] = tree["split_condition"]
 
-            for subtree in tree["children"]:
-                if subtree["nodeid"] == tree["no"]:
-                    leaves.extend(_extract_bounding_boxes(subtree, bounds))
+        for subtree in tree["children"]:
+            if subtree["nodeid"] == tree["no"]:
+                leaves.extend(_extract_bounding_boxes(subtree, bounds))
 
-            bounds[tree["split"]][0] = old_bound
+        bounds[tree["split"]][0] = old_bound
 
         return leaves
 

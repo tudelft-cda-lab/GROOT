@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="groot-trees",
-    version="0.0.7",
+    version="0.0.8",
     author="Daniel Vos",
     author_email="D.A.Vos@tudelft.nl",
     url="https://github.com/tudelft-cda-lab/GROOT",
