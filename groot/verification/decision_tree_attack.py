@@ -83,8 +83,10 @@ class DecisionTreeAttackWrapper(AttackWrapper):
                         best_adv_example = adv_example
 
             if best_distance == np.inf:
-                raise Exception("No adversarial example possible")
-
-            X_adv.append(best_adv_example)
+                # If no adversarial example is possible (tree predicts one value everywhere)
+                # then return a vector of NaNs
+                X_adv.append(np.full(len(sample), np.nan))
+            else:
+                X_adv.append(best_adv_example)
 
         return np.array(X_adv)
