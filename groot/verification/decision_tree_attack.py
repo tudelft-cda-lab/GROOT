@@ -40,7 +40,7 @@ def _extract_bounding_boxes(tree, bounds):
         ):
             bounds[tree["split"]][0] = tree["split_condition"]
 
-        if tree["split_condition"] <= bounds[tree["split"]][1]:
+        if tree["split_condition"] < bounds[tree["split"]][1]:
             for subtree in tree["children"]:
                 if subtree["nodeid"] == tree["no"]:
                     leaves.extend(_extract_bounding_boxes(subtree, bounds))
