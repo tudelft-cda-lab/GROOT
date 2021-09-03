@@ -19,8 +19,8 @@ def _extract_bounding_boxes(tree, bounds):
         # than the previous one, update the bound and recurse
         old_bound = bounds[tree["split"]][1]
         if (
-            tree["split_condition"] < bounds[tree["split"]][1]
-            and tree["split_condition"] > bounds[tree["split"]][0]
+            tree["split_condition"] <= bounds[tree["split"]][1]
+            and tree["split_condition"] >= bounds[tree["split"]][0]
         ):
             bounds[tree["split"]][1] = tree["split_condition"]
 
@@ -35,8 +35,8 @@ def _extract_bounding_boxes(tree, bounds):
         # than the previous one, update the bound and recurse
         old_bound = bounds[tree["split"]][0]
         if (
-            tree["split_condition"] > bounds[tree["split"]][0]
-            and tree["split_condition"] < bounds[tree["split"]][1]
+            tree["split_condition"] >= bounds[tree["split"]][0]
+            and tree["split_condition"] <= bounds[tree["split"]][1]
         ):
             bounds[tree["split"]][0] = tree["split_condition"]
 
