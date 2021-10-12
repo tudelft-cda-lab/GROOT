@@ -6,7 +6,8 @@ from collections import defaultdict
 from itertools import product
 from numba import jit
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils import check_random_state
 from joblib import Parallel, delayed
 from sklearn.base import clone
@@ -413,9 +414,30 @@ def _scan_numerical_feature_fast(
     return True, best_score, best_split
 
 
-@jit(nopython=True, nogil=NOGIL)
-def chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1):
-    raise NotImplementedError("Not discussed in the paper by Chen et al.")
+def chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1, ri_1):
+    i_1 = li_1 + ri_1
+
+    s1 = weighted_gini(l_0, l_1 + li_1, r_0, r_1 + ri_1)
+    s2 = weighted_gini(l_0, l_1, r_0, r_1 + i_1)
+    s3 = weighted_gini(l_0, l_1 + i_1, r_0, r_1)
+    s4 = weighted_gini(l_0, l_1 + ri_1, r_0, r_1 + li_1)
+
+    worst_case = max(s1, s2, s3, s4)
+
+    # Return the worst found weighted Gini impurity, the number of class 1
+    # samples that move to the left and the number of class 0 samples that
+    # move to the left
+    if s1 == worst_case:
+        return s1, li_1
+
+    if s2 == worst_case:
+        return s2, 0
+
+    if s3 == worst_case:
+        return s3, i_1
+
+    if s4 == worst_case:
+        return s4, ri_1
 
 
 @jit(nopython=True, nogil=NOGIL)
@@ -598,7 +620,6 @@ def weighted_gini(l_0, l_1, r_0, r_1):
         return 1.0
 
 
-@jit(nopython=True, nogil=NOGIL)
 def _counts_to_one_class_adv_gini(counts, rho, chen_heuristic):
     # Apply rho by moving a number of samples back from intersect
     rho_inv = 1.0 - rho
@@ -614,7 +635,8 @@ def _counts_to_one_class_adv_gini(counts, rho, chen_heuristic):
             left_mal,
             counts[RIGHT][0],
             right_mal,
-            left_i_mal + right_i_mal,
+            left_i_mal,
+            right_i_mal,
         )
     else:
         adv_gini, _ = adversarial_gini_gain_one_class(
@@ -689,7 +711,8 @@ def _categorical_counts_to_one_class_adv_gini(
             left_counts[1],
             right_counts[0],
             right_counts[1],
-            left_intersection_counts[1] + right_intersection_counts[1],
+            left_intersection_counts[1],
+            right_intersection_counts[1],
         )
     else:
         adv_gini, _ = adversarial_gini_gain_one_class(
@@ -845,10 +868,6 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         self.chen_heuristic = chen_heuristic
         self.random_state = random_state
 
-        # Turn numerical features in attack model into tuples to make fitting
-        # code simpler
-        self.attack_model_ = _attack_model_to_tuples(attack_model)
-
     def fit(self, X, y):
         """
         Build a robust and fair binary decision tree from the training set
@@ -869,14 +888,25 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         """
 
         X, y = check_X_y(X, y)
-        self.n_samples_, self.n_features_ = X.shape
-        self.classes_ = np.unique(y)
+        
+        target_type = type_of_target(y)
+        if target_type != "binary":
+            raise ValueError(f"Unknown label type: classifier only supports binary labels but found {target_type}")
+
+        self.classes_, y = np.unique(y, return_inverse=True)
+        self.n_classes_ = len(self.classes_)
+
+        self.n_samples_, self.n_features_in_ = X.shape
 
         if self.attack_model is None:
             self.attack_model = [""] * X.shape[1]
 
         if self.is_numerical is None:
             self.is_numerical = [True] * X.shape[1]
+
+        # Turn numerical features in attack model into tuples to make fitting
+        # code simpler
+        self.attack_model_ = _attack_model_to_tuples(self.attack_model)
 
         self.n_categories_ = []
         for feature, numeric in enumerate(self.is_numerical):
@@ -888,11 +918,11 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         self.random_state_ = check_random_state(self.random_state)
 
         if self.max_features == "sqrt":
-            self.max_features_ = int(np.sqrt(self.n_features_))
+            self.max_features_ = int(np.sqrt(self.n_features_in_))
         elif self.max_features == "log2":
-            self.max_features_ = int(np.log2(self.n_features_))
+            self.max_features_ = int(np.log2(self.n_features_in_))
         elif self.max_features is None:
-            self.max_features_ = self.n_features_
+            self.max_features_ = self.n_features_in_
         else:
             self.max_features_ = self.max_features
 
@@ -949,18 +979,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             assert rule[0].isdisjoint(constraints[feature])
             assert rule[1].isdisjoint(constraints[feature])
 
-        # TODO: fix this
         X_left, y_left, X_right, y_right = self.__split_left_right(
             X, y, rule, feature, numeric, self.attack_model_[feature]
         )
-        # if self.robust_weight == 1 and all(self.is_numerical):
-        #     X_left, y_left, X_right, y_right = _split_left_right_fast(
-        #         X, y, rule, feature, numeric, self.attack_model_[feature]
-        #     )
-        # else:
-        #     X_left, y_left, X_right, y_right = self.__split_left_right(
-        #         X, y, rule, feature, numeric, self.attack_model_[feature]
-        #     )
 
         if len(y_left) < self.min_samples_leaf or len(y_right) < self.min_samples_leaf:
             return self.__create_leaf(y)
@@ -1134,17 +1155,17 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         # TODO: refactor this entire part, we can do all operations on indices
         # and only create new arrays at the end
-        X_left = np.array(X_left).reshape(-1, self.n_features_)
+        X_left = np.array(X_left).reshape(-1, self.n_features_in_)
         y_left = np.array(y_left)
         X_left_intersection = np.array(X_left_intersection).reshape(
-            -1, self.n_features_
+            -1, self.n_features_in_
         )
         y_left_intersection = np.array(y_left_intersection)
         X_right_intersection = np.array(X_right_intersection).reshape(
-            -1, self.n_features_
+            -1, self.n_features_in_
         )
         y_right_intersection = np.array(y_right_intersection)
-        X_right = np.array(X_right).reshape(-1, self.n_features_)
+        X_right = np.array(X_right).reshape(-1, self.n_features_in_)
         y_right = np.array(y_right)
 
         # Compute optimal movement
@@ -1164,7 +1185,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
             # Determine optimal movement
             if self.chen_heuristic:
-                _, x = chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1)
+                _, x = chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1, ri_1)
             else:
                 _, x = adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1)
 
@@ -1327,7 +1348,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         # If there is a limit on features to consider in a split then choose
         # that number of random features.
-        all_features = np.arange(self.n_features_)
+        all_features = np.arange(self.n_features_in_)
         features = self.random_state_.choice(
             all_features, size=self.max_features_, replace=False
         )
@@ -1358,7 +1379,7 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         if numeric:
             # If possible, use the faster scan implementation
-            if self.robust_weight == 1:
+            if self.robust_weight == 1 and not self.one_adversarial_class:
                 return _scan_numerical_feature_fast(
                     samples, y, *attack_mode, *constraint, self.chen_heuristic
                 )
@@ -1718,7 +1739,11 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             The probability for each input sample of being malicious.
         """
 
+        check_is_fitted(self, "root_")
+
         X = check_array(X)
+        if X.shape[1] != self.n_features_in_:
+            raise ValueError("Received different number of features during predict than during fit")
 
         predictions = []
         for sample in X:
@@ -1746,7 +1771,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         X = check_array(X)
 
-        return np.round(self.predict_proba(X)[:, 1])
+        y_pred_proba = self.predict_proba(X)
+
+        return self.classes_.take(np.argmax(y_pred_proba, axis=1))
 
     def to_string(self):
         result = ""
@@ -1952,7 +1979,7 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             Fitted estimator.
         """
 
-        self.n_samples_, self.n_features_ = X.shape
+        self.n_samples_, self.n_features_in_ = X.shape
 
         random_state = check_random_state(self.random_state)
 
