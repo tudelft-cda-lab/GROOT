@@ -148,7 +148,7 @@ class Model:
             Instantiated Model object.
         """
         json_trees = [
-            tree.get_json_dict(counter_terminal_nodes=-10)[0] for tree in ensemble.trees
+            tree.get_json_dict(counter_terminal_nodes=-10)[0] for tree in classifier.trees
         ]
 
         return Model(json_trees, 2)
