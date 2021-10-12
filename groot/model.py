@@ -888,10 +888,12 @@ class GrootTree(BaseEstimator, ClassifierMixin):
         """
 
         X, y = check_X_y(X, y)
-        
+
         target_type = type_of_target(y)
         if target_type != "binary":
-            raise ValueError(f"Unknown label type: classifier only supports binary labels but found {target_type}")
+            raise ValueError(
+                f"Unknown label type: classifier only supports binary labels but found {target_type}"
+            )
 
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
@@ -1185,7 +1187,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
             # Determine optimal movement
             if self.chen_heuristic:
-                _, x = chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1, ri_1)
+                _, x = chen_adversarial_gini_gain_one_class(
+                    l_0, l_1, r_0, r_1, li_1, ri_1
+                )
             else:
                 _, x = adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, i_1)
 
@@ -1743,7 +1747,9 @@ class GrootTree(BaseEstimator, ClassifierMixin):
 
         X = check_array(X)
         if X.shape[1] != self.n_features_in_:
-            raise ValueError("Received different number of features during predict than during fit")
+            raise ValueError(
+                "Received different number of features during predict than during fit"
+            )
 
         predictions = []
         for sample in X:
