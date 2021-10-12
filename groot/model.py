@@ -1775,8 +1775,6 @@ class GrootTree(BaseEstimator, ClassifierMixin):
             The predicted class labels
         """
 
-        X = check_array(X)
-
         y_pred_proba = self.predict_proba(X)
 
         return self.classes_.take(np.argmax(y_pred_proba, axis=1))
@@ -1985,6 +1983,17 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             Fitted estimator.
         """
 
+        X, y = check_X_y(X, y)
+
+        target_type = type_of_target(y)
+        if target_type != "binary":
+            raise ValueError(
+                f"Unknown label type: classifier only supports binary labels but found {target_type}"
+            )
+
+        self.classes_, y = np.unique(y, return_inverse=True)
+        self.n_classes_ = len(self.classes_)
+
         self.n_samples_, self.n_features_in_ = X.shape
 
         random_state = check_random_state(self.random_state)
@@ -2041,7 +2050,11 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
         proba : array of shape (n_samples,)
             The probability for each input sample of being malicious.
         """
-        probability_sum = np.zeros((self.n_samples_, 2))
+
+        check_is_fitted(self, "estimators_")
+        X = check_array(X)
+
+        probability_sum = np.zeros((len(X), 2))
 
         for tree in self.estimators_:
             probabilities = tree.predict_proba(X)
@@ -2065,7 +2078,9 @@ class GrootRandomForest(BaseEstimator, ClassifierMixin):
             The predicted class labels
         """
 
-        return np.round(self.predict_proba(X)[:, 1])
+        y_pred_proba = self.predict_proba(X)
+
+        return self.classes_.take(np.argmax(y_pred_proba, axis=1))
 
     def __str__(self):
         result = ""
