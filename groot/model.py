@@ -288,14 +288,20 @@ def _scan_numerical_feature_fast(
         # If the next point is not the same as this one
         next_point = min(sample_val, dec_val, inc_val)
         if next_point != point:
-            if chen_heuristic:
-                adv_gini, _, __ = chen_adversarial_gini_gain_two_class(
-                    l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
-                )
+            if one_adversarial_class:
+                if chen_heuristic:
+                    adv_gini, _ = chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1, ri_1)
+                else:
+                    adv_gini, _ = adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1 + ri_1)
             else:
-                adv_gini, _, __ = adversarial_gini_gain_two_class(
-                    l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
-                )
+                if chen_heuristic:
+                    adv_gini, _, __ = chen_adversarial_gini_gain_two_class(
+                        l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
+                    )
+                else:
+                    adv_gini, _, __ = adversarial_gini_gain_two_class(
+                        l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1
+                    )
 
             # Maximize the margin of the split
             split = (point + next_point) * 0.5
@@ -1271,28 +1277,28 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
 
             i_left = np.where(
                 (label_0 & (X[:, feature] <= rule))
-                | (label_1 & (X[:, feature] <= rule - dec))
+                | (label_1 & (X[:, feature] + inc <= rule))
             )[0]
             i_left_intersection = np.where(
-                label_1 & (X[:, feature] > rule - dec) & (X[:, feature] <= rule)
+                label_1 & (X[:, feature] + inc > rule) & (X[:, feature] <= rule)
             )[0]
             i_right_intersection = np.where(
-                label_1 & (X[:, feature] > rule) & (X[:, feature] <= rule + inc)
+                label_1 & (X[:, feature] > rule) & (X[:, feature] - dec <= rule)
             )[0]
             i_right = np.where(
                 (label_0 & (X[:, feature] > rule))
-                | (label_1 & (X[:, feature] > rule + inc))
+                | (label_1 & (X[:, feature] - dec > rule))
             )[0]
         else:
             # Determine the indices of samples on each side of the split
-            i_left = np.where(X[:, feature] <= rule - dec)[0]
+            i_left = np.where(X[:, feature] + inc <= rule)[0]
             i_left_intersection = np.where(
-                (X[:, feature] > rule - dec) & (X[:, feature] <= rule)
+                (X[:, feature] + inc > rule) & (X[:, feature] <= rule)
             )[0]
             i_right_intersection = np.where(
-                (X[:, feature] > rule) & (X[:, feature] <= rule + inc)
+                (X[:, feature] > rule) & (X[:, feature] - dec <= rule)
             )[0]
-            i_right = np.where(X[:, feature] > rule + inc)[0]
+            i_right = np.where(X[:, feature] - dec > rule)[0]
 
         # Count samples with labels 0 and 1 left and right
         l_0, l_1 = np.bincount(y[i_left], minlength=2)
