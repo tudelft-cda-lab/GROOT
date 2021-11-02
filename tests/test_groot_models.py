@@ -1,4 +1,4 @@
-from groot.model import GrootTreeClassifier, GrootTreeRegressor, GrootRandomForestClassifier
+from groot.model import GrootTreeClassifier, GrootTreeRegressor, GrootRandomForestClassifier, GrootRandomForestRegressor
 
 from sklearn.datasets import make_moons
 from sklearn.utils.estimator_checks import check_estimator
@@ -17,6 +17,7 @@ def assert_fit_and_score_groot(X_train, y_train, X_test, y_test, model, kwargs):
 
 def test_groot_regressors_sklearn_estimator():
     check_estimator(GrootTreeRegressor())
+    check_estimator(GrootRandomForestRegressor())
 
 def test_groot_classifiers_sklearn_estimator():
     # Skip tests that contain non-binary classification datasets for GROOT classifiers

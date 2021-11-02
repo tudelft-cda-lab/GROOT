@@ -1636,8 +1636,7 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         """
         Predict the targets of the input samples X.
 
-        The predicted class is the most frequently occuring class label in a
-        leaf.
+        The predicted value is the median of values in a leaf.
 
         Parameters
         ----------
@@ -1679,7 +1678,167 @@ def _build_tree_parallel(base_tree, X, y, indices, seed, n_samples):
     return tree
 
 
-class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
+class BaseGrootRandomForest(BaseEstimator):
+    """
+    Base class for robust (GROOT) random forests.
+    """
+
+    def __init__(
+        self,
+        n_estimators=100,
+        max_depth=None,
+        max_features="sqrt",
+        min_samples_split=2,
+        min_samples_leaf=1,
+        robust_weight=1.0,
+        attack_model=None,
+        verbose=False,
+        chen_heuristic=False,
+        max_samples=None,
+        n_jobs=None,
+        random_state=None,
+    ):
+        """
+        Parameters
+        ----------
+        n_estimators : int, optional
+            The number of decision trees to fit in the forest.
+        max_depth : int, optional
+            The maximum depth for the decision trees once fitted.
+        max_features : int or {"sqrt", "log2", None}, optional
+            The number of features to consider while making each split, if None then all features are considered.
+        min_samples_split : int, optional
+            The minimum number of samples required to split a tree node.
+        min_samples_leaf : int, optional
+            The minimum number of samples required to make a tree leaf.
+        robust_weight : float, optional
+            The ratio of samples that are actually moved by an adversary.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X. The attack model needs to describe for every feature in which way it can be perturbed.
+        verbose : bool, optional
+            Whether to print fitting progress on screen.
+        chen_heuristic : bool, optional
+            Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        max_samples : float, optional
+            The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
+        n_jobs : int, optional
+            The number of jobs to run in parallel when fitting trees. See joblib.
+        random_state : int, optional
+            Controls the sampling of the features to consider when looking for the best split at each node.
+
+        Attributes
+        ----------
+        estimators_ : list of GrootTree
+            The collection of fitted sub-estimators.
+        n_samples_ : int
+            The number of samples when `fit` is performed.
+        n_features_ : int
+            The number of features when `fit` is performed.
+        """
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.max_features = max_features
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.robust_weight = robust_weight
+        self.attack_model = attack_model
+        self.verbose = verbose
+        self.chen_heuristic = chen_heuristic
+        self.max_samples = max_samples
+        self.n_jobs = n_jobs
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        """
+        Build a robust and fair random forest of binary decision trees from
+        the training set (X, y) using greedy splitting according to the
+        adversarial Gini combined with fair gini under the given attack model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The training samples.
+        y : array-like of shape (n_samples,)
+            The class labels as integers 0 (benign) or 1 (malicious)
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+
+        X, y = check_X_y(X, y)
+        y = self._check_target(y)
+
+        self.n_samples_, self.n_features_in_ = X.shape
+
+        random_state = check_random_state(self.random_state)
+
+        # Generate seeds for the random states of each tree to prevent each
+        # of them from fitting exactly the same way, but use the random state
+        # to keep the forest reproducible
+        seeds = [
+            random_state.randint(np.iinfo(np.int32).max)
+            for _ in range(self.n_estimators)
+        ]
+
+        tree = self._get_estimator()
+
+        if self.max_samples:
+            n_bootstrap_samples = int(self.n_samples_ * self.max_samples)
+        else:
+            n_bootstrap_samples = self.n_samples_
+
+        indices = np.arange(X.shape[0])
+        self.estimators_ = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, prefer="processes"
+        )(
+            delayed(_build_tree_parallel)(
+                tree, X, y, indices, seed, n_bootstrap_samples
+            )
+            for seed in seeds
+        )
+
+        return self
+
+    def __str__(self):
+        result = ""
+        result += f"Parameters: {self.get_params()}\n"
+
+        if hasattr(self, "estimators_"):
+            for tree in self.estimators_:
+                result += f"Tree:\n{tree.root_.pretty_print()}\n"
+        else:
+            result += "Forest has not yet been fitted"
+
+        return result
+
+    def to_json(self, output_file="forest.json"):
+        with open(output_file, "w") as fp:
+            dictionary = {
+                "params": self.get_params(),
+            }
+            if hasattr(self, "estimators_"):
+                dictionary["trees"] = [tree.to_json(None) for tree in self.estimators_]
+                json.dump(dictionary, fp, indent=2, default=convert_numpy)
+            else:
+                dictionary["trees"] = None
+                json.dump(dictionary, fp)
+
+    def to_xgboost_json(self, output_file="forest.json"):
+        if hasattr(self, "estimators_"):
+            dictionary = [tree.to_xgboost_json(None) for tree in self.estimators_]
+
+            if output_file:
+                with open(output_file, "w") as fp:
+                    json.dump(dictionary, fp, indent=2, default=convert_numpy)
+            else:
+                return dictionary
+        else:
+            raise Exception("Forest not yet fitted")
+
+
+class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
     """
     A robust random forest for binary classification.
     """
@@ -1739,41 +1898,23 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         n_features_ : int
             The number of features when `fit` is performed.
         """
-        self.n_estimators = n_estimators
-        self.max_depth = max_depth
-        self.max_features = max_features
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.robust_weight = robust_weight
-        self.attack_model = attack_model
+        super().__init__(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            robust_weight=robust_weight,
+            attack_model=attack_model,
+            verbose=verbose,
+            chen_heuristic=chen_heuristic,
+            max_samples=max_samples,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
         self.one_adversarial_class = one_adversarial_class
-        self.verbose = verbose
-        self.chen_heuristic = chen_heuristic
-        self.max_samples = max_samples
-        self.n_jobs = n_jobs
-        self.random_state = random_state
 
-    def fit(self, X, y):
-        """
-        Build a robust and fair random forest of binary decision trees from
-        the training set (X, y) using greedy splitting according to the
-        adversarial Gini combined with fair gini under the given attack model.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The training samples.
-        y : array-like of shape (n_samples,)
-            The class labels as integers 0 (benign) or 1 (malicious)
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-
-        X, y = check_X_y(X, y)
-
+    def _check_target(self, y):
         target_type = type_of_target(y)
         if target_type != "binary":
             raise ValueError(
@@ -1783,19 +1924,10 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
-        self.n_samples_, self.n_features_in_ = X.shape
+        return y
 
-        random_state = check_random_state(self.random_state)
-
-        # Generate seeds for the random states of each tree to prevent each
-        # of them from fitting exactly the same way, but use the random state
-        # to keep the forest reproducible
-        seeds = [
-            random_state.randint(np.iinfo(np.int32).max)
-            for _ in range(self.n_estimators)
-        ]
-
-        tree = GrootTreeClassifier(
+    def _get_estimator(self):
+        return GrootTreeClassifier(
             max_depth=self.max_depth,
             min_samples_split=self.min_samples_split,
             min_samples_leaf=self.min_samples_leaf,
@@ -1804,22 +1936,6 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
             attack_model=self.attack_model,
             one_adversarial_class=self.one_adversarial_class,
             chen_heuristic=self.chen_heuristic,
-            random_state=random_state,
-        )
-
-        if self.max_samples:
-            n_bootstrap_samples = int(self.n_samples_ * self.max_samples)
-        else:
-            n_bootstrap_samples = self.n_samples_
-
-        indices = np.arange(X.shape[0])
-        self.estimators_ = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose, prefer="processes"
-        )(
-            delayed(_build_tree_parallel)(
-                tree, X, y, indices, seed, n_bootstrap_samples
-            )
-            for seed in seeds
         )
 
     def predict_proba(self, X):
@@ -1828,6 +1944,7 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         The class probability is the average of the probabilities predicted by
         each decision tree. The probability prediction of each tree is the
         fraction of samples of the same class in the leaf.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1855,6 +1972,7 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         Predict the classes of the input samples X.
         The predicted class is the rounded average of the class labels in
         each predicted leaf.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1870,38 +1988,126 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
 
         return self.classes_.take(np.argmax(y_pred_proba, axis=1))
 
-    def __str__(self):
-        result = ""
-        result += f"Parameters: {self.get_params()}\n"
 
-        if hasattr(self, "estimators_"):
-            for tree in self.estimators_:
-                result += f"Tree:\n{tree.root_.pretty_print()}\n"
-        else:
-            result += "Forest has not yet been fitted"
+class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
+    """
+    A robust random forest for binary classification.
+    """
 
-        return result
+    def __init__(
+        self,
+        n_estimators=100,
+        max_depth=None,
+        max_features="sqrt",
+        min_samples_split=2,
+        min_samples_leaf=1,
+        robust_weight=1.0,
+        attack_model=None,
+        verbose=False,
+        chen_heuristic=False,
+        max_samples=None,
+        n_jobs=None,
+        random_state=None,
+    ):
+        """
+        Parameters
+        ----------
+        n_estimators : int, optional
+            The number of decision trees to fit in the forest.
+        max_depth : int, optional
+            The maximum depth for the decision trees once fitted.
+        max_features : int or {"sqrt", "log2", None}, optional
+            The number of features to consider while making each split, if None then all features are considered.
+        min_samples_split : int, optional
+            The minimum number of samples required to split a tree node.
+        min_samples_leaf : int, optional
+            The minimum number of samples required to make a tree leaf.
+        robust_weight : float, optional
+            The ratio of samples that are actually moved by an adversary.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X. The attack model needs to describe for every feature in which way it can be perturbed.
+        verbose : bool, optional
+            Whether to print fitting progress on screen.
+        chen_heuristic : bool, optional
+            Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        max_samples : float, optional
+            The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
+        n_jobs : int, optional
+            The number of jobs to run in parallel when fitting trees. See joblib.
+        random_state : int, optional
+            Controls the sampling of the features to consider when looking for the best split at each node.
 
-    def to_json(self, output_file="forest.json"):
-        with open(output_file, "w") as fp:
-            dictionary = {
-                "params": self.get_params(),
-            }
-            if hasattr(self, "estimators_"):
-                dictionary["trees"] = [tree.to_json(None) for tree in self.estimators_]
-                json.dump(dictionary, fp, indent=2, default=convert_numpy)
-            else:
-                dictionary["trees"] = None
-                json.dump(dictionary, fp)
+        Attributes
+        ----------
+        estimators_ : list of GrootTree
+            The collection of fitted sub-estimators.
+        n_samples_ : int
+            The number of samples when `fit` is performed.
+        n_features_ : int
+            The number of features when `fit` is performed.
+        """
+        super().__init__(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            robust_weight=robust_weight,
+            attack_model=attack_model,
+            verbose=verbose,
+            chen_heuristic=chen_heuristic,
+            max_samples=max_samples,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
 
-    def to_xgboost_json(self, output_file="forest.json"):
-        if hasattr(self, "estimators_"):
-            dictionary = [tree.to_xgboost_json(None) for tree in self.estimators_]
+    def _check_target(self, y):
+        target_type = type_of_target(y)
+        if target_type not in {"continuous", "multiclass", "binary"}:
+            raise ValueError(
+                f"Unknown label type: regressor only supports continuous/multiclass/binary targets but found {target_type}"
+            )
 
-            if output_file:
-                with open(output_file, "w") as fp:
-                    json.dump(dictionary, fp, indent=2, default=convert_numpy)
-            else:
-                return dictionary
-        else:
-            raise Exception("Forest not yet fitted")
+        # Make a copy of y if it is readonly to prevent errors
+        if not y.flags.writeable:
+            y = np.copy(y)
+
+        return y
+
+    def _get_estimator(self):
+        return GrootTreeRegressor(
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
+            max_features=self.max_features,
+            robust_weight=self.robust_weight,
+            attack_model=self.attack_model,
+            chen_heuristic=self.chen_heuristic,
+        )
+
+    def predict(self, X):
+        """
+        Predict the values of the input samples X.
+
+        The predicted values are the means of all individual predictions.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples to predict.
+
+        Returns
+        -------
+        y : array-like of shape (n_samples,)
+            The predicted class labels
+        """
+
+        check_is_fitted(self, "estimators_")
+        X = check_array(X)
+
+        predictions_sum = np.zeros(len(X))
+
+        for tree in self.estimators_:
+            predictions_sum += tree.predict(X)
+
+        return predictions_sum / self.n_estimators
