@@ -290,9 +290,13 @@ def _scan_numerical_feature_fast(
         if next_point != point:
             if one_adversarial_class:
                 if chen_heuristic:
-                    adv_gini, _ = chen_adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1, ri_1)
+                    adv_gini, _ = chen_adversarial_gini_gain_one_class(
+                        l_0, l_1, r_0, r_1, li_1, ri_1
+                    )
                 else:
-                    adv_gini, _ = adversarial_gini_gain_one_class(l_0, l_1, r_0, r_1, li_1 + ri_1)
+                    adv_gini, _ = adversarial_gini_gain_one_class(
+                        l_0, l_1, r_0, r_1, li_1 + ri_1
+                    )
             else:
                 if chen_heuristic:
                     adv_gini, _, __ = chen_adversarial_gini_gain_two_class(
