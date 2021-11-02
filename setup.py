@@ -22,6 +22,7 @@ setuptools.setup(
     python_requires='>=3.6',
     py_modules=["groot"],
     install_requires=[
+        "wheel",
         "dill",
         "joblib",
         "matplotlib",
