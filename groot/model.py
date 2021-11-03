@@ -661,9 +661,7 @@ def adversarial_sum_absolute_errors(y_l, y_r, y_i):
 @jit(nopython=True, nogil=NOGIL)
 def chen_adversarial_sum_absolute_errors(y_l, y_li, y_ri, y_r):
     if len(y_li) == 0 and len(y_ri) == 0:
-        return sum_absolute_errors(y_l) + sum_absolute_errors(y_r), (0, 0)
-
-    y_i = np.concatenate((y_li, y_ri))
+        return sum_absolute_errors(y_l) + sum_absolute_errors(y_r), 1
 
     s1 = sum_absolute_errors(np.concatenate((y_l, y_li))) + sum_absolute_errors(
         np.concatenate((y_r, y_ri))
@@ -680,21 +678,14 @@ def chen_adversarial_sum_absolute_errors(y_l, y_li, y_ri, y_r):
 
     worst_case = max(s1, s2, s3, s4)
 
-    # Return the worst found weighted Gini impurity, the number of class 1
-    # samples that move to the left and the number of class 0 samples that
-    # move to the left
-    # TODO: fix indices
     if s1 == worst_case:
-        return s1, (0, 0)
-
-    if s2 == worst_case:
-        return s2, (0, 0)
-
-    if s3 == worst_case:
-        return s3, (0, 0)
-
-    if s4 == worst_case:
-        return s4, (0, 0)
+        return s1, 1
+    elif s2 == worst_case:
+        return s2, 2
+    elif s3 == worst_case:
+        return s3, 3
+    else:
+        return s4, 4
 
 
 @jit(nopython=True, nogil=NOGIL)
@@ -1596,34 +1587,66 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         dec, inc = self.attack_model_[feature]
 
         # Determine the indices of samples on each side of the split
-        i_left = np.where(X[:, feature] <= rule - dec)[0]
-
-        i_intersection = np.where(
-            (X[:, feature] > rule - dec) & (X[:, feature] <= rule + inc)
-        )[0]
-        i_right = np.where(X[:, feature] > rule + inc)[0]
+        i_left = np.where(X[:, feature] + inc <= rule)[0]
+        i_right = np.where(X[:, feature] - dec > rule)[0]
 
         y_left = y[i_left]
-        y_intersection = y[i_intersection]
         y_right = y[i_right]
 
-        sort_order = np.argsort(y_intersection)
-        y_intersection = y_intersection[sort_order]
+        if self.chen_heuristic:
+            i_left_intersection = np.where(
+                (X[:, feature] + inc > rule) & (X[:, feature] <= rule)
+            )[0]
+            i_right_intersection = np.where(
+                (X[:, feature] - dec <= rule) & (X[:, feature] > rule)
+            )[0]
 
-        # Compute optimal movement
-        _, (l_start, l_end) = adversarial_sum_absolute_errors(
-            y_left, y_right, y_intersection
-        )
-        if l_start == 0:
-            r_start = l_end
-            r_end = -1
+            y_left_intersection = y[i_left_intersection]
+            y_right_intersection = y[i_right_intersection]
+
+            # Compute optimal movement
+            _, configuration = chen_adversarial_sum_absolute_errors(
+                y_left,
+                y_left_intersection,
+                y_right_intersection,
+                y_right,
+            )
+
+            # Move the resulting intersection arrays to the left and right sides
+            if configuration == 1:
+                i_left = np.concatenate((i_left, i_left_intersection))
+                i_right = np.concatenate((i_right, i_right_intersection))
+            elif configuration == 2:
+                i_right = np.concatenate(
+                    (i_right, i_left_intersection, i_right_intersection)
+                )
+            elif configuration == 3:
+                i_left = np.concatenate(
+                    (i_left, i_left_intersection, i_right_intersection)
+                )
+            else:
+                i_left = np.concatenate((i_left, i_right_intersection))
+                i_right = np.concatenate((i_right, i_left_intersection))
         else:
-            r_start = 0
-            r_end = l_start
+            i_intersection = np.where(
+                (X[:, feature] + inc > rule) & (X[:, feature] - dec <= rule)
+            )[0]
+            y_intersection = np.sort(y[i_intersection])
 
-        # Move the resulting intersection arrays to the left and right sides
-        i_left = np.concatenate((i_left, i_intersection[l_start:l_end]))
-        i_right = np.concatenate((i_right, i_intersection[r_start:r_end]))
+            # Compute optimal movement
+            _, (l_start, l_end) = adversarial_sum_absolute_errors(
+                y_left, y_right, y_intersection
+            )
+            if l_start == 0:
+                r_start = l_end
+                r_end = -1
+            else:
+                r_start = 0
+                r_end = l_start
+
+            # Move the resulting intersection arrays to the left and right sides
+            i_left = np.concatenate((i_left, i_intersection[l_start:l_end]))
+            i_right = np.concatenate((i_right, i_intersection[r_start:r_end]))
 
         X_left = X[i_left]
         y_left = y[i_left]
