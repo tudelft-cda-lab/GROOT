@@ -190,8 +190,6 @@ def _scan_numerical_feature_fast(
     chen_heuristic,
     one_adversarial_class,
 ):
-    # TODO: so far we assume attack_mode is a tuple (dec, inc), and both
-    # classes can move
     sort_order = samples.argsort()
     sorted_labels = y[sort_order]
     sample_queue = samples[sort_order]
@@ -332,8 +330,6 @@ def _scan_numerical_feature_fast_regression(
     right_bound,
     chen_heuristic,
 ):
-    # TODO: so far we assume attack_mode is a tuple (dec, inc), and both
-    # classes can move
     sort_order = samples.argsort()
     sorted_labels = y[sort_order]
     sample_queue = samples[sort_order]
