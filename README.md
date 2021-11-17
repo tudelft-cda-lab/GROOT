@@ -8,7 +8,7 @@ To train and evaluate GROOT on a toy dataset against an attacker that can move s
 
 ```python
 from groot.adversary import DecisionTreeAdversary
-from groot.model import GrootTree
+from groot.model import GrootTreeClassifier
 
 from sklearn.datasets import make_moons
 
@@ -17,7 +17,7 @@ X_test, y_test = make_moons(noise=0.3, random_state=1)
 
 attack_model = [0.5, 0.5]
 is_numerical = [True, True]
-tree = GrootTree(attack_model=attack_model, is_numerical=is_numerical, random_state=0)
+tree = GrootTreeClassifier(attack_model=attack_model, is_numerical=is_numerical, random_state=0)
 
 tree.fit(X, y)
 accuracy = tree.score(X_test, y_test)
@@ -50,7 +50,7 @@ To experiment on image datasets we have a script `image_experiments.py` that fit
 The scripts `summarize_datasets.py` and `visualize_threat_models.py` output some figures we used in the text. 
 
 ### Implementation details
-The TREANT implementation (`groot.treant.py`) is copied almost completely from the authors of TREANT at https://github.com/gtolomei/treant with small modifications to better interface with the experiments. The heuristic by Chen et al. runs in the GROOT code, only with a different score function. This score function can be enabled by setting `chen_heuristic=True` on a `GrootTree` before calling `.fit(X, y)`. The provably robust boosting implementation comes almost completely from their code at https://github.com/max-andr/provably-robust-boosting and we use a small wrapper around their code (`groot.provably_robust_boosting.wrapper.py`) to use it. When we recorded the runtimes we turned off all parallel options in the `@jit` annotations from the code. The implementation of Chen et al. boosting can be found in their own repo https://github.com/chenhongge/RobustTrees, from whic we need to compile and copy the binary `xgboost` to the current directory. The script `fit_chen_xgboost.py` then calls this binary and uses the command line interface to fit all models.
+The TREANT implementation (`groot.treant.py`) is copied almost completely from the authors of TREANT at https://github.com/gtolomei/treant with small modifications to better interface with the experiments. The heuristic by Chen et al. runs in the GROOT code, only with a different score function. This score function can be enabled by setting `chen_heuristic=True` on a `GrootTreeClassifier` before calling `.fit(X, y)`. The provably robust boosting implementation comes almost completely from their code at https://github.com/max-andr/provably-robust-boosting and we use a small wrapper around their code (`groot.provably_robust_boosting.wrapper.py`) to use it. When we recorded the runtimes we turned off all parallel options in the `@jit` annotations from the code. The implementation of Chen et al. boosting can be found in their own repo https://github.com/chenhongge/RobustTrees, from whic we need to compile and copy the binary `xgboost` to the current directory. The script `fit_chen_xgboost.py` then calls this binary and uses the command line interface to fit all models.
 
 ## Important note on TREANT
 To encode L-infinity norms correctly we had to modify TREANT to NOT apply rules recursively. This means we added a single `break` statement in the `treant.Attacker.__compute_attack()` method. If you are planning on using TREANT with recursive attacker rules then you should remove this statement or use TREANT's unmodified code at https://github.com/gtolomei/treant .

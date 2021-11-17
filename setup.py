@@ -5,11 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="groot-trees",
-    version="0.0.12",
+    version="0.0.14",
     author="Daniel Vos",
     author_email="D.A.Vos@tudelft.nl",
     url="https://github.com/tudelft-cda-lab/GROOT",
-    download_url="https://github.com/tudelft-cda-lab/GROOT/archive/refs/tags/v0.0.1.tar.gz",
     description="Growing Robust Decision Trees",
     long_description=long_description,
     long_description_content_type="text/markdown",
