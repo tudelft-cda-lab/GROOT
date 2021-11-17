@@ -330,109 +330,53 @@ def _scan_numerical_feature_fast_regression(
     right_bound,
     chen_heuristic,
 ):
-    sort_order = samples.argsort()
-    sorted_labels = y[sort_order]
-    sample_queue = samples[sort_order]
-    dec_queue = sample_queue - dec
-    inc_queue = sample_queue + inc
+    unique_samples = np.unique(samples)
+    thresholds = np.sort(np.concatenate((unique_samples - dec, unique_samples + inc)))
 
-    # Initialize label lists
-    y_left = []
-    y_left_intersect = []
-    y_right_intersect = []
-    y_right = list(y)
-
-    # Initialize queue values and indices
-    sample_i = dec_i = inc_i = 0
-    sample_val = sample_queue[0]
-    dec_val = dec_queue[0]
-    inc_val = inc_queue[0]
+    samples_inc = samples + inc
+    samples_dec = samples - dec
 
     best_score = 10e9
     best_split = None
     adv_sse = None
-    while True:
-        smallest_val = min(sample_val, dec_val, inc_val)
+    for point, next_point in zip(thresholds[:-1], thresholds[1:]):
 
-        # Find the current point and label from the queue with smallest value.
-        # Also update the sample counters
-        if dec_val == smallest_val:
-            point = dec_val
-            label = sorted_labels[dec_i]
-
-            y_right.remove(label)
-            y_right_intersect.append(label)
-
-            # Update dec_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the dec_queue does not get picked
-            if dec_i < dec_queue.shape[0] - 1:
-                dec_i += 1
-                dec_val = dec_queue[dec_i]
-            else:
-                dec_val = 10e9
-        elif sample_val == smallest_val:
-            point = sample_val
-            label = sorted_labels[sample_i]
-
-            y_right_intersect.remove(label)
-            y_left_intersect.append(label)
-
-            # Update sample_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the sample_queue does not get picked
-            if sample_i < sample_queue.shape[0] - 1:
-                sample_i += 1
-                sample_val = sample_queue[sample_i]
-            else:
-                sample_val = 10e9
-        else:
-            point = inc_val
-            label = sorted_labels[inc_i]
-
-            y_left_intersect.remove(label)
-            y_left.append(label)
-
-            # Update inc_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the inc_queue does not get picked
-            if inc_i < inc_queue.shape[0] - 1:
-                inc_i += 1
-                inc_val = inc_queue[inc_i]
-            else:
-                inc_val = 10e9
-
-        if point >= right_bound or (inc_val >= right_bound and dec_val >= right_bound):
+        if point >= right_bound:
             break
 
-        # If the next point is not the same as this one
-        next_point = min(dec_val, inc_val)
-        if next_point != point:
-            if chen_heuristic:
-                adv_sse, _ = chen_adversarial_sum_absolute_errors(
-                    np.array(y_left),
-                    np.array(y_left_intersect),
-                    np.array(y_right_intersect),
-                    np.array(y_right),
-                )
-            else:
-                adv_sse, _ = adversarial_sum_absolute_errors(
-                    np.array(y_left),
-                    np.array(y_right),
-                    np.array(y_left_intersect + y_right_intersect),
-                )
+        y_left = y[samples_inc <= point]
+        y_right = y[samples_dec > point]
 
-            # Maximize the margin of the split
-            split = (point + next_point) * 0.5
+        if chen_heuristic:
+            y_left_intersect = y[(samples <= point) and (samples_inc > point)]
+            y_right_intersect = y[(samples > point) and (samples_dec <= point)]
 
-            if (
-                adv_sse is not None
-                and adv_sse < best_score
-                and split > left_bound
-                and split < right_bound
-            ):
-                best_score = adv_sse
-                best_split = split
+            adv_sse, _ = chen_adversarial_sum_absolute_errors(
+                y_left,
+                y_left_intersect,
+                y_right_intersect,
+                y_right,
+            )
+        else:
+            y_intersect = y[~((samples_inc <= point) | (samples_dec > point))]
+
+            adv_sse, _ = adversarial_sum_absolute_errors(
+                y_left,
+                y_right,
+                y_intersect,
+            )
+
+        # Maximize the margin of the split
+        split = (point + next_point) * 0.5
+
+        if (
+            adv_sse is not None
+            and adv_sse < best_score
+            and split > left_bound
+            and split < right_bound
+        ):
+            best_score = adv_sse
+            best_split = split
 
     return best_score, best_split
 
