@@ -190,8 +190,6 @@ def _scan_numerical_feature_fast(
     chen_heuristic,
     one_adversarial_class,
 ):
-    # TODO: so far we assume attack_mode is a tuple (dec, inc), and both
-    # classes can move
     sort_order = samples.argsort()
     sorted_labels = y[sort_order]
     sample_queue = samples[sort_order]
@@ -322,7 +320,7 @@ def _scan_numerical_feature_fast(
     return best_score, best_split
 
 
-@jit(nopython=True, nogil=NOGIL)
+# @jit(nopython=True, nogil=NOGIL)
 def _scan_numerical_feature_fast_regression(
     samples,
     y,
@@ -332,111 +330,59 @@ def _scan_numerical_feature_fast_regression(
     right_bound,
     chen_heuristic,
 ):
-    # TODO: so far we assume attack_mode is a tuple (dec, inc), and both
-    # classes can move
-    sort_order = samples.argsort()
-    sorted_labels = y[sort_order]
-    sample_queue = samples[sort_order]
-    dec_queue = sample_queue - dec
-    inc_queue = sample_queue + inc
+    unique_samples = np.unique(samples)
 
-    # Initialize label lists
-    y_left = []
-    y_left_intersect = []
-    y_right_intersect = []
-    y_right = list(y)
+    if dec == 0 and inc == 0:
+        thresholds = np.sort(unique_samples)
+    else:
+        thresholds = np.sort(
+            np.unique(np.concatenate((unique_samples - dec, unique_samples + inc)))
+        )
 
-    # Initialize queue values and indices
-    sample_i = dec_i = inc_i = 0
-    sample_val = sample_queue[0]
-    dec_val = dec_queue[0]
-    inc_val = inc_queue[0]
+    samples_inc = samples + inc
+    samples_dec = samples - dec
 
     best_score = 10e9
     best_split = None
     adv_sse = None
-    while True:
-        smallest_val = min(sample_val, dec_val, inc_val)
+    for point, next_point in zip(thresholds[:-1], thresholds[1:]):
 
-        # Find the current point and label from the queue with smallest value.
-        # Also update the sample counters
-        if dec_val == smallest_val:
-            point = dec_val
-            label = sorted_labels[dec_i]
-
-            y_right.remove(label)
-            y_right_intersect.append(label)
-
-            # Update dec_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the dec_queue does not get picked
-            if dec_i < dec_queue.shape[0] - 1:
-                dec_i += 1
-                dec_val = dec_queue[dec_i]
-            else:
-                dec_val = 10e9
-        elif sample_val == smallest_val:
-            point = sample_val
-            label = sorted_labels[sample_i]
-
-            y_right_intersect.remove(label)
-            y_left_intersect.append(label)
-
-            # Update sample_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the sample_queue does not get picked
-            if sample_i < sample_queue.shape[0] - 1:
-                sample_i += 1
-                sample_val = sample_queue[sample_i]
-            else:
-                sample_val = 10e9
-        else:
-            point = inc_val
-            label = sorted_labels[inc_i]
-
-            y_left_intersect.remove(label)
-            y_left.append(label)
-
-            # Update inc_val and i to the values belonging to the next
-            # sample in queue. If we reached the end of the queue then store
-            # a high number to make sure the inc_queue does not get picked
-            if inc_i < inc_queue.shape[0] - 1:
-                inc_i += 1
-                inc_val = inc_queue[inc_i]
-            else:
-                inc_val = 10e9
-
-        if point >= right_bound or (inc_val >= right_bound and dec_val >= right_bound):
+        if point >= right_bound:
             break
 
-        # If the next point is not the same as this one
-        next_point = min(dec_val, inc_val)
-        if next_point != point:
-            if chen_heuristic:
-                adv_sse, _ = chen_adversarial_sum_absolute_errors(
-                    np.array(y_left),
-                    np.array(y_left_intersect),
-                    np.array(y_right_intersect),
-                    np.array(y_right),
-                )
-            else:
-                adv_sse, _ = adversarial_sum_absolute_errors(
-                    np.array(y_left),
-                    np.array(y_right),
-                    np.array(y_left_intersect + y_right_intersect),
-                )
+        y_left = y[samples_inc <= point]
+        y_right = y[samples_dec > point]
 
-            # Maximize the margin of the split
-            split = (point + next_point) * 0.5
+        if chen_heuristic:
+            y_left_intersect = y[(samples <= point) & (samples_inc > point)]
+            y_right_intersect = y[(samples > point) & (samples_dec <= point)]
 
-            if (
-                adv_sse is not None
-                and adv_sse < best_score
-                and split > left_bound
-                and split < right_bound
-            ):
-                best_score = adv_sse
-                best_split = split
+            adv_sse, _ = chen_adversarial_sum_absolute_errors(
+                y_left,
+                y_left_intersect,
+                y_right_intersect,
+                y_right,
+            )
+        else:
+            y_intersect = y[~((samples_inc <= point) | (samples_dec > point))]
+
+            adv_sse, _ = adversarial_sum_absolute_errors(
+                y_left,
+                y_right,
+                y_intersect,
+            )
+
+        # Maximize the margin of the split
+        split = (point + next_point) * 0.5
+
+        if (
+            adv_sse is not None
+            and adv_sse < best_score
+            and split > left_bound
+            and split < right_bound
+        ):
+            best_score = adv_sse
+            best_split = split
 
     return best_score, best_split
 
@@ -661,9 +607,7 @@ def adversarial_sum_absolute_errors(y_l, y_r, y_i):
 @jit(nopython=True, nogil=NOGIL)
 def chen_adversarial_sum_absolute_errors(y_l, y_li, y_ri, y_r):
     if len(y_li) == 0 and len(y_ri) == 0:
-        return sum_absolute_errors(y_l) + sum_absolute_errors(y_r), (0, 0)
-
-    y_i = np.concatenate((y_li, y_ri))
+        return sum_absolute_errors(y_l) + sum_absolute_errors(y_r), 1
 
     s1 = sum_absolute_errors(np.concatenate((y_l, y_li))) + sum_absolute_errors(
         np.concatenate((y_r, y_ri))
@@ -680,21 +624,14 @@ def chen_adversarial_sum_absolute_errors(y_l, y_li, y_ri, y_r):
 
     worst_case = max(s1, s2, s3, s4)
 
-    # Return the worst found weighted Gini impurity, the number of class 1
-    # samples that move to the left and the number of class 0 samples that
-    # move to the left
-    # TODO: fix indices
     if s1 == worst_case:
-        return s1, (0, 0)
-
-    if s2 == worst_case:
-        return s2, (0, 0)
-
-    if s3 == worst_case:
-        return s3, (0, 0)
-
-    if s4 == worst_case:
-        return s4, (0, 0)
+        return s1, 1
+    elif s2 == worst_case:
+        return s2, 2
+    elif s3 == worst_case:
+        return s3, 3
+    else:
+        return s4, 4
 
 
 @jit(nopython=True, nogil=NOGIL)
@@ -1596,34 +1533,66 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         dec, inc = self.attack_model_[feature]
 
         # Determine the indices of samples on each side of the split
-        i_left = np.where(X[:, feature] <= rule - dec)[0]
-
-        i_intersection = np.where(
-            (X[:, feature] > rule - dec) & (X[:, feature] <= rule + inc)
-        )[0]
-        i_right = np.where(X[:, feature] > rule + inc)[0]
+        i_left = np.where(X[:, feature] + inc <= rule)[0]
+        i_right = np.where(X[:, feature] - dec > rule)[0]
 
         y_left = y[i_left]
-        y_intersection = y[i_intersection]
         y_right = y[i_right]
 
-        sort_order = np.argsort(y_intersection)
-        y_intersection = y_intersection[sort_order]
+        if self.chen_heuristic:
+            i_left_intersection = np.where(
+                (X[:, feature] + inc > rule) & (X[:, feature] <= rule)
+            )[0]
+            i_right_intersection = np.where(
+                (X[:, feature] - dec <= rule) & (X[:, feature] > rule)
+            )[0]
 
-        # Compute optimal movement
-        _, (l_start, l_end) = adversarial_sum_absolute_errors(
-            y_left, y_right, y_intersection
-        )
-        if l_start == 0:
-            r_start = l_end
-            r_end = -1
+            y_left_intersection = y[i_left_intersection]
+            y_right_intersection = y[i_right_intersection]
+
+            # Compute optimal movement
+            _, configuration = chen_adversarial_sum_absolute_errors(
+                y_left,
+                y_left_intersection,
+                y_right_intersection,
+                y_right,
+            )
+
+            # Move the resulting intersection arrays to the left and right sides
+            if configuration == 1:
+                i_left = np.concatenate((i_left, i_left_intersection))
+                i_right = np.concatenate((i_right, i_right_intersection))
+            elif configuration == 2:
+                i_right = np.concatenate(
+                    (i_right, i_left_intersection, i_right_intersection)
+                )
+            elif configuration == 3:
+                i_left = np.concatenate(
+                    (i_left, i_left_intersection, i_right_intersection)
+                )
+            else:
+                i_left = np.concatenate((i_left, i_right_intersection))
+                i_right = np.concatenate((i_right, i_left_intersection))
         else:
-            r_start = 0
-            r_end = l_start
+            i_intersection = np.where(
+                (X[:, feature] + inc > rule) & (X[:, feature] - dec <= rule)
+            )[0]
+            y_intersection = np.sort(y[i_intersection])
 
-        # Move the resulting intersection arrays to the left and right sides
-        i_left = np.concatenate((i_left, i_intersection[l_start:l_end]))
-        i_right = np.concatenate((i_right, i_intersection[r_start:r_end]))
+            # Compute optimal movement
+            _, (l_start, l_end) = adversarial_sum_absolute_errors(
+                y_left, y_right, y_intersection
+            )
+            if l_start == 0:
+                r_start = l_end
+                r_end = -1
+            else:
+                r_start = 0
+                r_end = l_start
+
+            # Move the resulting intersection arrays to the left and right sides
+            i_left = np.concatenate((i_left, i_intersection[l_start:l_end]))
+            i_right = np.concatenate((i_right, i_intersection[r_start:r_end]))
 
         X_left = X[i_left]
         y_left = y[i_left]
@@ -1636,8 +1605,7 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         """
         Predict the targets of the input samples X.
 
-        The predicted class is the most frequently occuring class label in a
-        leaf.
+        The predicted value is the median of values in a leaf.
 
         Parameters
         ----------
@@ -1679,7 +1647,167 @@ def _build_tree_parallel(base_tree, X, y, indices, seed, n_samples):
     return tree
 
 
-class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
+class BaseGrootRandomForest(BaseEstimator):
+    """
+    Base class for robust (GROOT) random forests.
+    """
+
+    def __init__(
+        self,
+        n_estimators=100,
+        max_depth=None,
+        max_features="sqrt",
+        min_samples_split=2,
+        min_samples_leaf=1,
+        robust_weight=1.0,
+        attack_model=None,
+        verbose=False,
+        chen_heuristic=False,
+        max_samples=None,
+        n_jobs=None,
+        random_state=None,
+    ):
+        """
+        Parameters
+        ----------
+        n_estimators : int, optional
+            The number of decision trees to fit in the forest.
+        max_depth : int, optional
+            The maximum depth for the decision trees once fitted.
+        max_features : int or {"sqrt", "log2", None}, optional
+            The number of features to consider while making each split, if None then all features are considered.
+        min_samples_split : int, optional
+            The minimum number of samples required to split a tree node.
+        min_samples_leaf : int, optional
+            The minimum number of samples required to make a tree leaf.
+        robust_weight : float, optional
+            The ratio of samples that are actually moved by an adversary.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X. The attack model needs to describe for every feature in which way it can be perturbed.
+        verbose : bool, optional
+            Whether to print fitting progress on screen.
+        chen_heuristic : bool, optional
+            Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        max_samples : float, optional
+            The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
+        n_jobs : int, optional
+            The number of jobs to run in parallel when fitting trees. See joblib.
+        random_state : int, optional
+            Controls the sampling of the features to consider when looking for the best split at each node.
+
+        Attributes
+        ----------
+        estimators_ : list of GrootTree
+            The collection of fitted sub-estimators.
+        n_samples_ : int
+            The number of samples when `fit` is performed.
+        n_features_ : int
+            The number of features when `fit` is performed.
+        """
+        self.n_estimators = n_estimators
+        self.max_depth = max_depth
+        self.max_features = max_features
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.robust_weight = robust_weight
+        self.attack_model = attack_model
+        self.verbose = verbose
+        self.chen_heuristic = chen_heuristic
+        self.max_samples = max_samples
+        self.n_jobs = n_jobs
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        """
+        Build a robust and fair random forest of binary decision trees from
+        the training set (X, y) using greedy splitting according to the
+        adversarial Gini combined with fair gini under the given attack model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The training samples.
+        y : array-like of shape (n_samples,)
+            The class labels as integers 0 (benign) or 1 (malicious)
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+
+        X, y = check_X_y(X, y)
+        y = self._check_target(y)
+
+        self.n_samples_, self.n_features_in_ = X.shape
+
+        random_state = check_random_state(self.random_state)
+
+        # Generate seeds for the random states of each tree to prevent each
+        # of them from fitting exactly the same way, but use the random state
+        # to keep the forest reproducible
+        seeds = [
+            random_state.randint(np.iinfo(np.int32).max)
+            for _ in range(self.n_estimators)
+        ]
+
+        tree = self._get_estimator()
+
+        if self.max_samples:
+            n_bootstrap_samples = int(self.n_samples_ * self.max_samples)
+        else:
+            n_bootstrap_samples = self.n_samples_
+
+        indices = np.arange(X.shape[0])
+        self.estimators_ = Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, prefer="processes"
+        )(
+            delayed(_build_tree_parallel)(
+                tree, X, y, indices, seed, n_bootstrap_samples
+            )
+            for seed in seeds
+        )
+
+        return self
+
+    def __str__(self):
+        result = ""
+        result += f"Parameters: {self.get_params()}\n"
+
+        if hasattr(self, "estimators_"):
+            for tree in self.estimators_:
+                result += f"Tree:\n{tree.root_.pretty_print()}\n"
+        else:
+            result += "Forest has not yet been fitted"
+
+        return result
+
+    def to_json(self, output_file="forest.json"):
+        with open(output_file, "w") as fp:
+            dictionary = {
+                "params": self.get_params(),
+            }
+            if hasattr(self, "estimators_"):
+                dictionary["trees"] = [tree.to_json(None) for tree in self.estimators_]
+                json.dump(dictionary, fp, indent=2, default=convert_numpy)
+            else:
+                dictionary["trees"] = None
+                json.dump(dictionary, fp)
+
+    def to_xgboost_json(self, output_file="forest.json"):
+        if hasattr(self, "estimators_"):
+            dictionary = [tree.to_xgboost_json(None) for tree in self.estimators_]
+
+            if output_file:
+                with open(output_file, "w") as fp:
+                    json.dump(dictionary, fp, indent=2, default=convert_numpy)
+            else:
+                return dictionary
+        else:
+            raise Exception("Forest not yet fitted")
+
+
+class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
     """
     A robust random forest for binary classification.
     """
@@ -1739,41 +1867,23 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         n_features_ : int
             The number of features when `fit` is performed.
         """
-        self.n_estimators = n_estimators
-        self.max_depth = max_depth
-        self.max_features = max_features
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.robust_weight = robust_weight
-        self.attack_model = attack_model
+        super().__init__(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            robust_weight=robust_weight,
+            attack_model=attack_model,
+            verbose=verbose,
+            chen_heuristic=chen_heuristic,
+            max_samples=max_samples,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
         self.one_adversarial_class = one_adversarial_class
-        self.verbose = verbose
-        self.chen_heuristic = chen_heuristic
-        self.max_samples = max_samples
-        self.n_jobs = n_jobs
-        self.random_state = random_state
 
-    def fit(self, X, y):
-        """
-        Build a robust and fair random forest of binary decision trees from
-        the training set (X, y) using greedy splitting according to the
-        adversarial Gini combined with fair gini under the given attack model.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The training samples.
-        y : array-like of shape (n_samples,)
-            The class labels as integers 0 (benign) or 1 (malicious)
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-
-        X, y = check_X_y(X, y)
-
+    def _check_target(self, y):
         target_type = type_of_target(y)
         if target_type != "binary":
             raise ValueError(
@@ -1783,19 +1893,10 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
-        self.n_samples_, self.n_features_in_ = X.shape
+        return y
 
-        random_state = check_random_state(self.random_state)
-
-        # Generate seeds for the random states of each tree to prevent each
-        # of them from fitting exactly the same way, but use the random state
-        # to keep the forest reproducible
-        seeds = [
-            random_state.randint(np.iinfo(np.int32).max)
-            for _ in range(self.n_estimators)
-        ]
-
-        tree = GrootTreeClassifier(
+    def _get_estimator(self):
+        return GrootTreeClassifier(
             max_depth=self.max_depth,
             min_samples_split=self.min_samples_split,
             min_samples_leaf=self.min_samples_leaf,
@@ -1804,22 +1905,6 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
             attack_model=self.attack_model,
             one_adversarial_class=self.one_adversarial_class,
             chen_heuristic=self.chen_heuristic,
-            random_state=random_state,
-        )
-
-        if self.max_samples:
-            n_bootstrap_samples = int(self.n_samples_ * self.max_samples)
-        else:
-            n_bootstrap_samples = self.n_samples_
-
-        indices = np.arange(X.shape[0])
-        self.estimators_ = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose, prefer="processes"
-        )(
-            delayed(_build_tree_parallel)(
-                tree, X, y, indices, seed, n_bootstrap_samples
-            )
-            for seed in seeds
         )
 
     def predict_proba(self, X):
@@ -1828,6 +1913,7 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         The class probability is the average of the probabilities predicted by
         each decision tree. The probability prediction of each tree is the
         fraction of samples of the same class in the leaf.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1855,6 +1941,7 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
         Predict the classes of the input samples X.
         The predicted class is the rounded average of the class labels in
         each predicted leaf.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1870,38 +1957,126 @@ class GrootRandomForestClassifier(BaseEstimator, ClassifierMixin):
 
         return self.classes_.take(np.argmax(y_pred_proba, axis=1))
 
-    def __str__(self):
-        result = ""
-        result += f"Parameters: {self.get_params()}\n"
 
-        if hasattr(self, "estimators_"):
-            for tree in self.estimators_:
-                result += f"Tree:\n{tree.root_.pretty_print()}\n"
-        else:
-            result += "Forest has not yet been fitted"
+class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
+    """
+    A robust random forest for binary classification.
+    """
 
-        return result
+    def __init__(
+        self,
+        n_estimators=100,
+        max_depth=None,
+        max_features="sqrt",
+        min_samples_split=2,
+        min_samples_leaf=1,
+        robust_weight=1.0,
+        attack_model=None,
+        verbose=False,
+        chen_heuristic=False,
+        max_samples=None,
+        n_jobs=None,
+        random_state=None,
+    ):
+        """
+        Parameters
+        ----------
+        n_estimators : int, optional
+            The number of decision trees to fit in the forest.
+        max_depth : int, optional
+            The maximum depth for the decision trees once fitted.
+        max_features : int or {"sqrt", "log2", None}, optional
+            The number of features to consider while making each split, if None then all features are considered.
+        min_samples_split : int, optional
+            The minimum number of samples required to split a tree node.
+        min_samples_leaf : int, optional
+            The minimum number of samples required to make a tree leaf.
+        robust_weight : float, optional
+            The ratio of samples that are actually moved by an adversary.
+        attack_model : array-like of shape (n_features,), optional
+            Attacker capabilities for perturbing X. The attack model needs to describe for every feature in which way it can be perturbed.
+        verbose : bool, optional
+            Whether to print fitting progress on screen.
+        chen_heuristic : bool, optional
+            Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        max_samples : float, optional
+            The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
+        n_jobs : int, optional
+            The number of jobs to run in parallel when fitting trees. See joblib.
+        random_state : int, optional
+            Controls the sampling of the features to consider when looking for the best split at each node.
 
-    def to_json(self, output_file="forest.json"):
-        with open(output_file, "w") as fp:
-            dictionary = {
-                "params": self.get_params(),
-            }
-            if hasattr(self, "estimators_"):
-                dictionary["trees"] = [tree.to_json(None) for tree in self.estimators_]
-                json.dump(dictionary, fp, indent=2, default=convert_numpy)
-            else:
-                dictionary["trees"] = None
-                json.dump(dictionary, fp)
+        Attributes
+        ----------
+        estimators_ : list of GrootTree
+            The collection of fitted sub-estimators.
+        n_samples_ : int
+            The number of samples when `fit` is performed.
+        n_features_ : int
+            The number of features when `fit` is performed.
+        """
+        super().__init__(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            max_features=max_features,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            robust_weight=robust_weight,
+            attack_model=attack_model,
+            verbose=verbose,
+            chen_heuristic=chen_heuristic,
+            max_samples=max_samples,
+            n_jobs=n_jobs,
+            random_state=random_state,
+        )
 
-    def to_xgboost_json(self, output_file="forest.json"):
-        if hasattr(self, "estimators_"):
-            dictionary = [tree.to_xgboost_json(None) for tree in self.estimators_]
+    def _check_target(self, y):
+        target_type = type_of_target(y)
+        if target_type not in {"continuous", "multiclass", "binary"}:
+            raise ValueError(
+                f"Unknown label type: regressor only supports continuous/multiclass/binary targets but found {target_type}"
+            )
 
-            if output_file:
-                with open(output_file, "w") as fp:
-                    json.dump(dictionary, fp, indent=2, default=convert_numpy)
-            else:
-                return dictionary
-        else:
-            raise Exception("Forest not yet fitted")
+        # Make a copy of y if it is readonly to prevent errors
+        if not y.flags.writeable:
+            y = np.copy(y)
+
+        return y
+
+    def _get_estimator(self):
+        return GrootTreeRegressor(
+            max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
+            min_samples_leaf=self.min_samples_leaf,
+            max_features=self.max_features,
+            robust_weight=self.robust_weight,
+            attack_model=self.attack_model,
+            chen_heuristic=self.chen_heuristic,
+        )
+
+    def predict(self, X):
+        """
+        Predict the values of the input samples X.
+
+        The predicted values are the means of all individual predictions.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples to predict.
+
+        Returns
+        -------
+        y : array-like of shape (n_samples,)
+            The predicted class labels
+        """
+
+        check_is_fitted(self, "estimators_")
+        X = check_array(X)
+
+        predictions_sum = np.zeros(len(X))
+
+        for tree in self.estimators_:
+            predictions_sum += tree.predict(X)
+
+        return predictions_sum / self.n_estimators

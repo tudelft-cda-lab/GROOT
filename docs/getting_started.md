@@ -1,15 +1,15 @@
 The GROOT repository contains several useful modules for fitting and scoring decision trees and ensembles against adversarial examples:
 
 - Implementations of robust decision tree learning algorithms:
-    * [GROOT trees](../reference/models/groot_tree)[^1]
-    * [GROOT forests](../reference/models/groot_forest)
-    * [TREANT](../reference/models/treant)[^2]
-    * [Provably robust boosting](../reference/models/boosting)[^3]
-- [Adversary](../reference/adversary) for attacking and scoring decision trees
-- [Kantchelian's MILP attack](../reference/verification) for attacking and scoring trees / ensembles[^4]
-- Easy functions to import [datasets](../reference/datasets)
+    * [GROOT decision tree](../reference/models/groot_tree/)[^1]
+    * [GROOT random forest](../reference/models/groot_forest/)[^1]
+    * [TREANT decision tree](../reference/models/treant/)[^2]
+    * [Provably robust boosting](../reference/models/boosting/)[^3]
+- [Adversary](../reference/adversary/) for attacking and scoring decision trees
+- [Kantchelian's MILP attack](../reference/verification/) for attacking and scoring trees / ensembles[^4]
+- Easy functions to import [datasets](../reference/datasets/)
 - [Utilities](../reference/util) for exporting scikit-learn models
-- 2D decision tree [visualizer](../reference/visualization)
+- 2D decision tree [visualizer](../reference/visualization/)
 
 For an introduction to decision trees and adversarial examples see [this blogpost](https://cyber-analytics.nl/blogposts/2021-03-15-trees-adversarial-examples/).
 
@@ -20,12 +20,15 @@ GROOT can be directly install from PyPi:
 To use Kantchelian's MILP attack it is required that you have [GUROBI](https://www.gurobi.com/) installed along with their python package:
 ```python -m pip install -i https://pypi.gurobi.com gurobipy```
 
-## Example
+## Toolbox
+The [GROOT toolbox](../reference/toolbox/) contains the useful `Model` class which can take models of different types (e.g. Scikit-learn, GROOT, TREANT) and turn these into a general JSON representation. It can also be used to easily evaluate the performance of these models against adversarial attacks.
+
+## GROOT Example
 Below is a very simple example demonstrating how to train and score a GROOT tree on a toy dataset. We start by creating a 2D dataset using scikit-learn then split it into a train and test set.
 
 ``` python
 from groot.adversary import DecisionTreeAdversary
-from groot.model import GrootTree
+from groot.model import GrootTreeClassifier
 
 from sklearn.datasets import make_moons
 
@@ -41,12 +44,12 @@ To encode an attacker that can increase/decrease a sample by 0.3 for both featur
 attack_model = [0.3, 0.3]
 ```
 
-We specify that this is a numerical dataset and train the `GrootTree` using `.fit()` just like other scikit-learn models.
+We specify that this is a numerical dataset and train the `GrootTreeClassifier` using `.fit()` just like other scikit-learn models.
 
 ``` python
 # Create and fit a GROOT tree
 is_numerical = [True, True]
-tree = GrootTree(
+tree = GrootTreeClassifier(
     attack_model=attack_model,
     is_numerical=is_numerical,
     random_state=0
@@ -73,7 +76,7 @@ The full script is given below.
 
 ``` python
 from groot.adversary import DecisionTreeAdversary
-from groot.model import GrootTree
+from groot.model import GrootTreeClassifier
 
 from sklearn.datasets import make_moons
 
@@ -86,7 +89,7 @@ attack_model = [0.3, 0.3]
 
 # Create and fit a GROOT tree
 is_numerical = [True, True]
-tree = GrootTree(
+tree = GrootTreeClassifier(
     attack_model=attack_model,
     is_numerical=is_numerical,
     random_state=0
