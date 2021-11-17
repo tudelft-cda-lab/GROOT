@@ -5,6 +5,7 @@ import numpy as np
 from collections import defaultdict
 from itertools import product
 from numba import jit
+from numpy.lib.function_base import iterable
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -159,24 +160,32 @@ class NumericalNode(Node):
             return self
 
 
-def _attack_model_to_tuples(attack_model):
-    new_attack_model = []
-    for attack_mode in attack_model:
-        if attack_mode == "":
-            new_attack_model.append((0, 0))
-        elif attack_mode == ">":
-            new_attack_model.append((0, 10e9))
-        elif attack_mode == "<":
-            new_attack_model.append((10e9, 0))
-        elif attack_mode == "<>":
-            new_attack_model.append((10e9, 10e9))
-        elif isinstance(attack_mode, numbers.Number):
-            new_attack_model.append((attack_mode, attack_mode))
-        elif isinstance(attack_mode, tuple) and len(attack_mode) == 2:
-            new_attack_model.append(attack_mode)
-        else:
-            raise Exception("Unknown attack model spec:", attack_mode)
-    return new_attack_model
+def _attack_model_to_tuples(attack_model, n_features):
+    if isinstance(attack_model, numbers.Number):
+        return [(attack_model, attack_model) for _ in range(n_features)]
+    elif iterable(attack_model):
+        new_attack_model = []
+        for attack_mode in attack_model:
+            if attack_mode == "":
+                new_attack_model.append((0, 0))
+            elif attack_mode == ">":
+                new_attack_model.append((0, 10e9))
+            elif attack_mode == "<":
+                new_attack_model.append((10e9, 0))
+            elif attack_mode == "<>":
+                new_attack_model.append((10e9, 10e9))
+            elif isinstance(attack_mode, numbers.Number):
+                new_attack_model.append((attack_mode, attack_mode))
+            elif isinstance(attack_mode, tuple) and len(attack_mode) == 2:
+                new_attack_model.append(attack_mode)
+            else:
+                raise Exception("Unknown attack model spec:", attack_mode)
+        return new_attack_model
+    else:
+        raise Exception(
+            "Unknown attack model spec, needs to be perturbation radius or perturbation per feature:",
+            attack_model,
+        )
 
 
 @jit(nopython=True, nogil=NOGIL)
@@ -787,7 +796,7 @@ class BaseGrootTree(BaseEstimator):
 
         # Turn numerical features in attack model into tuples to make fitting
         # code simpler
-        self.attack_model_ = _attack_model_to_tuples(attack_model)
+        self.attack_model_ = _attack_model_to_tuples(attack_model, X.shape[1])
 
         self.random_state_ = check_random_state(self.random_state)
 
