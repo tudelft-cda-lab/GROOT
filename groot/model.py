@@ -320,7 +320,7 @@ def _scan_numerical_feature_fast(
     return best_score, best_split
 
 
-@jit(nopython=True, nogil=NOGIL)
+# @jit(nopython=True, nogil=NOGIL)
 def _scan_numerical_feature_fast_regression(
     samples,
     y,
@@ -331,7 +331,13 @@ def _scan_numerical_feature_fast_regression(
     chen_heuristic,
 ):
     unique_samples = np.unique(samples)
-    thresholds = np.sort(np.concatenate((unique_samples - dec, unique_samples + inc)))
+
+    if dec == 0 and inc == 0:
+        thresholds = np.sort(unique_samples)
+    else:
+        thresholds = np.sort(
+            np.unique(np.concatenate((unique_samples - dec, unique_samples + inc)))
+        )
 
     samples_inc = samples + inc
     samples_dec = samples - dec
@@ -348,8 +354,8 @@ def _scan_numerical_feature_fast_regression(
         y_right = y[samples_dec > point]
 
         if chen_heuristic:
-            y_left_intersect = y[(samples <= point) and (samples_inc > point)]
-            y_right_intersect = y[(samples > point) and (samples_dec <= point)]
+            y_left_intersect = y[(samples <= point) & (samples_inc > point)]
+            y_right_intersect = y[(samples > point) & (samples_dec <= point)]
 
             adv_sse, _ = chen_adversarial_sum_absolute_errors(
                 y_left,
