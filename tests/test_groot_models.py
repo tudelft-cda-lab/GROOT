@@ -76,6 +76,47 @@ def test_groot_tree_parameters():
                     )
 
 
+def test_groot_tree_prediction_compiling():
+    attack_models = [
+        (0, 0),
+        (0.2, 0.2),
+        (">", ">"),
+        (0.1, "<>"),
+    ]
+
+    X_train, y_train = make_moons(
+        n_samples=100, shuffle=True, noise=0.2, random_state=1
+    )
+    X_test, y_test = make_moons(n_samples=100, shuffle=True, noise=0.2, random_state=2)
+
+    models = (
+        GrootTreeClassifier(),
+        GrootRandomForestClassifier(n_estimators=10),
+        GrootTreeRegressor(),
+        GrootRandomForestRegressor(n_estimators=10),
+    )
+
+    for model in models:
+        for attack_model in attack_models:
+            standard_model = clone(model)
+            standard_model.set_params(
+                attack_model=attack_model, compile=False, random_state=1
+            )
+            standard_model.fit(X_train, y_train)
+
+            compiled_model = clone(model)
+            compiled_model.set_params(
+                attack_model=attack_model, compile=True, random_state=1
+            )
+            compiled_model.fit(X_train, y_train)
+
+            standard_pred = standard_model.predict(X_test)
+            compiled_pred = compiled_model.predict(X_test)
+
+            assert standard_pred.shape == compiled_pred.shape
+            assert np.allclose(standard_pred, compiled_pred)
+
+
 def test_groot_regressors_sklearn_estimator():
     check_estimator(GrootTreeRegressor())
     check_estimator(GrootRandomForestRegressor(n_estimators=10))
@@ -98,7 +139,10 @@ def test_groot_classifiers_sklearn_estimator():
         "check_dont_overwrite_parameters",
         "check_fit2d_predict1d",
     }
-    for estimator in (GrootTreeClassifier(), GrootRandomForestClassifier(n_estimators=10)):
+    for estimator in (
+        GrootTreeClassifier(),
+        GrootRandomForestClassifier(n_estimators=10),
+    ):
         for _, check in check_estimator(estimator, generate_only=True):
             if check.func.__name__ in classifier_checks_to_skip:
                 continue

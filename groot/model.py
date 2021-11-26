@@ -1,6 +1,5 @@
 import json
 import numbers
-import time
 import numpy as np
 from collections import defaultdict
 from itertools import product
@@ -158,6 +157,122 @@ class NumericalNode(Node):
             return self.left_child
         else:
             return self
+
+
+def node_tree_to_arrays(node: Node):
+    xgboost_json, n_nodes = node.to_xgboost_json(0, 0)
+    n_nodes += 1
+
+    left_ids = np.empty(n_nodes, dtype=np.int32)
+    right_ids = np.empty(n_nodes, dtype=np.int32)
+    features = np.empty(n_nodes, dtype=np.int32)
+    thresholds = np.empty(n_nodes, dtype=np.float32)
+    values = np.empty(n_nodes, dtype=np.float32)
+
+    def _recurse(json_node):
+        node_id = json_node["nodeid"]
+
+        if "leaf" in json_node:
+            left_ids[node_id] = _TREE_LEAF
+            right_ids[node_id] = _TREE_LEAF
+            features[node_id] = _TREE_LEAF
+            thresholds[node_id] = _TREE_LEAF
+            values[node_id] = json_node["leaf"]
+        else:
+            left_ids[node_id] = json_node["yes"]
+            right_ids[node_id] = json_node["no"]
+            features[node_id] = json_node["split"]
+            thresholds[node_id] = json_node["split_condition"]
+            values[node_id] = _TREE_UNDEFINED
+
+            _recurse(json_node["children"][0])
+            _recurse(json_node["children"][1])
+
+    _recurse(xgboost_json)
+
+    return left_ids, right_ids, features, thresholds, values
+
+
+@jit(nopython=True, nogil=NOGIL)
+def _predict_compiled(X, left_ids, right_ids, features, thresholds, values):
+    n_samples = X.shape[0]
+
+    # Initialize the output to -1
+    y_pred = np.empty(n_samples, dtype=np.float32)
+
+    # Iterate over the samples
+    for i, sample in enumerate(X):
+        # Initialize the current node to the root node
+        node_id = 0
+
+        # Iterate over the nodes until we reach a leaf
+        while True:
+            # Get the feature and threshold of the current node
+            feature = features[node_id]
+            threshold = thresholds[node_id]
+
+            # If the feature is -1, we have reached the leaf node
+            if feature == _TREE_LEAF:
+                break
+
+            # If the sample is lower or equal to the threshold, follow the left child
+            if sample[feature] <= threshold:
+                node_id = left_ids[node_id]
+            else:
+                node_id = right_ids[node_id]
+
+        # Store the prediction of the leaf node
+        y_pred[i] = values[node_id]
+
+    return y_pred
+
+
+class CompiledTree:
+    def __init__(self, node):
+        (
+            self.left_ids,
+            self.right_ids,
+            self.features,
+            self.thresholds,
+            self.values,
+        ) = node_tree_to_arrays(node)
+
+    def predict_classification(self, X):
+        pred_values = _predict_compiled(
+            X,
+            self.left_ids,
+            self.right_ids,
+            self.features,
+            self.thresholds,
+            self.values,
+        )
+        return (pred_values > 0.0).astype(np.int32)
+
+    def predict_classification_proba(self, X):
+        pred_values = _predict_compiled(
+            X,
+            self.left_ids,
+            self.right_ids,
+            self.features,
+            self.thresholds,
+            self.values,
+        )
+
+        # Rescale [-1, 1] values to probabilities in range [0, 1]
+        pred_values += 1
+        pred_values *= 0.5
+
+        return np.vstack([1 - pred_values, pred_values]).T
+
+    def predict_regression(self, X):
+        return _predict_compiled(
+            X,
+            self.left_ids,
+            self.right_ids,
+            self.features,
+            self.thresholds,
+            self.values,
+        )
 
 
 def _attack_model_to_tuples(attack_model, n_features):
@@ -753,6 +868,7 @@ class BaseGrootTree(BaseEstimator):
         robust_weight=1.0,
         attack_model=None,
         chen_heuristic=False,
+        compile=True,
         random_state=None,
     ):
         self.max_depth = max_depth
@@ -762,6 +878,7 @@ class BaseGrootTree(BaseEstimator):
         self.robust_weight = robust_weight
         self.attack_model = attack_model
         self.chen_heuristic = chen_heuristic
+        self.compile = compile
         self.random_state = random_state
 
     def fit(self, X, y, check_input=True):
@@ -818,6 +935,10 @@ class BaseGrootTree(BaseEstimator):
         )
 
         self.root_ = self.__fit_recursive(X, y, constraints)
+
+        # Compile the tree into a representation that is faster when predicting
+        if self.compile:
+            self.compiled_root_ = CompiledTree(self.root_)
 
         return self
 
@@ -960,6 +1081,7 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
         attack_model=None,
         one_adversarial_class=False,
         chen_heuristic=False,
+        compile=True,
         random_state=None,
     ):
         """
@@ -981,6 +1103,8 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
             Whether one class (malicious, 1) perturbs their samples or if both classes (benign and malicious, 0 and 1) do so.
         chen_heuristic : bool, optional
             Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        compile : bool, optional
+            Whether to compile the tree for faster predictions.
         random_state : int, optional
             Controls the sampling of the features to consider when looking for the best split at each node.
 
@@ -996,6 +1120,8 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
             The number of features when `fit` is performed.
         root_ : Node
             The root node of the tree after fitting.
+        compiled_root_ : CompiledTree
+            The compiled root node of the tree after fitting.
         """
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -1005,6 +1131,7 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
         self.attack_model = attack_model
         self.one_adversarial_class = one_adversarial_class
         self.chen_heuristic = chen_heuristic
+        self.compile = compile
         self.random_state = random_state
 
     def _check_target(self, y):
@@ -1391,6 +1518,10 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
                 "Received different number of features during predict than during fit"
             )
 
+        # If model has been compiled, use compiled predict_proba
+        if self.compile:
+            return self.compiled_root_.predict_classification_proba(X)
+
         predictions = []
         for sample in X:
             predictions.append(self.root_.predict(sample))
@@ -1418,6 +1549,18 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
             The predicted class labels
         """
 
+        # If model has been compiled, use compiled predict
+        if self.compile:
+            check_is_fitted(self, "root_")
+
+            X = check_array(X)
+            if X.shape[1] != self.n_features_in_:
+                raise ValueError(
+                    "Received different number of features during predict than during fit"
+                )
+
+            return self.classes_.take(self.compiled_root_.predict_classification(X))
+
         y_pred_proba = self.predict_proba(X)
 
         return self.classes_.take(np.argmax(y_pred_proba, axis=1))
@@ -1439,6 +1582,7 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         robust_weight=1.0,
         attack_model=None,
         chen_heuristic=False,
+        compile=True,
         random_state=None,
     ):
         """
@@ -1460,6 +1604,8 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
             Whether one class (malicious, 1) perturbs their samples or if both classes (benign and malicious, 0 and 1) do so.
         chen_heuristic : bool, optional
             Whether to use the heuristic for the adversarial Gini impurity from Chen et al. (2019) instead of GROOT's adversarial Gini impurity.
+        compile : bool, optional
+            Whether to compile the tree for faster predictions.
         random_state : int, optional
             Controls the sampling of the features to consider when looking for the best split at each node.
 
@@ -1475,6 +1621,8 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
             The number of features when `fit` is performed.
         root_ : Node
             The root node of the tree after fitting.
+        compiled_root_ : CompiledTree
+            The compiled root node of the tree after fitting.
         """
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -1483,6 +1631,7 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         self.robust_weight = robust_weight
         self.attack_model = attack_model
         self.chen_heuristic = chen_heuristic
+        self.compile = compile
         self.random_state = random_state
 
     def _check_target(self, y):
@@ -1635,6 +1784,10 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
                 "Received different number of features during predict than during fit"
             )
 
+        # If model has been compiled, use compiled predict
+        if self.compile:
+            return self.compiled_root_.predict_regression(X)
+
         predictions = []
         for sample in X:
             predictions.append(self.root_.predict(sample))
@@ -1674,6 +1827,7 @@ class BaseGrootRandomForest(BaseEstimator):
         chen_heuristic=False,
         max_samples=None,
         n_jobs=None,
+        compile=True,
         random_state=None,
     ):
         """
@@ -1701,6 +1855,8 @@ class BaseGrootRandomForest(BaseEstimator):
             The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
         n_jobs : int, optional
             The number of jobs to run in parallel when fitting trees. See joblib.
+        compile : bool, optional
+            Whether to compile decision trees for faster predictions.
         random_state : int, optional
             Controls the sampling of the features to consider when looking for the best split at each node.
 
@@ -1724,6 +1880,7 @@ class BaseGrootRandomForest(BaseEstimator):
         self.chen_heuristic = chen_heuristic
         self.max_samples = max_samples
         self.n_jobs = n_jobs
+        self.compile = compile
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -1835,6 +1992,7 @@ class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
         chen_heuristic=False,
         max_samples=None,
         n_jobs=None,
+        compile=True,
         random_state=None,
     ):
         """
@@ -1864,6 +2022,8 @@ class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
             The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
         n_jobs : int, optional
             The number of jobs to run in parallel when fitting trees. See joblib.
+        compile : bool, optional
+            Whether to compile decision trees for faster predictions.
         random_state : int, optional
             Controls the sampling of the features to consider when looking for the best split at each node.
 
@@ -1888,6 +2048,7 @@ class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
             chen_heuristic=chen_heuristic,
             max_samples=max_samples,
             n_jobs=n_jobs,
+            compile=compile,
             random_state=random_state,
         )
         self.one_adversarial_class = one_adversarial_class
@@ -1914,6 +2075,7 @@ class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
             attack_model=self.attack_model,
             one_adversarial_class=self.one_adversarial_class,
             chen_heuristic=self.chen_heuristic,
+            compile=self.compile,
         )
 
     def predict_proba(self, X):
@@ -1985,6 +2147,7 @@ class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
         chen_heuristic=False,
         max_samples=None,
         n_jobs=None,
+        compile=True,
         random_state=None,
     ):
         """
@@ -2012,6 +2175,8 @@ class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
             The fraction of samples to draw from X to train each decision tree. If None (default), then draw X.shape[0] samples.
         n_jobs : int, optional
             The number of jobs to run in parallel when fitting trees. See joblib.
+        compile : bool, optional
+            Whether to compile decision trees for faster predictions.
         random_state : int, optional
             Controls the sampling of the features to consider when looking for the best split at each node.
 
@@ -2036,6 +2201,7 @@ class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
             chen_heuristic=chen_heuristic,
             max_samples=max_samples,
             n_jobs=n_jobs,
+            compile=compile,
             random_state=random_state,
         )
 
@@ -2061,6 +2227,7 @@ class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
             robust_weight=self.robust_weight,
             attack_model=self.attack_model,
             chen_heuristic=self.chen_heuristic,
+            compile=self.compile,
         )
 
     def predict(self, X):
