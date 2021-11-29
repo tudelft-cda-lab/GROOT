@@ -444,7 +444,7 @@ def _scan_numerical_feature_fast(
     return best_score, best_split
 
 
-# @jit(nopython=True, nogil=NOGIL)
+@jit(nopython=True, nogil=NOGIL)
 def _scan_numerical_feature_fast_regression(
     samples,
     y,
@@ -913,7 +913,9 @@ class BaseGrootTree(BaseEstimator):
 
         # Turn numerical features in attack model into tuples to make fitting
         # code simpler
-        self.attack_model_ = _attack_model_to_tuples(attack_model, X.shape[1])
+        self.attack_model_ = np.array(
+            _attack_model_to_tuples(attack_model, X.shape[1]), dtype=X.dtype
+        )
 
         self.random_state_ = check_random_state(self.random_state)
 
