@@ -12,7 +12,6 @@ epsilon = 0.3
 attack_model = [epsilon, epsilon]
 
 # Create and fit a GROOT tree
-is_numerical = [True, True]
 tree = GrootTreeClassifier(
     attack_model=attack_model,
     random_state=0
