@@ -27,8 +27,8 @@ The [GROOT toolbox](../reference/toolbox/) contains the useful `Model` class whi
 Below is a very simple example demonstrating how to train and score a GROOT tree on a toy dataset. We start by creating a 2D dataset using scikit-learn then split it into a train and test set.
 
 ``` python
-from groot.adversary import DecisionTreeAdversary
 from groot.model import GrootTreeClassifier
+from groot.toolbox import Model
 
 from sklearn.datasets import make_moons
 
@@ -40,8 +40,9 @@ X_test, y_test = make_moons(noise=0.3, random_state=1)
 To encode an attacker that can increase/decrease a sample by 0.3 for both features we set the attack_model to `[0.3, 0.3]`.
 
 ``` python
-# Define the attacker's capabilities
-attack_model = [0.3, 0.3]
+# Define the attacker's capabilities (L-inf norm radius 0.3)
+epsilon = 0.3
+attack_model = [epsilon, epsilon]
 ```
 
 We specify that this is a numerical dataset and train the `GrootTreeClassifier` using `.fit()` just like other scikit-learn models.
@@ -51,32 +52,31 @@ We specify that this is a numerical dataset and train the `GrootTreeClassifier` 
 is_numerical = [True, True]
 tree = GrootTreeClassifier(
     attack_model=attack_model,
-    is_numerical=is_numerical,
     random_state=0
 )
 tree.fit(X, y)
 ```
 
-Lastly, we test the performance. To get the regular accuracy we use `.score()` and to determine adversarial accuracy we can use the `DecisionTreeAdversary` that exposes some useful adversarial score functions.
+Lastly, we test the performance. To get the regular accuracy we use `.score()` and to determine adversarial accuracy we can use the `Model` class that exposes some useful functionality.
 
 ``` python
 # Determine the accuracy and accuracy against attackers
 accuracy = tree.score(X_test, y_test)
-adversary = DecisionTreeAdversary(tree, "groot")
-adversarial_accuracy = adversary.adversarial_accuracy(X_test, y_test)
+model = Model.from_groot(tree)
+adversarial_accuracy = model.adversarial_accuracy(X_test, y_test, attack="tree", epsilon=0.3)
 
 print("Accuracy:", accuracy)
 print("Adversarial Accuracy:", adversarial_accuracy)
 ```
 
-The `groot.adversary.DecisionTreeAdversary` is an optimal python attack for decision trees but cannot be used for tree ensembles. For attacking ensembles see the [groot.toolbox](../reference/toolbox).
+See the [groot.toolbox](../reference/toolbox) for more information on how to use the `Model` class.
 
 ### Putting it all together
 The full script is given below.
 
 ``` python
-from groot.adversary import DecisionTreeAdversary
 from groot.model import GrootTreeClassifier
+from groot.toolbox import Model
 
 from sklearn.datasets import make_moons
 
@@ -84,33 +84,32 @@ from sklearn.datasets import make_moons
 X, y = make_moons(noise=0.3, random_state=0)
 X_test, y_test = make_moons(noise=0.3, random_state=1)
 
-# Define the attacker's capabilities
-attack_model = [0.3, 0.3]
+# Define the attacker's capabilities (L-inf norm radius 0.3)
+epsilon = 0.3
+attack_model = [epsilon, epsilon]
 
 # Create and fit a GROOT tree
 is_numerical = [True, True]
 tree = GrootTreeClassifier(
     attack_model=attack_model,
-    is_numerical=is_numerical,
     random_state=0
 )
 tree.fit(X, y)
 
 # Determine the accuracy and accuracy against attackers
 accuracy = tree.score(X_test, y_test)
-adversary = DecisionTreeAdversary(tree, "groot")
-adversarial_accuracy = adversary.adversarial_accuracy(X_test, y_test)
+model = Model.from_groot(tree)
+adversarial_accuracy = model.adversarial_accuracy(X_test, y_test, attack="tree", epsilon=0.3)
 
 print("Accuracy:", accuracy)
 print("Adversarial Accuracy:", adversarial_accuracy)
-
 ```
 
 Which evaluates to:
 
 ```
-Accuracy: 0.82
-Adversarial Accuracy: 0.61
+Accuracy: 0.83
+Adversarial Accuracy: 0.65
 ```
 
 [^1]: Vos, Daniël, and Sicco Verwer. "Efficient Training of Robust Decision Trees Against Adversarial Examples." arXiv preprint arXiv:2012.10438 (2020).
