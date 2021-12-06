@@ -104,6 +104,7 @@ class KantchelianAttack(object):
         pred_threshold=0.0,
         verbose=False,
         n_threads=1,
+        mipgap=0.0,
     ):
         assert (
             epsilon is None or order == np.inf
@@ -120,6 +121,7 @@ class KantchelianAttack(object):
         self.order = order
         self.verbose = verbose
         self.n_threads = n_threads
+        self.mipgap = mipgap
 
         # two nodes with identical decision are merged in this list, their left and right leaves and in the list, third element of the tuple
         self.node_list = []
@@ -212,6 +214,7 @@ class KantchelianAttack(object):
             )  # suppress Gurobi output, gives a small speed-up and prevents huge logs
 
         self.m.setParam("Threads", self.n_threads)
+        self.m.setParam("MIPGap", self.mipgap)
 
         # Most datasets require a very low tolerance
         self.m.setParam("IntFeasTol", 1e-9)
@@ -539,6 +542,7 @@ class KantchelianAttackMultiClass(object):
         low_memory=False,
         verbose=False,
         n_threads=1,
+        mipgap=0.0,
     ):
         if n_classes <= 2:
             raise ValueError("multiclass attack must be used when number of class > 2")
@@ -556,6 +560,7 @@ class KantchelianAttackMultiClass(object):
         self.low_memory = low_memory
         self.verbose = verbose
         self.n_threads = n_threads
+        self.mipgap = mipgap
 
         # Create all attacker models, this takes quadratic space in terms
         # of n_classes, but speeds up attacks for many samples.
@@ -586,6 +591,7 @@ class KantchelianAttackMultiClass(object):
                     n_threads=self.n_threads,
                     pos_json_input=self.one_vs_all_models[class_label],
                     neg_json_input=self.one_vs_all_models[other_label],
+                    mipgap=self.mipgap,
                 )
 
                 attackers.append(attacker)
@@ -613,6 +619,7 @@ class KantchelianAttackMultiClass(object):
                     n_threads=self.n_threads,
                     pos_json_input=self.one_vs_all_models[label],
                     neg_json_input=self.one_vs_all_models[other_label],
+                    mipgap=self.mipgap,
                 )
             else:
                 attacker = self.binary_attackers[label][other_label]
@@ -652,6 +659,7 @@ class KantchelianAttackMultiClass(object):
                     n_threads=self.n_threads,
                     pos_json_input=self.one_vs_all_models[label],
                     neg_json_input=self.one_vs_all_models[other_label],
+                    mipgap=self.mipgap,
                 )
             else:
                 attacker = self.binary_attackers[label][other_label]
@@ -672,6 +680,7 @@ DEFAULT_OPTIONS = {
     "low_memory": False,
     "verbose": False,
     "n_threads": 1,
+    "MIPGap": 0.0,
 }
 
 
@@ -691,6 +700,7 @@ class KantchelianAttackWrapper(AttackWrapper):
                 pred_threshold=options["pred_threshold"],
                 verbose=options["verbose"],
                 n_threads=options["n_threads"],
+                mipgap=options["MIPGap"],
             )
         else:
             attack = KantchelianAttackMultiClass(
@@ -704,6 +714,7 @@ class KantchelianAttackWrapper(AttackWrapper):
                 low_memory=options["low_memory"],
                 verbose=options["verbose"],
                 n_threads=options["n_threads"],
+                mipgap=options["MIPGap"],
             )
         return attack
 
