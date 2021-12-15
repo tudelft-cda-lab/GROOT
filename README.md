@@ -55,5 +55,18 @@ The TREANT implementation (`groot.treant.py`) is copied almost completely from t
 ## Important note on TREANT
 To encode L-infinity norms correctly we had to modify TREANT to NOT apply rules recursively. This means we added a single `break` statement in the `treant.Attacker.__compute_attack()` method. If you are planning on using TREANT with recursive attacker rules then you should remove this statement or use TREANT's unmodified code at https://github.com/gtolomei/treant .
 
+# Citation
+If you want to cite GROOT please reference the original paper:
+```
+@inproceedings{vos2021efficient,
+  title={Efficient Training of Robust Decision Trees Against Adversarial Examples},
+  author={Vos, Dani{\"e}l and Verwer, Sicco},
+  booktitle={International Conference on Machine Learning},
+  pages={10586--10595},
+  year={2021},
+  organization={PMLR}
+}
+```
+
 # Contact
 For any questions or comments please create an issue or contact [me](https://github.com/daniel-vos) directly.
