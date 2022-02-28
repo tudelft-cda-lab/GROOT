@@ -40,7 +40,7 @@ class Node:
 
         return self.value
 
-    def pretty_print(self, depth=0):
+    def pretty_print(self, _, depth=0):
         indentation = depth * "  "
         if isinstance(self.value, np.ndarray):
             return f"{indentation}return [{self.value[0]:.3f}, {self.value[1]:.3f}]"
@@ -92,12 +92,18 @@ class NumericalNode(Node):
         else:
             return self.right_child.predict(sample)
 
-    def pretty_print(self, depth=0):
+    def pretty_print(self, feature_names, depth=0):
         indentation = depth * "  "
-        return f"""{indentation}if x{self.feature} <= {self.threshold}:
-{self.left_child.pretty_print(depth + 1)}
+
+        if feature_names:
+            feature_name = feature_names[self.feature]
+        else:
+            feature_name = f"x[{self.feature}]"
+
+        return f"""{indentation}if {feature_name} <= {self.threshold}:
+{self.left_child.pretty_print(feature_names, depth + 1)}
 {indentation}else:
-{self.right_child.pretty_print(depth + 1)}"""
+{self.right_child.pretty_print(feature_names, depth + 1)}"""
 
     def to_json(self):
         return {
@@ -298,7 +304,8 @@ def _attack_model_to_tuples(attack_model, n_features):
         return new_attack_model
     else:
         raise Exception(
-            "Unknown attack model spec, needs to be perturbation radius or perturbation per feature:",
+            "Unknown attack model spec, needs to be perturbation radius or perturbation"
+            " per feature:",
             attack_model,
         )
 
@@ -601,7 +608,7 @@ def adversarial_gini_gain_two_class(l_0, l_1, li_0, li_1, ri_0, ri_1, r_0, r_1):
     # Compute these before since we use their values multiple times
     x_coef = (l_0 + r_0 + i_0) / (l_1 + r_1 + i_1)
     intercept = (l_1 * r_0 - l_0 * r_1 - l_0 * i_1 + l_1 * i_0) / (l_1 + r_1 + i_1)
-    denominator = x_coef ** 2 + 1
+    denominator = x_coef**2 + 1
 
     # In the paper we refer to m1, m0 here they are li_1 and li_0
     x_prime = round((li_1 + x_coef * (li_0 - intercept)) / denominator)
@@ -688,7 +695,7 @@ def gini_impurity(i_0, i_1):
         return 1.0
 
     ratio = i_0 / (i_0 + i_1)
-    return 1.0 - (ratio ** 2) - ((1 - ratio) ** 2)
+    return 1.0 - (ratio**2) - ((1 - ratio) ** 2)
 
 
 @jit(nopython=True, nogil=NOGIL)
@@ -773,8 +780,8 @@ def weighted_gini(l_0, l_1, r_0, r_1):
     else:
         r_p = r_0 / (r_0 + r_1)
 
-    gini = l_t * (1 - (l_p ** 2) - ((1 - l_p) ** 2)) + r_t * (
-        1 - (r_p ** 2) - ((1 - r_p) ** 2)
+    gini = l_t * (1 - (l_p**2) - ((1 - l_p) ** 2)) + r_t * (
+        1 - (r_p**2) - ((1 - r_p) ** 2)
     )
 
     total = l_t + r_t
@@ -1029,12 +1036,12 @@ class BaseGrootTree(BaseEstimator):
 
         return best_rule, best_feature, best_score
 
-    def to_string(self):
+    def to_string(self, feature_names=None):
         result = ""
         result += f"Parameters: {self.get_params()}\n"
 
         if hasattr(self, "root_"):
-            result += f"Tree:\n{self.root_.pretty_print()}"
+            result += f"Tree:\n{self.root_.pretty_print(feature_names)}"
         else:
             result += "Tree has not yet been fitted"
 
@@ -1140,7 +1147,8 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
         target_type = type_of_target(y)
         if target_type != "binary":
             raise ValueError(
-                f"Unknown label type: classifier only supports binary labels but found {target_type}"
+                "Unknown label type: classifier only supports binary labels but found"
+                f" {target_type}"
             )
 
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -1558,7 +1566,8 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
             X = check_array(X)
             if X.shape[1] != self.n_features_in_:
                 raise ValueError(
-                    "Received different number of features during predict than during fit"
+                    "Received different number of features during predict than"
+                    " during fit"
                 )
 
             return self.classes_.take(self.compiled_root_.predict_classification(X))
@@ -1640,7 +1649,8 @@ class GrootTreeRegressor(BaseGrootTree, RegressorMixin):
         target_type = type_of_target(y)
         if target_type not in {"continuous", "multiclass", "binary"}:
             raise ValueError(
-                f"Unknown label type: regressor only supports continuous/multiclass/binary targets but found {target_type}"
+                "Unknown label type: regressor only supports"
+                f" continuous/multiclass/binary targets but found {target_type}"
             )
 
         # Make a copy of y if it is readonly to prevent errors
@@ -2059,7 +2069,8 @@ class GrootRandomForestClassifier(BaseGrootRandomForest, ClassifierMixin):
         target_type = type_of_target(y)
         if target_type != "binary":
             raise ValueError(
-                f"Unknown label type: classifier only supports binary labels but found {target_type}"
+                "Unknown label type: classifier only supports binary labels but found"
+                f" {target_type}"
             )
 
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -2211,7 +2222,8 @@ class GrootRandomForestRegressor(BaseGrootRandomForest, RegressorMixin):
         target_type = type_of_target(y)
         if target_type not in {"continuous", "multiclass", "binary"}:
             raise ValueError(
-                f"Unknown label type: regressor only supports continuous/multiclass/binary targets but found {target_type}"
+                "Unknown label type: regressor only supports"
+                f" continuous/multiclass/binary targets but found {target_type}"
             )
 
         # Make a copy of y if it is readonly to prevent errors

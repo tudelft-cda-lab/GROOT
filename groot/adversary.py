@@ -290,7 +290,7 @@ class DecisionTreeAdversary:
             self.__calculate_leaves_sklearn()
 
     def __calculate_leaves_ours(self):
-        inf = 10.0 ** 10
+        inf = 10.0**10
         conditions = []
         for numeric in self.is_numeric:
             if numeric:
@@ -346,7 +346,7 @@ class DecisionTreeAdversary:
             return left_leaves + right_leaves
 
     def __calculate_leaves_sklearn(self):
-        inf = 10.0 ** 10
+        inf = 10.0**10
         conditions = []
         for numeric in self.is_numeric:
             if numeric:
@@ -420,7 +420,7 @@ class DecisionTreeAdversary:
             return left_leaves + right_leaves
 
     def __calculate_leaves_treant(self):
-        inf = 10.0 ** 10
+        inf = 10.0**10
         conditions = []
         self.is_numeric = self.decision_tree.numerical_idx
         for numeric in self.is_numeric:
