@@ -7,21 +7,30 @@ This repository contains the module `groot` that implements GROOT as a Scikit-le
 To train and evaluate GROOT on a toy dataset against an attacker that can move samples by 0.5 in each direction one can use the following code:
 
 ```python
-from groot.adversary import DecisionTreeAdversary
 from groot.model import GrootTreeClassifier
+from groot.toolbox import Model
 
 from sklearn.datasets import make_moons
 
+# Load the dataset
 X, y = make_moons(noise=0.3, random_state=0)
 X_test, y_test = make_moons(noise=0.3, random_state=1)
 
-attack_model = [0.5, 0.5]
-is_numerical = [True, True]
-tree = GrootTreeClassifier(attack_model=attack_model, is_numerical=is_numerical, random_state=0)
+# Define the attacker's capabilities (L-inf norm radius 0.3)
+epsilon = 0.3
+attack_model = [epsilon, epsilon]
 
+# Create and fit a GROOT tree
+tree = GrootTreeClassifier(
+    attack_model=attack_model,
+    random_state=0
+)
 tree.fit(X, y)
+
+# Determine the accuracy and accuracy against attackers
 accuracy = tree.score(X_test, y_test)
-adversarial_accuracy = DecisionTreeAdversary(tree, "groot").adversarial_accuracy(X_test, y_test)
+model = Model.from_groot(tree)
+adversarial_accuracy = model.adversarial_accuracy(X_test, y_test, attack="tree", epsilon=0.3)
 
 print("Accuracy:", accuracy)
 print("Adversarial Accuracy:", adversarial_accuracy)
