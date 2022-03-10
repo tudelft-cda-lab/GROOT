@@ -1040,6 +1040,9 @@ class BaseGrootTree(BaseEstimator):
         result = ""
         result += f"Parameters: {self.get_params()}\n"
 
+        if feature_names is None:
+            feature_names = [f"x[{i}]" for i in range(self.n_features_in_)]
+
         if hasattr(self, "root_"):
             result += f"Tree:\n{self.root_.pretty_print(feature_names)}"
         else:
