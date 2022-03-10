@@ -224,6 +224,14 @@ class Model:
         """
         Return the instantiated attack wrapper for the appropriate attack.
         """
+        # If the attack is set to automatic then use MILP for ensembles and
+        # tree attack for individual trees.
+        if attack_name == "auto":
+            if len(self.json_model) == 1:
+                attack_name = "tree"
+            else:
+                attack_name = "milp"
+
         if attack_name == "milp":
             from .verification.kantchelian_attack import KantchelianAttackWrapper
 
@@ -236,7 +244,7 @@ class Model:
             raise ValueError(f"Attack '{attack_name}' not supported.")
 
     def attack_feasibility(
-        self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}
+        self, X, y, attack="auto", order=np.inf, epsilon=0.0, options={}
     ):
         """
         Determine whether an adversarial example is feasible for each sample given the maximum perturbation radius epsilon.
@@ -247,8 +255,12 @@ class Model:
             Samples to attack.
         y : array-like of shape (n_samples,)
             True labels for the samples.
-        attack : {"milp",}, optional
-            The attack to use. Currently only the optimal MILP attack is supported.
+        attack : {"auto", "milp", "tree"}, optional
+            The attack to use, if "auto" the attack is chosen automatically:
+            - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+              Linear Programming formulation.
+            - "tree" for optimal attacks on single decision trees by enumerating
+              all possible paths through the tree.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
         epsilon : float, optional
@@ -266,7 +278,7 @@ class Model:
             X, y, order=order, epsilon=epsilon, options=options
         )
 
-    def attack_distance(self, X, y, attack="milp", order=np.inf, options={}):
+    def attack_distance(self, X, y, attack="auto", order=np.inf, options={}):
         """
         Determine the perturbation distance for each sample to make an adversarial example.
 
@@ -276,8 +288,12 @@ class Model:
             Samples to attack.
         y : array-like of shape (n_samples,)
             True labels for the samples.
-        attack : {"milp",}, optional
-            The attack to use. Currently only the optimal MILP attack is supported.
+        attack : {"auto", "milp", "tree"}, optional
+            The attack to use, if "auto" the attack is chosen automatically:
+            - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+              Linear Programming formulation.
+            - "tree" for optimal attacks on single decision trees by enumerating
+              all possible paths through the tree.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
         options : dict, optional
@@ -291,7 +307,7 @@ class Model:
         attack_wrapper = self.__get_attack_wrapper(attack)
         return attack_wrapper.attack_distance(X, y, order=order, options=options)
 
-    def adversarial_examples(self, X, y, attack="milp", order=np.inf, options={}):
+    def adversarial_examples(self, X, y, attack="auto", order=np.inf, options={}):
         """
         Create adversarial examples for each input sample.
 
@@ -301,8 +317,12 @@ class Model:
             Samples to attack.
         y : array-like of shape (n_samples,)
             True labels for the samples.
-        attack : {"milp",}, optional
-            The attack to use. Currently only the optimal MILP attack is supported.
+        attack : {"auto", "milp", "tree"}, optional
+            The attack to use, if "auto" the attack is chosen automatically:
+            - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+              Linear Programming formulation.
+            - "tree" for optimal attacks on single decision trees by enumerating
+              all possible paths through the tree.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
         options : dict, optional
@@ -336,7 +356,7 @@ class Model:
         return np.sum(y_pred == y) / len(y)
 
     def adversarial_accuracy(
-        self, X, y, attack="milp", order=np.inf, epsilon=0.0, options={}
+        self, X, y, attack="auto", order=np.inf, epsilon=0.0, options={}
     ):
         """
         Determine the accuracy against adversarial examples within maximum perturbation radius epsilon.
@@ -347,8 +367,12 @@ class Model:
             Samples to attack.
         y : array-like of shape (n_samples,)
             True labels for the samples.
-        attack : {"milp",}, optional
-            The attack to use. Currently only the optimal MILP attack is supported.
+        attack : {"auto", "milp", "tree"}, optional
+            The attack to use, if "auto" the attack is chosen automatically:
+            - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+              Linear Programming formulation.
+            - "tree" for optimal attacks on single decision trees by enumerating
+              all possible paths through the tree.
         order : {0, 1, 2, inf}, optional
             L-norm order to use. See numpy documentation of more explanation.
         epsilon : float, optional
