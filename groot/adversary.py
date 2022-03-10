@@ -2,6 +2,7 @@ import numpy as np
 import numbers
 from copy import deepcopy
 import json
+import warnings
 
 
 def convert_numpy(obj):
@@ -244,6 +245,19 @@ class DecisionTreeAdversary:
         self.decision_tree = decision_tree
         self.kind = kind
         self.one_adversarial_class = one_adversarial_class
+
+        if hasattr(decision_tree, "n_features_in_"):
+            if attack_model is None:
+                attack_model = ["" for _ in range(decision_tree.n_features_in_)]
+                warnings.warn(
+                    "Attack model not specified, assuming all features are not perturbable."
+                )
+
+            if is_numeric is None:
+                is_numeric = [True for _ in range(decision_tree.n_features_in_)]
+
+            if n_categories is None:
+                n_categories = [None for _ in range(decision_tree.n_features_in_)]
 
         if is_numeric is not None:
             self.is_numeric = is_numeric
