@@ -37,6 +37,9 @@ def test_toolbox_model_adversarial_accuracy():
         
         adversarial_accuracy_auto = model.adversarial_accuracy(X_test, y_test, attack="auto", epsilon=0.3)
         adversarial_accuracy_tree = model.adversarial_accuracy(X_test, y_test, attack="tree", epsilon=0.3)
-
+        
         assert adversarial_accuracy_tree == adversarial_accuracy_auto
         assert accuracy >= adversarial_accuracy_tree
+
+        # Test if "disable_progress_bar" option is accepted
+        model.adversarial_accuracy(X_test, y_test, attack="auto", epsilon=0.3, options={"disable_progress_bar": True})

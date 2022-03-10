@@ -74,8 +74,13 @@ class DecisionTreeAttackWrapper(AttackWrapper):
                 bounding_box[i] = bound
             bounding_boxes.append(bounding_box)
 
+        if "disable_progress_bar" in options:
+            disable = options["disable_progress_bar"]
+        else:
+            disable = False
+
         X_adv = []
-        for sample, label in tqdm(zip(X, y), total=X.shape[0]):
+        for sample, label in tqdm(zip(X, y), total=X.shape[0], disable=disable):
             # Create a minimal adversarial example for each leaf
             # then choose the one with minimal distance
             best_distance = np.inf

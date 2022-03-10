@@ -681,6 +681,7 @@ DEFAULT_OPTIONS = {
     "verbose": False,
     "n_threads": 1,
     "MIPGap": 0.0,
+    "disable_progress_bar": False,
 }
 
 
@@ -729,7 +730,9 @@ class KantchelianAttackWrapper(AttackWrapper):
         attack_feasible = []
         start_time = time.time()
 
-        for sample, label in tqdm(zip(X, y), total=X.shape[0]):
+        for sample, label in tqdm(
+            zip(X, y), total=X.shape[0], disable=options["disable_progress_bar"]
+        ):
             attack_feasible.append(attack.attack_feasible(sample, label))
 
         total_time = time.time() - start_time
@@ -750,7 +753,9 @@ class KantchelianAttackWrapper(AttackWrapper):
         start_time = time.time()
 
         X_adv = []
-        for sample, label in tqdm(zip(X, y), total=X.shape[0]):
+        for sample, label in tqdm(
+            zip(X, y), total=X.shape[0], disable=options["disable_progress_bar"]
+        ):
             optimal_example = attack.optimal_adversarial_example(sample, label)
             X_adv.append(optimal_example)
 
