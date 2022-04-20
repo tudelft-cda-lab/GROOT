@@ -402,6 +402,93 @@ class Model:
         with open(filename, "w") as file:
             json.dump(self.json_model, file, indent=indent, default=convert_numpy)
 
+    def counterfactual_explanations(self, X, y=None, attack="auto", options={}):
+        """
+        Generate a counterfactual explanation for each input sample using an L0 norm attack.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples to explain.
+        y : array-like of shape (n_samples,), optional
+            True labels for the samples. If not provided, then model predictions are used.
+        attack : {"auto", "milp", "tree"}, optional
+            The attack to use, if "auto" the attack is chosen automatically:
+            - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+                Linear Programming formulation.
+            - "tree" for optimal attacks on single decision trees by enumerating
+                all possible paths through the tree.
+        options : dict, optional
+            Extra attack-specific options.
+
+        Returns
+        -------
+        ndarray of shape (n_samples, n_features)
+            Counterfactual explanations, one for each sample.
+        """
+
+        if y is None:
+            y = self.predict(X)
+
+        return self.adversarial_examples(X, y, attack, order=0, options=options)
+
+    def natural_language_explanations(
+        self, X, y=None, attack="auto", feature_names=None, class_names=None, options={}
+    ):
+        """
+        Generate natural language explanations for each input sample using an L0 norm attack.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Samples to explain.
+        y : array-like of shape (n_samples,), optional
+            True labels for the samples. If not provided, then model predictions are used.
+        attack : {"auto", "milp", "tree"}, optional
+            The attack to use, if "auto" the attack is chosen automatically:
+            - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+                Linear Programming formulation.
+            - "tree" for optimal attacks on single decision trees by enumerating
+                all possible paths through the tree.
+        feature_names : list or dict of str, optional
+            Names of the features.
+        class_names : list or dict of str, optional
+            Names of the class labels. If not provided, then the labels are assumed to be integers
+        options : dict, optional
+            Extra attack-specific options.
+
+        Returns
+        -------
+        ndarray of strings of shape (n_samples,)
+            Natural language explanations, one for each sample.
+        """
+
+        counterfactuals = self.adversarial_examples(
+            X, y, attack, order=0, options=options
+        )
+
+        predictions = self.predict(X)
+
+        natural_language_explanations = []
+        for sample, counterfactual, prediction in zip(X, counterfactuals, predictions):
+            # Use the given name for a prediction value if it is given
+            if class_names is not None:
+                prediction = class_names[prediction]
+
+            changed_features = []
+            for i, (value, new_value) in enumerate(zip(sample, counterfactual)):
+                if value != new_value:
+                    if feature_names is not None:
+                        changed_features.append((feature_names[i], value, new_value))
+                    else:
+                        changed_features.append((f"feature {i}", value, new_value))
+
+            natural_language_explanations.append(
+                f"This sample is predicted to be {prediction}. If {' and '.join(f'{feature} was changed from {value:.3f} to {new_value:.3f}' for feature, value, new_value in changed_features)}, then it would be predicted differently."
+            )
+
+        return np.array(natural_language_explanations)
+
 
 def _sklearn_tree_to_dict(tree, classifier=True, one_vs_all_class=1, learning_rate=1.0):
     if classifier:
