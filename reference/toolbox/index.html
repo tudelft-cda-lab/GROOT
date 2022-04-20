@@ -1,0 +1,1906 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Fit robust decision trees in a matter of seconds.">
+      
+      
+        <meta name="author" content="Daniël Vos">
+      
+      
+        <link rel="canonical" href="https://groot.cyber-analytics.nl/reference/toolbox/">
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.3.0, mkdocs-material-8.2.9">
+    
+    
+      
+        <title>Toolbox - GROOT</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.120efc48.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.9647289d.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="deep-orange">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#example" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="GROOT" class="md-header__button md-logo" aria-label="GROOT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            GROOT
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Toolbox
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31Z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="deep-orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/tudelft-cda-lab/GROOT" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tudelft-cda-lab/GROOT
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="GROOT" class="md-nav__button md-logo" aria-label="GROOT" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    GROOT
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/tudelft-cda-lab/GROOT" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tudelft-cda-lab/GROOT
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/" class="md-nav__link">
+        Getting started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Code Reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Code Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Code Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_1" type="checkbox" id="__nav_3_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_1">
+          Models
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Models" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_1">
+          <span class="md-nav__icon md-icon"></span>
+          Models
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/groot_tree/" class="md-nav__link">
+        GROOT tree
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/groot_forest/" class="md-nav__link">
+        GROOT forest
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/treant/" class="md-nav__link">
+        TREANT
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/boosting/" class="md-nav__link">
+        Provably robust boosting
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Toolbox
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Toolbox
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-reference" class="md-nav__link">
+    Code reference
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#groot.toolbox" class="md-nav__link">
+    toolbox
+  </a>
+  
+    <nav class="md-nav" aria-label="toolbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model" class="md-nav__link">
+    Model
+  </a>
+  
+    <nav class="md-nav" aria-label="Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.accuracy" class="md-nav__link">
+    accuracy()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.adversarial_accuracy" class="md-nav__link">
+    adversarial_accuracy()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.adversarial_examples" class="md-nav__link">
+    adversarial_examples()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.attack_distance" class="md-nav__link">
+    attack_distance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.attack_feasibility" class="md-nav__link">
+    attack_feasibility()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.decision_function" class="md-nav__link">
+    decision_function()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_groot" class="md-nav__link">
+    from_groot()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_json_file" class="md-nav__link">
+    from_json_file()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_provably_robust_boosting" class="md-nav__link">
+    from_provably_robust_boosting()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_sklearn" class="md-nav__link">
+    from_sklearn()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_treant" class="md-nav__link">
+    from_treant()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.predict" class="md-nav__link">
+    predict()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.to_json" class="md-nav__link">
+    to_json()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adversary/" class="md-nav__link">
+        Adversaries
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../verification/" class="md-nav__link">
+        Robustness verification
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datasets/" class="md-nav__link">
+        Datasets
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../visualization/" class="md-nav__link">
+        Visualization
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../util/" class="md-nav__link">
+        Utilities
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../license/" class="md-nav__link">
+        License
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-reference" class="md-nav__link">
+    Code reference
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#groot.toolbox" class="md-nav__link">
+    toolbox
+  </a>
+  
+    <nav class="md-nav" aria-label="toolbox">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model" class="md-nav__link">
+    Model
+  </a>
+  
+    <nav class="md-nav" aria-label="Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.accuracy" class="md-nav__link">
+    accuracy()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.adversarial_accuracy" class="md-nav__link">
+    adversarial_accuracy()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.adversarial_examples" class="md-nav__link">
+    adversarial_examples()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.attack_distance" class="md-nav__link">
+    attack_distance()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.attack_feasibility" class="md-nav__link">
+    attack_feasibility()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.decision_function" class="md-nav__link">
+    decision_function()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_groot" class="md-nav__link">
+    from_groot()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_json_file" class="md-nav__link">
+    from_json_file()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_provably_robust_boosting" class="md-nav__link">
+    from_provably_robust_boosting()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_sklearn" class="md-nav__link">
+    from_sklearn()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.from_treant" class="md-nav__link">
+    from_treant()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.predict" class="md-nav__link">
+    predict()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groot.toolbox.Model.to_json" class="md-nav__link">
+    to_json()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+
+
+  <h1>Toolbox</h1>
+
+<p>The <code>groot.toolbox</code> package exposes the <code>Model</code> class that allows easy loading, converting and attacking decision tree ensembles of different formats. The <code>Model</code> class can load tree ensembles from the following formats using:</p>
+<ul>
+<li>Scikit-learn: <code>Model.from_sklearn</code></li>
+<li>JSON file: <code>Model.from_json_file</code></li>
+<li>GROOT: <code>Model.from_groot</code></li>
+<li>TREANT: <code>Model.from_treant</code></li>
+<li>Provably robust boosting: <code>Model.from_provably_robust_boosting</code></li>
+</ul>
+<p>After loading you can then easily determine metrics such as accuracy and adversarial accuracy (against a given perturbation radius epsilon). It is also possible to get access to more information about adversarial robustness than just a metric. The model class has three methods for this:</p>
+<ul>
+<li><code>attack_feasibility</code>: Compute for each sample whether or not an adversarial example exists within an radius around it.</li>
+<li><code>attack_distances</code>: Compute for each sample the distance it needs to move to turn into an adversarial example.</li>
+<li><code>adversarial_examples</code>: Generate adversarial examples for each input sample.</li>
+</ul>
+<p>These three methods are theoretically listed in order of increasing complexity. That means that when you only need to know e.g. <code>attack_feasibility</code> and not <code>attack_distances</code> calling only the first function might be faster than calling the second and computing the 'feasibility' from that. For example for the default <code>'milp'</code> attack, <code>attack_feasibility</code> is orders of magnitude faster than <code>attack_distances</code> and <code>adversarial_examples</code>.</p>
+<h2 id="example">Example</h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_iris</span>
+<span class="kn">from</span> <span class="nn">sklearn.tree</span> <span class="kn">import</span> <span class="n">DecisionTreeClassifier</span>
+
+<span class="kn">from</span> <span class="nn">groot.toolbox</span> <span class="kn">import</span> <span class="n">Model</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">tree</span> <span class="o">=</span> <span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">max_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">tree</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="o">.</span><span class="n">from_sklearn</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Accuracy:&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+
+<span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adversarial accuracy:&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">adversarial_accuracy</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">))</span>
+
+<span class="n">X_adv</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">adversarial_examples</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adversarial examples:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">X_adv</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="code-reference">Code reference</h2>
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="groot.toolbox" class="doc doc-heading">
+        <code>groot.toolbox</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h3 id="groot.toolbox.Model" class="doc doc-heading">
+        <code>
+Model        </code>
+
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.__init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_model</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>General model class that exposes a common API for evaluating decision tree (ensemble) models. Usually you won't have to call this constructor manually, instead use <code>from_json_file</code>, <code>from_sklearn</code>, <code>from_treant</code>, <code>from_provably_robust_boosting</code> or <code>from_groot</code>.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>json_model</code></td>
+        <td><code>list of dicts</code></td>
+        <td><p>List of decision trees encoded as dicts. See the XGBoost JSON format.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_classes</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of classes that this model predicts.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.accuracy" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Determine the accuracy of the model on unperturbed samples.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Input samples.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>y</code></td>
+        <td><code>array-like of shape (n_samples,)</code></td>
+        <td><p>True labels.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>float</code></td>
+      <td><p>Accuracy on unperturbed samples.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.adversarial_accuracy" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">adversarial_accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">inf</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Determine the accuracy against adversarial examples within maximum perturbation radius epsilon.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Samples to attack.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>y</code></td>
+        <td><code>array-like of shape (n_samples,)</code></td>
+        <td><p>True labels for the samples.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>attack</code></td>
+        <td><code>{&#34;auto&#34;, &#34;milp&#34;, &#34;tree&#34;}</code></td>
+        <td><p>The attack to use, if "auto" the attack is chosen automatically:
+- "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+  Linear Programming formulation.
+- "tree" for optimal attacks on single decision trees by enumerating
+  all possible paths through the tree.</p></td>
+        <td><code>&#39;auto&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>order</code></td>
+        <td><code>{0, 1, 2, inf}</code></td>
+        <td><p>L-norm order to use. See numpy documentation of more explanation.</p></td>
+        <td><code>inf</code></td>
+      </tr>
+      <tr>
+        <td><code>epsilon</code></td>
+        <td><code>float</code></td>
+        <td><p>Maximum distance by which samples can move.</p></td>
+        <td><code>0.0</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>float</code></td>
+      <td><p>Adversarial accuracy given the maximum perturbation radius epsilon.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.adversarial_examples" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">adversarial_examples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">inf</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create adversarial examples for each input sample.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Samples to attack.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>y</code></td>
+        <td><code>array-like of shape (n_samples,)</code></td>
+        <td><p>True labels for the samples.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>attack</code></td>
+        <td><code>{&#34;auto&#34;, &#34;milp&#34;, &#34;tree&#34;}</code></td>
+        <td><p>The attack to use, if "auto" the attack is chosen automatically:
+- "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+  Linear Programming formulation.
+- "tree" for optimal attacks on single decision trees by enumerating
+  all possible paths through the tree.</p></td>
+        <td><code>&#39;auto&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>order</code></td>
+        <td><code>{0, 1, 2, inf}</code></td>
+        <td><p>L-norm order to use. See numpy documentation of more explanation.</p></td>
+        <td><code>inf</code></td>
+      </tr>
+      <tr>
+        <td><code>options</code></td>
+        <td><code>dict</code></td>
+        <td><p>Extra attack-specific options.</p></td>
+        <td><code>{}</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray of shape (n_samples, n_features)</code></td>
+      <td><p>Adversarial examples.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.attack_distance" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">attack_distance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">inf</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Determine the perturbation distance for each sample to make an adversarial example.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Samples to attack.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>y</code></td>
+        <td><code>array-like of shape (n_samples,)</code></td>
+        <td><p>True labels for the samples.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>attack</code></td>
+        <td><code>{&#34;auto&#34;, &#34;milp&#34;, &#34;tree&#34;}</code></td>
+        <td><p>The attack to use, if "auto" the attack is chosen automatically:
+- "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+  Linear Programming formulation.
+- "tree" for optimal attacks on single decision trees by enumerating
+  all possible paths through the tree.</p></td>
+        <td><code>&#39;auto&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>order</code></td>
+        <td><code>{0, 1, 2, inf}</code></td>
+        <td><p>L-norm order to use. See numpy documentation of more explanation.</p></td>
+        <td><code>inf</code></td>
+      </tr>
+      <tr>
+        <td><code>options</code></td>
+        <td><code>dict</code></td>
+        <td><p>Extra attack-specific options.</p></td>
+        <td><code>{}</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray of shape (n_samples,) of floats</code></td>
+      <td><p>Distances to create adversarial examples.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.attack_feasibility" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">attack_feasibility</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">attack</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">inf</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{})</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Determine whether an adversarial example is feasible for each sample given the maximum perturbation radius epsilon.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Samples to attack.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>y</code></td>
+        <td><code>array-like of shape (n_samples,)</code></td>
+        <td><p>True labels for the samples.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>attack</code></td>
+        <td><code>{&#34;auto&#34;, &#34;milp&#34;, &#34;tree&#34;}</code></td>
+        <td><p>The attack to use, if "auto" the attack is chosen automatically:
+- "milp" for optimal attacks on tree ensembles using a Mixed-Integer
+  Linear Programming formulation.
+- "tree" for optimal attacks on single decision trees by enumerating
+  all possible paths through the tree.</p></td>
+        <td><code>&#39;auto&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>order</code></td>
+        <td><code>{0, 1, 2, inf}</code></td>
+        <td><p>L-norm order to use. See numpy documentation of more explanation.</p></td>
+        <td><code>inf</code></td>
+      </tr>
+      <tr>
+        <td><code>epsilon</code></td>
+        <td><code>float</code></td>
+        <td><p>Maximum distance by which samples can move.</p></td>
+        <td><code>0.0</code></td>
+      </tr>
+      <tr>
+        <td><code>options</code></td>
+        <td><code>dict</code></td>
+        <td><p>Extra attack-specific options.</p></td>
+        <td><code>{}</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray of shape (n_samples,) of booleans</code></td>
+      <td><p>Vector of True/False. Whether an adversarial example is feasible.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.decision_function" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">decision_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Compute prediction values for some samples. These values are the sum of leaf values in which the samples end up.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Samples to predict.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray of shape (n_samples) or ndarray of shape (n_samples, n_classes)</code></td>
+      <td><p>Predicted values. Returns a 1-dimensional array if n_classes=2, else a 2-dimensional array.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.from_groot" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_groot</span><span class="p">(</span><span class="n">classifier</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a Model instance from a GrootTree, GrootRandomForest or GROOT OneVsRestClassifier.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>classifier</code></td>
+        <td><code>GrootTree, GrootRandomForest or OneVsRestClassifier (of GROOT models)</code></td>
+        <td><p>GROOT model to load.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Model</code></td>
+      <td><p>Instantiated Model object.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.from_json_file" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_json_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">n_classes</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a Model instance from a JSON file.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>filename</code></td>
+        <td><code>str</code></td>
+        <td><p>Path to JSON file that contains a list of decision trees encoded as dicts. See the XGBoost JSON format.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_classes</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of classes that this model predicts.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Model</code></td>
+      <td><p>Instantiated Model object.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.from_provably_robust_boosting" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_provably_robust_boosting</span><span class="p">(</span><span class="n">classifier</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a Model instance from a Provably Robust Boosting TreeEnsemble.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>classifier</code></td>
+        <td><code>groot.provably_robust_boosting.TreeEnsemble</code></td>
+        <td><p>Provably Robust Boosting model to load.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Model</code></td>
+      <td><p>Instantiated Model object.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.from_sklearn" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_sklearn</span><span class="p">(</span><span class="n">classifier</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a Model instance from a Scikit-learn classifier.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>classifier</code></td>
+        <td><code>DecisionTreeClassifier, RandomForestClassifier or GradientBoostingClassifier</code></td>
+        <td><p>Scikit-learn model to load.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Model</code></td>
+      <td><p>Instantiated Model object.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.from_treant" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_treant</span><span class="p">(</span><span class="n">classifier</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a Model instance from a TREANT decision tree.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>classifier</code></td>
+        <td><code>groot.treant.RobustDecisionTree</code></td>
+        <td><p>TREANT model to load.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Model</code></td>
+      <td><p>Instantiated Model object.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.predict" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Predict classes for some samples. The raw prediction values are turned into class labels.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>X</code></td>
+        <td><code>array-like of shape (n_samples, n_features)</code></td>
+        <td><p>Samples to predict.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray of shape (n_samples)</code></td>
+      <td><p>Predicted class labels.</p></td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="groot.toolbox.Model.to_json" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Export the model object to a JSON file.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>filename</code></td>
+        <td><code>str</code></td>
+        <td><p>Name of the JSON file to export to.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>indent</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of spaces to use for indentation in the JSON file. Can be reduced to save storage.</p></td>
+        <td><code>2</code></td>
+      </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../models/boosting/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Provably robust boosting" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Provably robust boosting
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../adversary/" class="md-footer__link md-footer__link--next" aria-label="Next: Adversaries" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Adversaries
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2021 Daniël Vos
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections"], "search": "../../assets/javascripts/workers/search.2a1c317c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.6e54b5cd.min.js"></script>
+      
+    
+  </body>
+</html>
