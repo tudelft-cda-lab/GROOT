@@ -35,3 +35,12 @@ def test_counterfactual_explanations():
         assert len(natural_language_explanations) == len(X)
         assert "x was changed from 0.000 to" in natural_language_explanations[0]
         assert "y was changed from 0.000 to" in natural_language_explanations[0]
+
+        natural_language_explanations = model.natural_language_explanations(
+            X,
+            feature_names=["x", "y"],
+            class_names=["A", "B"],
+        )
+        assert len(natural_language_explanations) == len(X)
+        assert "x was changed from 0.000 to" in natural_language_explanations[0]
+        assert "y was changed from 0.000 to" in natural_language_explanations[0]

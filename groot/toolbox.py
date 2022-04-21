@@ -404,7 +404,7 @@ class Model:
 
     def counterfactual_explanations(self, X, y=None, attack="auto", options={}):
         """
-        Generate a counterfactual explanation for each input sample using an L0 norm attack.
+        Generate a counterfactual explanation for each input sample using an L0.5 norm attack.
 
         Parameters
         ----------
@@ -430,7 +430,7 @@ class Model:
         if y is None:
             y = self.predict(X)
 
-        return self.adversarial_examples(X, y, attack, order=0, options=options)
+        return self.adversarial_examples(X, y, attack, order=0.5, options=options)
 
     def natural_language_explanations(
         self, X, y=None, attack="auto", feature_names=None, class_names=None, options={}
@@ -463,8 +463,8 @@ class Model:
             Natural language explanations, one for each sample.
         """
 
-        counterfactuals = self.adversarial_examples(
-            X, y, attack, order=0, options=options
+        counterfactuals = self.counterfactual_explanations(
+            X, y, attack, options=options
         )
 
         predictions = self.predict(X)
