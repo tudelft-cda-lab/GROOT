@@ -5,7 +5,11 @@ from sklearn.tree import DecisionTreeClassifier
 
 import numpy as np
 
+import pytest
 
+import importlib
+
+@pytest.mark.skipif(importlib.util.find_spec("gurobipy") is None, reason="Gurobi not installed")
 def test_counterfactual_explanations():
     X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).astype(np.float32)
     y = np.array([0, 0, 0, 1])
