@@ -402,7 +402,7 @@ class Model:
         with open(filename, "w") as file:
             json.dump(self.json_model, file, indent=indent, default=convert_numpy)
 
-    def counterfactual_explanations(self, X, y=None, attack="auto", options={}):
+    def counterfactual_explanations(self, X, y_true=None, attack="auto", options={}):
         """
         Generate a counterfactual explanation for each input sample using an L0.5 norm attack.
 
@@ -410,7 +410,7 @@ class Model:
         ----------
         X : array-like of shape (n_samples, n_features)
             Samples to explain.
-        y : array-like of shape (n_samples,), optional
+        y_true : array-like of shape (n_samples,), optional
             True labels for the samples. If not provided, then model predictions are used.
         attack : {"auto", "milp", "tree"}, optional
             The attack to use, if "auto" the attack is chosen automatically:
@@ -427,8 +427,10 @@ class Model:
             Counterfactual explanations, one for each sample.
         """
 
-        if y is None:
+        if y_true is None:
             y = self.predict(X)
+        else:
+            y = y_true
 
         counterfactuals = self.adversarial_examples(
             X, y, attack, order=0.5, options=options
@@ -438,7 +440,8 @@ class Model:
     def natural_language_explanations(
         self,
         X,
-        y=None,
+        y_true=None,
+        y_proba=None,
         attack="auto",
         feature_names=None,
         class_names=None,
@@ -453,8 +456,10 @@ class Model:
         ----------
         X : array-like of shape (n_samples, n_features)
             Samples to explain.
-        y : array-like of shape (n_samples,), optional
+        y_true : array-like of shape (n_samples,), optional
             True labels for the samples. If not provided, then model predictions are used.
+        y_proba : array-like of shape (n_samples, n_classes), optional
+            Predicted probabilities for the samples. If not provided, then model predictions are used.
         attack : {"auto", "milp", "tree"}, optional
             The attack to use, if "auto" the attack is chosen automatically:
             - "milp" for optimal attacks on tree ensembles using a Mixed-Integer
@@ -481,10 +486,13 @@ class Model:
         """
 
         counterfactuals = self.counterfactual_explanations(
-            X, y, attack, options=options
+            X, y_true, attack, options=options
         )
 
-        predictions = self.predict(X)
+        if y_proba is None:
+            predictions = self.predict(X)
+        else:
+            predictions = y_proba
 
         # If a scaler is given then map the original and perturbed data points
         # back to the original feature space.
@@ -504,10 +512,6 @@ class Model:
 
         natural_language_explanations = []
         for sample, counterfactual, prediction in zip(X, counterfactuals, predictions):
-            # Use the given name for a prediction value if it is given
-            if class_names is not None:
-                prediction = class_names[prediction]
-
             # Collect the feature names and values for features that were changed
             changed_features = []
             for i, (value, new_value) in enumerate(zip(sample, counterfactual)):
@@ -521,9 +525,24 @@ class Model:
                         changed_features.append((f"feature {i}", value, new_value))
 
             # Write a natural language explanation from the prediction value and changed features
-            natural_language_explanations.append(
-                f"This sample is predicted to be {prediction}. If {' and '.join(f'{feature} was changed from {value:.3f} to {new_value:.3f}' for feature, value, new_value in changed_features)}, then it would be predicted differently."
-            )
+            if y_proba is not None:
+                pred_label = np.argmax(prediction)
+                pred_proba = prediction[pred_label]
+
+                # Use the given name for a prediction value if it is given
+                if class_names is not None:
+                    pred_label = class_names[pred_label]
+
+                explanation = f"This sample is predicted to be {pred_label} with probability {pred_proba:.2f}. "
+            else:
+                # Use the given name for a prediction value if it is given
+                if class_names is not None:
+                    prediction = class_names[prediction]
+
+                explanation = f"This sample is predicted to be {prediction}. "
+
+            explanation += f"If {' and '.join(f'{feature} was changed from {value:.3f} to {new_value:.3f}' for feature, value, new_value in changed_features)}, then it would be predicted differently."
+            natural_language_explanations.append(explanation)
 
         return np.array(natural_language_explanations)
 
