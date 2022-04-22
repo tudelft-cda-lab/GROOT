@@ -516,13 +516,22 @@ class Model:
             changed_features = []
             for i, (value, new_value) in enumerate(zip(sample, counterfactual)):
                 if value != new_value:
-                    if integer_features[i]:
-                        new_value = np.round(new_value).astype(int)
-
+                    # If feature_names are given use them, otherwise use the feature index
                     if feature_names is not None:
-                        changed_features.append((feature_names[i], value, new_value))
+                        feature_name = feature_names[i]
                     else:
-                        changed_features.append((f"feature {i}", value, new_value))
+                        feature_name = f"feature {i}"
+
+                    # If the feature is integer then round to an integer value, otherwise use
+                    # the formatted float value (showing first 3 non-zero digits)
+                    if integer_features[i]:
+                        value = int(value)
+                        new_value = np.round(new_value).astype(int)
+                    else:
+                        value = f"{value:.3g}"
+                        new_value = f"{new_value:.3g}"
+
+                    changed_features.append((feature_name, value, new_value))
 
             # Write a natural language explanation from the prediction value and changed features
             if y_proba is not None:
@@ -541,7 +550,7 @@ class Model:
 
                 explanation = f"This sample is predicted to be {prediction}. "
 
-            explanation += f"If {' and '.join(f'{feature} was changed from {value:.3f} to {new_value:.3f}' for feature, value, new_value in changed_features)}, then it would be predicted differently."
+            explanation += f"If {' and '.join(f'{feature} was changed from {value} to {new_value}' for feature, value, new_value in changed_features)}, then it would be predicted differently."
             natural_language_explanations.append(explanation)
 
         return np.array(natural_language_explanations)
