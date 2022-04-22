@@ -433,7 +433,14 @@ class Model:
         return self.adversarial_examples(X, y, attack, order=0.5, options=options)
 
     def natural_language_explanations(
-        self, X, y=None, attack="auto", feature_names=None, class_names=None, options={}
+        self,
+        X,
+        y=None,
+        attack="auto",
+        feature_names=None,
+        class_names=None,
+        integer_features="auto",
+        options={},
     ):
         """
         Generate natural language explanations for each input sample using an L0 norm attack.
@@ -454,6 +461,9 @@ class Model:
             Names of the features.
         class_names : list or dict of str, optional
             Names of the class labels. If not provided, then the labels are assumed to be integers
+        integer_features : "auto" or boolean array-like of shape (n_features,), optional
+            Whether the features are integer or continuous. If "auto" then the features are assumed to be integer if
+            they are all integer, otherwise they are assumed to be continuous.
         options : dict, optional
             Extra attack-specific options.
 
@@ -469,6 +479,14 @@ class Model:
 
         predictions = self.predict(X)
 
+        if integer_features == "auto":
+            integer_features = np.all(np.mod(X, 1) == 0, axis=0)
+        else:
+            integer_features = np.array(integer_features)
+
+            assert integer_features.shape == (X.shape[1],)
+            assert integer_features.dtype == bool
+
         natural_language_explanations = []
         for sample, counterfactual, prediction in zip(X, counterfactuals, predictions):
             # Use the given name for a prediction value if it is given
@@ -478,6 +496,9 @@ class Model:
             changed_features = []
             for i, (value, new_value) in enumerate(zip(sample, counterfactual)):
                 if value != new_value:
+                    if integer_features[i]:
+                        new_value = np.round(new_value).astype(int)
+
                     if feature_names is not None:
                         changed_features.append((feature_names[i], value, new_value))
                     else:
