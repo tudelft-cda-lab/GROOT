@@ -430,7 +430,10 @@ class Model:
         if y is None:
             y = self.predict(X)
 
-        return self.adversarial_examples(X, y, attack, order=0.5, options=options)
+        counterfactuals = self.adversarial_examples(
+            X, y, attack, order=0.5, options=options
+        )
+        return counterfactuals
 
     def natural_language_explanations(
         self,
@@ -440,6 +443,7 @@ class Model:
         feature_names=None,
         class_names=None,
         integer_features="auto",
+        scaler=None,
         options={},
     ):
         """
@@ -463,7 +467,10 @@ class Model:
             Names of the class labels. If not provided, then the labels are assumed to be integers
         integer_features : "auto" or boolean array-like of shape (n_features,), optional
             Whether the features are integer or continuous. If "auto" then the features are assumed to be integer if
-            they are all integer, otherwise they are assumed to be continuous.
+            they are all close to integer, otherwise they are assumed to be continuous.
+        scaler, {MinMaxScaler, StandardScaler}, optional (default=None)
+            Scaler used to inversely scale the features. This is useful when features have been preprocessed using a scaler
+            (e.g. to normalize feature values). If None, then no scaling is applied.
         options : dict, optional
             Extra attack-specific options.
 
@@ -479,8 +486,16 @@ class Model:
 
         predictions = self.predict(X)
 
+        # If a scaler is given then map the original and perturbed data points
+        # back to the original feature space.
+        if scaler:
+            X = scaler.inverse_transform(X)
+            counterfactuals = scaler.inverse_transform(counterfactuals)
+
+        # If integer features are not specified then assume that they are integer
+        # if they are close to integer.
         if integer_features == "auto":
-            integer_features = np.all(np.mod(X, 1) == 0, axis=0)
+            integer_features = np.all(np.isclose(X, np.rint(X)), axis=0)
         else:
             integer_features = np.array(integer_features)
 
@@ -493,6 +508,7 @@ class Model:
             if class_names is not None:
                 prediction = class_names[prediction]
 
+            # Collect the feature names and values for features that were changed
             changed_features = []
             for i, (value, new_value) in enumerate(zip(sample, counterfactual)):
                 if value != new_value:
@@ -504,6 +520,7 @@ class Model:
                     else:
                         changed_features.append((f"feature {i}", value, new_value))
 
+            # Write a natural language explanation from the prediction value and changed features
             natural_language_explanations.append(
                 f"This sample is predicted to be {prediction}. If {' and '.join(f'{feature} was changed from {value:.3f} to {new_value:.3f}' for feature, value, new_value in changed_features)}, then it would be predicted differently."
             )
