@@ -502,7 +502,7 @@ class Model:
 
         # If integer features are not specified then assume that they are integer
         # if they are close to integer.
-        if integer_features == "auto":
+        if isinstance(integer_features, str) and integer_features == "auto":
             integer_features = np.all(np.isclose(X, np.rint(X)), axis=0)
         else:
             integer_features = np.array(integer_features)
