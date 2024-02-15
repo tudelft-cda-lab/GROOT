@@ -1398,10 +1398,10 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
         y_left_intersection = y[i_left_intersection]
         y_right_intersection = y[i_right_intersection]
 
-        i_left_intersection_0 = np.where(y_left_intersection == 0)[0]
-        i_left_intersection_1 = np.where(y_left_intersection == 1)[0]
-        i_right_intersection_0 = np.where(y_right_intersection == 0)[0]
-        i_right_intersection_1 = np.where(y_right_intersection == 1)[0]
+        i_left_intersection_0 = i_left_intersection[y_left_intersection == 0]
+        i_left_intersection_1 = i_left_intersection[y_left_intersection == 1]
+        i_right_intersection_0 = i_right_intersection[y_right_intersection == 0]
+        i_right_intersection_1 = i_right_intersection[y_right_intersection == 1]
 
         li_0 = len(i_left_intersection_0)
         li_1 = len(i_left_intersection_1)
@@ -1459,10 +1459,10 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
         elif m1 < li_1:
             n_move_right = li_1 - m1
 
-            i_left_intersection_1 = i_left_intersection_1[n_move_right:]
             i_right_intersection_1 = np.concatenate(
                 (i_left_intersection_1[:n_move_right], i_right_intersection_1)
             )
+            i_left_intersection_1 = i_left_intersection_1[n_move_right:]
 
         # Move label 0 samples according to m0 (not used if one_adversarial_class=True)
         if m0:
@@ -1476,10 +1476,10 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
             elif m0 < li_0:
                 n_move_right = li_0 - m0
 
-                i_left_intersection_0 = i_left_intersection_0[n_move_right:]
                 i_right_intersection_0 = np.concatenate(
                     (i_left_intersection_0[:n_move_right], i_right_intersection_0)
                 )
+                i_left_intersection_0 = i_left_intersection_0[n_move_right:]
 
         i_left = np.concatenate(
             (
@@ -1502,6 +1502,9 @@ class GrootTreeClassifier(BaseGrootTree, ClassifierMixin):
         y_left = y[i_left]
         X_right = X[i_right]
         y_right = y[i_right]
+
+        # Assert that we are not losing any samples in this process
+        assert len(X_left) + len(X_right) == len(X)
 
         return X_left, y_left, X_right, y_right
 
